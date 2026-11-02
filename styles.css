@@ -21,6 +21,8 @@
   --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --r: 14px;
   --nav-h: 64px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -121,9 +123,10 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
 .add-row select.input { width: auto; flex: 1; }
 
 /* ── сегменты, пилюли ── */
-.seg { display: flex; background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; overflow-x: auto; }
-.seg-btn { flex: 1; border: 0; background: transparent; padding: 8px 10px; border-radius: 9px; font-weight: 500; white-space: nowrap; color: var(--muted); min-height: 38px; }
-.seg-btn.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+.seg { position: relative; display: flex; background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; overflow-x: auto; }
+.seg-btn { position: relative; z-index: 1; transition: color 0.25s ease; flex: 1; border: 0; background: transparent; padding: 8px 10px; border-radius: 9px; font-weight: 500; white-space: nowrap; color: var(--muted); min-height: 38px; }
+.seg-btn.on { color: var(--ink); }
+.seg-thumb { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; border-radius: 9px; background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); transition: transform 0.38s var(--ease-out), width 0.38s var(--ease-out); }
 .seg.small .seg-btn { font-size: 13px; }
 .pick { display: flex; flex-wrap: wrap; gap: 6px; }
 .pill { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; }
@@ -136,7 +139,7 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
 .ring-wrap { position: relative; width: 128px; height: 128px; flex: none; }
 .ring { width: 100%; height: 100%; }
 .ring-bg { fill: none; stroke: var(--surface-2); stroke-width: 12; }
-.ring-fg { fill: none; stroke: var(--kcal); stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray 0.6s ease; }
+.ring-fg { fill: none; stroke: var(--kcal); stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray 0.9s var(--ease-out); }
 .ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .ring-num { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
 .ring-sub { font-size: 12px; color: var(--muted); }
@@ -144,7 +147,7 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
 .bar-top { display: flex; justify-content: space-between; font-size: 13px; gap: 6px; }
 .bar-track { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
 .bar-track.thin { height: 6px; }
-.bar-fill { height: 100%; border-radius: inherit; background: var(--accent); transition: width 0.6s ease; }
+.bar-fill { height: 100%; border-radius: inherit; background: var(--accent); transition: width 0.8s var(--ease-out); }
 .bar.p .bar-fill { background: var(--mp); }
 .bar.f .bar-fill { background: var(--mf); }
 .bar.c .bar-fill { background: var(--mc); }
@@ -161,7 +164,7 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
 
 .timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
 .meal { display: grid; grid-template-columns: 64px 1fr; gap: 12px; position: relative; padding-bottom: 18px; }
-.meal::before { content: ""; position: absolute; left: 27px; top: 30px; bottom: 0; width: 2px; background: var(--line); }
+.meal::before { content: ""; position: absolute; left: 27px; top: 54px; bottom: 0; width: 2px; background: var(--line); }
 .meal:last-child::before { display: none; }
 .meal-time { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .meal-time .num { font-family: var(--font-display); font-weight: 500; font-size: 15px; background: var(--bg); position: relative; }
@@ -284,19 +287,22 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
 
 /* ── навигация ── */
 .nav {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  position: fixed; isolation: isolate; left: 0; right: 0; bottom: 0; z-index: 20;
   display: flex; justify-content: center; gap: 0;
   background: var(--surface); border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px));
 }
-.nav-btn { flex: 1; max-width: 112px; height: var(--nav-h); border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
+.nav-btn { position: relative; z-index: 1; transition: color 0.25s ease; flex: 1; max-width: 112px; height: var(--nav-h); border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
 .nav-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .nav-btn.on { color: var(--accent); }
-.nav-btn.on svg { stroke-width: 2.2; }
+.nav-btn svg { transition: transform 0.35s var(--ease-spring); }
+.nav-btn.on svg { stroke-width: 2.2; transform: translateY(-2px) scale(1.08); }
+.nav-ind { position: absolute; top: 0; left: 0; width: 0; height: 3px; border-radius: 0 0 3px 3px; background: var(--accent); transition: transform 0.4s var(--ease-out), width 0.4s var(--ease-out); }
 
 .toast {
-  position: fixed; left: 50%; transform: translateX(-50%); z-index: 30;
+  position: fixed; left: 50%; transform: translate(-50%, 16px) scale(0.96); opacity: 0; z-index: 30;
+  transition: transform 0.3s var(--ease-spring), opacity 0.25s ease;
   bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
   background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px;
   max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
@@ -310,6 +316,61 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
   .tgrid { grid-template-columns: 1fr 1fr; }
   .checks { grid-template-columns: 1fr; }
 }
+
+/* ───────────────── движение ───────────────── */
+/* кнопки и интерактивные элементы: мягкий отклик на нажатие */
+.btn, .chip-card, .pill, .day, .icon-btn, .result, .seg-btn, .nav-btn, .link {
+  transition: transform 0.15s ease, background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, opacity 0.25s ease;
+}
+.btn:active, .chip-card:active, .pill:active, .day:active, .icon-btn:active, .result:active { transform: scale(0.96); }
+.nav-btn:active svg { transform: scale(0.9); }
+@media (hover: hover) {
+  .btn:hover { filter: brightness(1.06); }
+  .chip-card:hover, .result:hover, .pill:hover, .day:hover { border-color: var(--accent); }
+}
+.toast.show { transform: translate(-50%, 0) scale(1); opacity: 1; }
+
+/* появление экрана: блоки поднимаются по очереди */
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.enter { animation: rise 0.5s var(--ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
+/* приёмы пищи в плане — тоже лесенкой */
+.enter .meal { animation: rise 0.5s var(--ease-out) both; }
+.enter .meal:nth-child(2) { animation-delay: 80ms; }
+.enter .meal:nth-child(3) { animation-delay: 160ms; }
+.enter .meal:nth-child(4) { animation-delay: 240ms; }
+.enter .ex, .enter .recipe { animation: rise 0.45s var(--ease-out) both; }
+
+/* «Съел»: карточка мягко гаснет, галочка выпрыгивает */
+.meal-body { transition: opacity 0.4s ease, transform 0.4s var(--ease-out); }
+.meal-time .check { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-size: 13px; font-weight: 700; position: relative; }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.25); } 100% { transform: scale(1); } }
+@keyframes settle { 0% { opacity: 1; transform: scale(1); } 40% { transform: scale(0.98); } 100% { opacity: 0.62; transform: none; } }
+.just-eaten .check { animation: pop 0.45s var(--ease-spring) both; }
+.just-eaten .meal-body { animation: settle 0.5s ease both; }
+/* «Другой вариант»: новое блюдо выезжает */
+@keyframes swap { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+.swap-in .meal-body { animation: swap 0.42s var(--ease-out) both; }
+
+/* раскрывающиеся блоки */
+@keyframes reveal { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+details[open] > *:not(summary) { animation: reveal 0.3s var(--ease-out); }
+details.card > summary::after { content: "+"; display: inline-block; transition: transform 0.3s var(--ease-out); }
+details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
+.steps summary::marker, .ex details summary::marker { transition: color 0.2s; }
+
+/* графики: линия веса прорисовывается, столбики сна растут */
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes fade { from { opacity: 0; } }
+.enter .chart .line { stroke-dasharray: 1; animation: draw 1.1s var(--ease-out) 0.15s both; }
+.enter .chart .area { animation: fade 0.8s ease 0.5s both; }
+.enter .chart .dot { animation: pop 0.4s var(--ease-spring) 1.1s both; transform-box: fill-box; transform-origin: center; }
+@keyframes grow { from { transform: scaleY(0); } to { transform: none; } }
+.enter .sbar-fill { transform-origin: bottom; animation: grow 0.6s var(--ease-out) both; animation-delay: calc(150ms + var(--j, 0) * 55ms); }
+
+/* поля ввода */
+.input { transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); outline: none; }
+
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; animation: none !important; }
+  *, *::before, *::after { transition: none !important; animation: none !important; }
 }

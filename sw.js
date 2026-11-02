@@ -1,5 +1,5 @@
 /* NovaFit service worker: офлайн-режим. При изменении файлов увеличь VERSION. */
-const VERSION = 'novafit-v1';
+const VERSION = 'novafit-v2';
 const FILES = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
   'js/data-foods.js', 'js/data-recipes.js', 'js/data-exercises.js', 'js/nutrition.js', 'js/planner.js', 'js/workout.js', 'js/app.js',

@@ -141,8 +141,12 @@
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.hidden = false;
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => { t.hidden = true; }, 2600);
+    clearTimeout(toast._t); clearTimeout(toast._h);
+    requestAnimationFrame(() => t.classList.add('show'));
+    toast._t = setTimeout(() => {
+      t.classList.remove('show');
+      toast._h = setTimeout(() => { t.hidden = true; }, 260);
+    }, 2600);
   }
 
   function runAdaptation() {
@@ -166,15 +170,16 @@
 
   function bar(label, val, max, unit, mod) {
     const pct = Math.max(0, Math.min(100, (val / Math.max(1, max)) * 100));
+    const key = 'bar-' + (mod || label);
     return '<div class="bar ' + (mod || '') + '"><div class="bar-top"><span>' + label + '</span><span class="num">' + r0(val) + ' / ' + r0(max) + ' ' + unit + '</span></div>' +
-      '<div class="bar-track"><div class="bar-fill" style="width:' + pct.toFixed(1) + '%"></div></div></div>';
+      '<div class="bar-track"><div class="bar-fill" data-k="' + key + '" data-w="' + pct.toFixed(1) + '" style="width:' + pct.toFixed(1) + '%"></div></div></div>';
   }
 
   function ring(val, max) {
     const pct = Math.max(0, Math.min(1, val / Math.max(1, max)));
     const R = 52, C = 2 * Math.PI * R;
     return '<svg class="ring" viewBox="0 0 128 128" aria-hidden="true"><circle cx="64" cy="64" r="' + R + '" class="ring-bg"/>' +
-      '<circle cx="64" cy="64" r="' + R + '" class="ring-fg" stroke-dasharray="' + (C * pct).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 64 64)"/></svg>';
+      '<circle cx="64" cy="64" r="' + R + '" class="ring-fg" data-k="ring" data-dash="' + (C * pct).toFixed(1) + '" data-c="' + C.toFixed(1) + '" stroke-dasharray="' + (C * pct).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 64 64)"/></svg>';
   }
 
   function warningsBlock(ws) {
@@ -204,12 +209,12 @@
     let html = '<section class="hero">' +
       '<p class="eyebrow">' + esc(fmtDate(date)) + '</p>' +
       '<div class="hero-row">' +
-      '<div class="ring-wrap">' + ring(eaten.kcal, T.kcal) + '<div class="ring-label"><span class="ring-num">' + r0(eaten.kcal) + '</span><span class="ring-sub">из ' + T.kcal + ' ккал</span></div></div>' +
+      '<div class="ring-wrap">' + ring(eaten.kcal, T.kcal) + '<div class="ring-label"><span class="ring-num count" data-k="kcal" data-n="' + r0(eaten.kcal) + '">' + r0(eaten.kcal) + '</span><span class="ring-sub">из ' + T.kcal + ' ккал</span></div></div>' +
       '<div class="hero-bars">' +
       bar('Белки', eaten.p, T.protein, 'г', 'p') + bar('Жиры', eaten.f, T.fat, 'г', 'f') + bar('Углеводы', eaten.c, T.carbs, 'г', 'c') +
       '</div></div>' +
       '<div class="goal"><div class="goal-top"><span>' + lastW.toFixed(1).replace('.', ',') + ' кг</span><span class="muted">цель ' + S.profile.target + ' кг · ~' + T.weeks + ' ' + plural(T.weeks, 'неделя', 'недели', 'недель') + '</span></div>' +
-      '<div class="bar-track thin"><div class="bar-fill goal-fill" style="width:' + (prog * 100).toFixed(1) + '%"></div></div></div>' +
+      '<div class="bar-track thin"><div class="bar-fill goal-fill" data-k="goal" data-w="' + (prog * 100).toFixed(1) + '" style="width:' + (prog * 100).toFixed(1) + '%"></div></div></div>' +
       '</section>';
 
     html += '<div class="chips-row">' +
@@ -231,8 +236,8 @@
       const rec = m.recipeId ? recipeById(m.recipeId) : null;
       const mm = NF.macrosOf(m.items, F);
       const title = rec ? rec.name : 'Тарелка из твоих продуктов';
-      html += '<li class="meal' + (m.eaten ? ' eaten' : '') + '">' +
-        '<div class="meal-time"><span class="num">' + esc(m.time) + '</span><span class="meal-type">' + NF.MEAL_LABEL[m.type] + '</span></div>' +
+      html += '<li class="meal' + (m.eaten ? ' eaten' : '') + (ui.justEaten === i ? ' just-eaten' : '') + (ui.justSwapped === i ? ' swap-in' : '') + '">' +
+        '<div class="meal-time"><span class="num">' + esc(m.time) + '</span>' + (m.eaten ? '<span class="check" aria-label="съедено">✓</span>' : '') + '<span class="meal-type">' + NF.MEAL_LABEL[m.type] + '</span></div>' +
         '<div class="meal-body">' +
         '<h3>' + esc(title) + '</h3>' + macroLine(mm) +
         '<ul class="items">' + m.items.map((it) => {
@@ -263,7 +268,7 @@
   // ───────────────── вкладка «Питание» ─────────────────
   function renderFood() {
     const segs = [['stock', 'Запасы'], ['calc', 'Порция'], ['recipes', 'Рецепты'], ['shop', 'Покупки']];
-    let html = '<h1 class="h1">Питание</h1><div class="seg" role="tablist">' + segs.map((s) =>
+    let html = '<h1 class="h1">Питание</h1><div class="seg" data-k="seg-food" role="tablist"><span class="seg-thumb" aria-hidden="true"></span>' + segs.map((s) =>
       '<button role="tab" aria-selected="' + (ui.foodSeg === s[0]) + '" class="seg-btn' + (ui.foodSeg === s[0] ? ' on' : '') + '" data-act="seg" data-seg="' + s[0] + '">' + s[1] + '</button>').join('') + '</div>';
     if (ui.foodSeg === 'stock') html += renderStock();
     if (ui.foodSeg === 'calc') html += renderCalc();
@@ -335,7 +340,7 @@
     const target = NF.targetFor(T, NF.MEAL_SHARE[ui.calcMeal]);
     const pool = Object.keys(S.inventory).filter((id) => F[id]);
     let html = '<div class="card"><p class="muted small">Выбери продукты, которые хочешь съесть сейчас. NovaFit посчитает граммы, чтобы закрыть норму на этот приём пищи.</p>' +
-      '<div class="seg small">' + NF.MEAL_ORDER.map((t) => '<button class="seg-btn' + (ui.calcMeal === t ? ' on' : '') + '" data-act="calc-meal" data-t="' + t + '">' + NF.MEAL_LABEL[t] + '</button>').join('') + '</div>' +
+      '<div class="seg small" data-k="seg-calc"><span class="seg-thumb" aria-hidden="true"></span>' + NF.MEAL_ORDER.map((t) => '<button class="seg-btn' + (ui.calcMeal === t ? ' on' : '') + '" data-act="calc-meal" data-t="' + t + '">' + NF.MEAL_LABEL[t] + '</button>').join('') + '</div>' +
       '<p class="small">Цель на ' + NF.MEAL_LABEL[ui.calcMeal].toLowerCase() + ': ' + macroLine(target) + '</p>' +
       '<label class="check"><input type="checkbox" id="calc-stock" data-bind="calc-stock"' + (ui.calcStock ? ' checked' : '') + '> не больше, чем есть дома</label>';
     if (!pool.length) html += '<p class="muted">Добавь продукты в запасы, и они появятся здесь.</p>';
@@ -365,7 +370,7 @@
     const filters = [['all', 'Все'], ['b', 'Завтрак'], ['l', 'Обед/ужин'], ['s', 'Перекус']];
     let list = NF.RECIPES.filter((r) => ui.recFilter === 'all' || r.meals.indexOf(ui.recFilter) >= 0);
     list = list.map((r) => ({ r: r, miss: recipeStatus(r) })).sort((a, b) => a.miss.length - b.miss.length);
-    let html = '<div class="seg small">' + filters.map((f) => '<button class="seg-btn' + (ui.recFilter === f[0] ? ' on' : '') + '" data-act="rec-filter" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
+    let html = '<div class="seg small" data-k="seg-rec"><span class="seg-thumb" aria-hidden="true"></span>' + filters.map((f) => '<button class="seg-btn' + (ui.recFilter === f[0] ? ' on' : '') + '" data-act="rec-filter" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
     html += '<p class="hint">Граммовки указаны базовые. В плане на день они пересчитываются под твою норму.</p><div class="recipes">';
     list.forEach((x) => {
       const r = x.r;
@@ -388,7 +393,7 @@
     if (!T) return '<div class="empty"><p>Сначала заполни профиль.</p></div>';
     const F = fm();
     const list = NF.shoppingList(todayStr(), ui.shopDays, T, scheduleFor(todayStr()), S.inventory, F, recentPenalty(todayStr()));
-    let html = '<div class="seg small">' + [3, 7].map((d) => '<button class="seg-btn' + (ui.shopDays === d ? ' on' : '') + '" data-act="shop-days" data-d="' + d + '">На ' + d + ' ' + plural(d, 'день', 'дня', 'дней') + '</button>').join('') + '</div>';
+    let html = '<div class="seg small" data-k="seg-shop"><span class="seg-thumb" aria-hidden="true"></span>' + [3, 7].map((d) => '<button class="seg-btn' + (ui.shopDays === d ? ' on' : '') + '" data-act="shop-days" data-d="' + d + '">На ' + d + ' ' + plural(d, 'день', 'дня', 'дней') + '</button>').join('') + '</div>';
     if (!list.length) return html + '<div class="empty"><p>Всё необходимое на ' + ui.shopDays + ' ' + plural(ui.shopDays, 'день', 'дня', 'дней') + ' уже есть дома.</p></div>';
     html += '<p class="hint">Список собран по меню на ближайшие дни с учётом того, что уже лежит дома. Отметь купленное и нажми кнопку внизу: продукты добавятся в запасы.</p><ul class="shop">';
     list.forEach((it) => {
@@ -484,7 +489,7 @@
       last7.map((x) => {
         const m = x.e ? NF.sleepMinutes(x.e.bed, x.e.wake) : 0;
         const cls = !x.e ? 'none' : m < need[0] ? 'low' : 'ok';
-        return '<div class="sbar"><div class="sbar-fill ' + cls + '" style="height:' + (Math.min(m, maxH) / maxH * 100).toFixed(1) + '%" title="' + (x.e ? fmtDur(m) : 'нет записи') + '"></div><span class="small muted">' + esc(fmtDate(x.date, { weekday: 'short' })) + '</span></div>';
+        return '<div class="sbar" style="--j:' + last7.indexOf(x) + '"><div class="sbar-fill ' + cls + '" style="height:' + (Math.min(m, maxH) / maxH * 100).toFixed(1) + '%" title="' + (x.e ? fmtDur(m) : 'нет записи') + '"></div><span class="small muted">' + esc(fmtDate(x.date, { weekday: 'short' })) + '</span></div>';
       }).join('') + '</div>';
     if (avg != null && avg < need[0]) html += '<p class="note note-warn">Меньше ' + need[0] / 60 + ' часов сна снижает выработку тестостерона и гормона роста и мешает набирать именно мышцы, а не жир. Сдвинь отбой на 30 минут раньше.</p>';
     else if (avg != null) html += '<p class="note note-ok">Сна достаточно для восстановления.</p>';
@@ -545,7 +550,7 @@
     return '<div class="chart-wrap"><svg viewBox="0 0 ' + W + ' ' + H + '" class="chart" role="img" aria-label="График веса">' +
       [lo, mid, hi].map((v) => '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" class="grid"/><text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" class="axis" text-anchor="end">' + v + '</text>').join('') +
       '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(target) + '" y2="' + y(target) + '" class="target"/><text x="' + (W - R) + '" y="' + (y(target) - 5) + '" class="axis accent" text-anchor="end">цель ' + target + '</text>' +
-      '<path d="' + area + '" class="area"/><path d="' + path + '" class="line"/>' +
+      '<path d="' + area + '" class="area"/><path d="' + path + '" class="line" pathLength="1"/>' +
       '<circle cx="' + x(last.date) + '" cy="' + y(last.kg) + '" r="4" class="dot"/>' +
       '<text x="' + L + '" y="' + (H - 6) + '" class="axis">' + esc(fmtDate(pts[0].date, { day: 'numeric', month: 'short' })) + '</text>' +
       '<text x="' + (W - R) + '" y="' + (H - 6) + '" class="axis" text-anchor="end">' + esc(fmtDate(last.date, { day: 'numeric', month: 'short' })) + '</text>' +
@@ -589,27 +594,104 @@
   // ───────────────── рендер ─────────────────
   const TABS = { today: renderToday, food: renderFood, train: renderTrain, sleep: renderSleep, profile: renderProfile };
 
+  // ───────────────── анимации ─────────────────
+  const motionOK = () => !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const prevVals = {};
+  let lastScreen = null;
+
+  /** Плавно переводит полоски, кольцо и числа от прошлого значения к новому. */
+  function animateValues(fromZero) {
+    const view = document.getElementById('view');
+    const anim = motionOK();
+    const fills = view.querySelectorAll('[data-w]');
+    const ring = view.querySelector('.ring-fg[data-dash]');
+    const counts = view.querySelectorAll('.count[data-n]');
+    const start = (k) => (fromZero || prevVals[k] == null ? 0 : prevVals[k]);
+    if (anim) {
+      fills.forEach((el) => { el.style.transition = 'none'; el.style.width = start(el.dataset.k) + '%'; });
+      if (ring) { ring.style.transition = 'none'; ring.setAttribute('stroke-dasharray', start('ring') + ' ' + ring.dataset.c); }
+      void view.offsetWidth; // зафиксировать стартовое состояние
+      requestAnimationFrame(() => {
+        fills.forEach((el) => { el.style.transition = ''; el.style.width = el.dataset.w + '%'; });
+        if (ring) { ring.style.transition = ''; ring.setAttribute('stroke-dasharray', ring.dataset.dash + ' ' + ring.dataset.c); }
+      });
+      counts.forEach((el) => {
+        const from = start(el.dataset.k), to = +el.dataset.n;
+        if (from === to) return;
+        const t0 = performance.now(), dur = 700;
+        const step = (t) => {
+          const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+          el.textContent = Math.round(from + (to - from) * e);
+          if (k < 1 && el.isConnected) requestAnimationFrame(step);
+        };
+        el.textContent = from;
+        requestAnimationFrame(step);
+      });
+    }
+    fills.forEach((el) => { prevVals[el.dataset.k] = +el.dataset.w; });
+    if (ring) prevVals.ring = +ring.dataset.dash;
+    counts.forEach((el) => { prevVals[el.dataset.k] = +el.dataset.n; });
+  }
+
+  /** Подложка сегментов переезжает от прошлой кнопки к активной. */
+  function placeThumbs() {
+    document.querySelectorAll('.seg[data-k]').forEach((seg) => {
+      const thumb = seg.querySelector('.seg-thumb'); const on = seg.querySelector('.seg-btn.on');
+      if (!thumb || !on) return;
+      const to = { x: on.offsetLeft, w: on.offsetWidth };
+      const from = prevVals[seg.dataset.k];
+      const set = (p) => { thumb.style.width = p.w + 'px'; thumb.style.transform = 'translateX(' + p.x + 'px)'; };
+      if (from && motionOK()) {
+        thumb.style.transition = 'none'; set(from); void thumb.offsetWidth;
+        requestAnimationFrame(() => { thumb.style.transition = ''; set(to); });
+      } else set(to);
+      prevVals[seg.dataset.k] = to;
+    });
+  }
+
+  function placeNavIndicator() {
+    const ind = document.querySelector('.nav-ind'); const on = document.querySelector('.nav-btn.on');
+    if (!ind || !on) return;
+    ind.style.width = on.offsetWidth + 'px';
+    ind.style.transform = 'translateX(' + on.offsetLeft + 'px)';
+  }
+
   function render() {
     const view = document.getElementById('view');
     const tab = TABS[S.tab] ? S.tab : 'today';
+    const screen = tab + (tab === 'food' ? ':' + ui.foodSeg : '');
+    const prevTab = lastScreen && lastScreen.split(':')[0];
+    const entering = screen !== lastScreen;
+    lastScreen = screen;
     view.innerHTML = TABS[tab]();
+    if (entering && motionOK()) {
+      // при смене вкладки блоки появляются по очереди; при смене сегмента — только содержимое под ним
+      let kids = Array.from(view.children);
+      if (prevTab === tab) { const seg = view.querySelector('.seg'); kids = kids.slice(kids.indexOf(seg) + 1); }
+      kids.forEach((c, i) => { c.style.setProperty('--i', Math.min(i, 8)); c.classList.add('enter'); });
+    }
     document.querySelectorAll('.nav-btn').forEach((b) => {
       const on = b.dataset.tab === tab;
       b.classList.toggle('on', on);
       if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
+    animateValues(entering && prevTab !== tab);
+    placeThumbs();
+    placeNavIndicator();
+    ui.justEaten = null; ui.justSwapped = null;
   }
+  window.addEventListener('resize', () => { placeNavIndicator(); document.querySelectorAll('.seg[data-k]').forEach((s) => { delete prevVals[s.dataset.k]; }); placeThumbs(); });
 
   function num(id) { const el = document.getElementById(id); return el ? parseFloat(String(el.value).replace(',', '.')) : NaN; }
   function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
 
   // ───────────────── действия ─────────────────
   const ACTIONS = {
-    tab(el) { S.tab = el.dataset.tab; save(); render(); window.scrollTo(0, 0); },
+    tab(el) { S.tab = el.dataset.tab; save(); render(); window.scrollTo({ top: 0, behavior: 'instant' }); },
     rebuild() { rebuildPlan(todayStr()); render(); toast('План пересобран из текущих запасов'); },
     eat(el) {
       const plan = getPlan(todayStr()); const m = plan.meals[+el.dataset.i];
-      m.eaten = true; m.items.forEach((it) => { if (S.inventory[it.id] != null) changeInventory(it.id, -it.g); });
+      m.eaten = true; ui.justEaten = +el.dataset.i; m.items.forEach((it) => { if (S.inventory[it.id] != null) changeInventory(it.id, -it.g); });
       plan.invVersion = S.invVersion; save(); render(); toast('Записал. Продукты списаны из запасов');
     },
     uneat(el) {
@@ -622,6 +704,7 @@
       plan.swaps = (plan.swaps || 0) + 1;
       const inv = Object.assign({}, S.inventory);
       plan.meals.forEach((m, j) => { if (j !== i && !m.eaten) m.items.forEach((it) => { if (inv[it.id] != null) inv[it.id] = Math.max(0, inv[it.id] - it.g); }); });
+      ui.justSwapped = i;
       plan.meals[i] = NF.replanMeal(plan, i, targets(), scheduleFor(date), inv, fm(), recentPenalty(date), plan.swaps);
       save(); render();
     },
@@ -668,7 +751,7 @@
       const filled = Object.keys(S.draft.sets).some((k) => S.draft.sets[k].some((v) => v > 0));
       if (!filled) { toast('Впиши повторения хотя бы в один подход'); return; }
       S.workouts.push({ date: todayStr(), key: w.key, title: w.title, sets: S.draft.sets });
-      S.draft = null; save(); render(); window.scrollTo(0, 0); toast('Тренировка записана. Отдыхай и ешь по плану');
+      S.draft = null; save(); render(); window.scrollTo({ top: 0, behavior: 'instant' }); toast('Тренировка записана. Отдыхай и ешь по плану');
     },
     'sleep-q'(el) { ui.sleepQ = +el.dataset.q; const e = sleepEntry(todayStr()); if (e) { e.q = ui.sleepQ; save(); } render(); },
     'sleep-save'() {
@@ -776,7 +859,7 @@
       if (ex) ex.kg = p.weight; else if (!S.weights.length || S.weights[S.weights.length - 1].kg !== p.weight) S.weights.push({ date: todayStr(), kg: p.weight });
     }
     if (first) S.tab = 'today';
-    save(); render(); window.scrollTo(0, 0);
+    save(); render(); window.scrollTo({ top: 0, behavior: 'instant' });
     toast(first ? 'Программа готова' : 'Сохранено');
   });
 
