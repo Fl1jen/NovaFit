@@ -38,17 +38,21 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     await snap('1-today');
     await p.click('[data-act=eat][data-i="0"]');
     check(await p.isVisible('.meal.eaten'), 'Съел не сработал');
+    // карточка приёма свёрнута: раскрываем и меняем блюдо
+    await p.click('.timeline .meal:nth-child(2) summary');
     await p.click('[data-act=swap][data-i="1"]');
+    check(await p.isVisible('.notices'), 'нет блока «Важное»');
+    check((await p.$$eval('.notices .notice', (x) => x.length)) <= 2, 'в «Важном» на виду больше двух пунктов');
 
     // еда вне плана
-    const kcalBefore = await p.$eval('.timeline', (t) => Array.from(t.querySelectorAll('.meal:not(.eaten) .macros b')).reduce((s, b) => s + +b.textContent, 0));
+    const kcalBefore = await p.$eval('.timeline', (t) => Array.from(t.querySelectorAll('.meal:not(.eaten) summary .macros b')).reduce((s, b) => s + +b.textContent, 0));
     await p.click('[data-act=extra-toggle]');
     await p.fill('#extra-search', 'арахис');
     await p.click('[data-act=extra-pick][data-id=peanuts]');
     await p.fill('#extra-qty', '80');
     await p.click('[data-act=extra-add]');
     check(await p.isVisible('.extras'), 'еда вне плана не появилась');
-    const kcalAfter = await p.$eval('.timeline', (t) => Array.from(t.querySelectorAll('.meal:not(.eaten) .macros b')).reduce((s, b) => s + +b.textContent, 0));
+    const kcalAfter = await p.$eval('.timeline', (t) => Array.from(t.querySelectorAll('.meal:not(.eaten) summary .macros b')).reduce((s, b) => s + +b.textContent, 0));
     check(kcalBefore - kcalAfter > 250, 'план не уменьшился после еды вне плана: ' + kcalBefore + ' → ' + kcalAfter);
     await snap('1b-extra');
 
@@ -148,6 +152,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     check(/Перелёт/.test(await p.textContent('.water')), 'нет рекомендации по воде');
     await snap('1c-appetite');
     await p.click('.nav-btn[data-tab=profile]');
+    await p.click('[data-act=pseg][data-seg=progress]');
     check(await p.isVisible('#report .kchart'), 'нет недельного отчёта');
     await p.click('[data-act=report-week][data-d="-1"]');
     check(/Прошлая неделя/.test(await p.textContent('#report h2')), 'листание отчёта');
@@ -157,6 +162,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     await p.fill('#ms-waist', '74'); await p.fill('#ms-arm', '29.5');
     await p.click('[data-act=measure-save]');
     check(/74 см/.test(await p.textContent('#measures .mtable')), 'замеры не сохранились');
+    await p.click('[data-act=pseg][data-seg=settings]');
     await p.click('#reminders > summary');
     await p.check('#rem-enabled', { force: true });
     await p.waitForSelector('[data-act=rem-test]');
@@ -171,10 +177,10 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('novafit.v1')); s.lastOffset = new Date().getTimezoneOffset() + 240; localStorage.setItem('novafit.v1', JSON.stringify(s)); });
     await p.reload();
     await p.click('.nav-btn[data-tab=today]');
-    check(await p.isVisible('.note.tz'), 'нет подсказки о смене часового пояса');
-    check(/\+4 ч, на восток/.test(await p.textContent('.note.tz')), 'неверная разница часовых поясов');
+    check(await p.isVisible('.notice.tz'), 'нет подсказки о смене часового пояса');
+    check(/\+4 ч, на восток/.test(await p.textContent('.notice.tz')), 'неверная разница часовых поясов');
     await p.click('[data-act=tz-ok]');
-    check(!(await p.isVisible('.note.tz')), 'подсказка не скрылась');
+    check(!(await p.isVisible('.notice.tz')), 'подсказка не скрылась');
     // данные переживают перезагрузку
     await p.reload();
     await p.waitForSelector('.view');

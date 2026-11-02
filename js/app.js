@@ -76,7 +76,7 @@
   let S = load();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 
-  const ui = { recQuery: '', recTime: 0, recNoCook: false, waterOpen: false, extraOpen: false, extraSearch: '', extraPick: null, editExp: null, reportWeek: 0, measureOpen: false, foodSeg: 'stock', search: '', addFood: null, calcSel: [], calcMeal: 'l', calcStock: true, recFilter: 'all', shopDays: 3, shopChecked: {}, confirmReset: false, customOpen: false, importOpen: false, errors: [] };
+  const ui = { open: {}, noticesAll: false, recMore: {}, profSeg: 'norm', recQuery: '', recTime: 0, recNoCook: false, waterOpen: false, extraOpen: false, extraSearch: '', extraPick: null, editExp: null, reportWeek: 0, measureOpen: false, foodSeg: 'stock', search: '', addFood: null, calcSel: [], calcMeal: 'l', calcStock: true, recFilter: 'all', shopDays: 3, shopChecked: {}, confirmReset: false, customOpen: false, importOpen: false, errors: [] };
 
   // ───────────────── утилиты ─────────────────
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -292,16 +292,15 @@
     const program = currentProgram();
     const next = program[S.workouts.length % program.length];
     const doneToday = S.workouts.some((w) => w.date === date);
-    const sched = scheduleFor(date);
     const lastW = S.weights.length ? S.weights[S.weights.length - 1].kg : S.profile.weight;
     const start = S.startWeight || S.profile.weight;
     const prog = Math.max(0, Math.min(1, (lastW - start) / Math.max(0.1, S.profile.target - start)));
-    const left = T.kcal - eaten.kcal;
+    const closed = eaten.kcal >= T.kcal * 0.97;
 
     let html = '<section class="hero">' +
       '<p class="eyebrow">' + esc(fmtDate(date)) + '</p>' +
       '<div class="hero-row">' +
-      '<div class="ring-wrap">' + ring(eaten.kcal, T.kcal) + '<div class="ring-label"><span class="ring-num count" data-k="kcal" data-n="' + r0(eaten.kcal) + '">' + r0(eaten.kcal) + '</span><span class="ring-sub">из ' + T.kcal + ' ккал</span></div></div>' +
+      '<div class="ring-wrap">' + ring(eaten.kcal, T.kcal) + '<div class="ring-label"><span class="ring-num count" data-k="kcal" data-n="' + r0(eaten.kcal) + '">' + r0(eaten.kcal) + '</span><span class="ring-sub">' + (closed ? 'норма закрыта ✓' : 'из ' + T.kcal + ' ккал') + '</span></div></div>' +
       '<div class="hero-bars">' +
       bar('Белки', eaten.p, T.protein, 'г', 'p') + bar('Жиры', eaten.f, T.fat, 'г', 'f') + bar('Углеводы', eaten.c, T.carbs, 'г', 'c') +
       '</div></div>' +
@@ -311,58 +310,121 @@
 
     html += '<div class="chips-row">' +
       '<button class="chip-card" data-act="tab" data-tab="sleep"><span class="chip-k">Сон</span><span class="chip-v">' + (sl ? fmtDur(NF.sleepMinutes(sl.bed, sl.wake)) : 'отметить') + '</span></button>' +
-      '<button class="chip-card" data-act="tab" data-tab="train"><span class="chip-k">' + (train ? 'Тренировка' : 'Отдых') + '</span><span class="chip-v">' + (train ? (doneToday ? 'выполнена ✓' : esc(next.title) + ' · ' + S.train.time) : 'восстановление') + '</span></button>' +
+      '<button class="chip-card" data-act="tab" data-tab="train"><span class="chip-k">' + (train ? 'Тренировка' : 'Отдых') + '</span><span class="chip-v">' + (train ? (doneToday ? 'готово ✓' : S.train.time) : 'восстановление') + '</span></button>' +
       '<button class="chip-card" data-act="water-toggle" aria-expanded="' + ui.waterOpen + '"><span class="chip-k">Вода</span><span class="chip-v">' + ((train ? T.waterTrain : T.water) / 1000).toFixed(1).replace('.', ',') + ' л</span></button>' +
       '</div>';
     if (ui.waterOpen) html += waterCard(T, train);
-    html += tzNotice();
-    if (S.lowAppetite) html += '<div class="note note-info"><span>Режим «Нет аппетита»: ' + plan.meals.length + ' приёмов поменьше, больше калорий в каждом глотке.</span><button class="btn small ghost" data-act="open-appetite">Советы</button></div>';
+    html += noticesBlock(notices(plan, stale));
 
-    html += todayAlerts(plan);
-
-    if (S.demoInventory) {
-      html += '<div class="note note-info">Запасы продуктов сейчас примерные, чтобы показать, как работает план. Замени их на свои во вкладке «Питание».</div>';
-    }
-    if (stale) {
-      html += '<div class="note note-action"><span>Запасы или норма изменились. Пересобрать несъеденные приёмы пищи?</span><button class="btn small" data-act="rebuild">Обновить план</button></div>';
-    }
-
-    html += '<div class="section-head"><h2 class="h2">План питания</h2><button class="btn small ghost" data-act="extra-toggle" aria-expanded="' + ui.extraOpen + '">' + (ui.extraOpen ? 'Скрыть' : '+ Добавить еду') + '</button></div>';
+    html += '<div class="section-head"><h2 class="h2">Еда</h2>' +
+      (S.lowAppetite ? '<button class="tag-btn" data-act="open-appetite">нет аппетита</button>' : '') +
+      '<button class="btn small ghost" data-act="extra-toggle" aria-expanded="' + ui.extraOpen + '">' + (ui.extraOpen ? 'Скрыть' : '+ Добавить еду') + '</button></div>';
     if (ui.extraOpen) html += extraPanel();
     html += extrasList(date);
-    if (sched.note) html += '<p class="hint">' + esc(sched.note) + '</p>';
-    if (left < 0) html += '<p class="note note-info">Норма на сегодня закрыта, перебор ' + r0(-left) + ' ккал. Немного сверху — не страшно: на наборе это нормально, если не каждый день.</p>';
 
     const nowIdx = currentMealIndex(plan);
-    html += '<ol class="timeline">';
-    plan.meals.forEach((m, i) => {
-      const rec = m.recipeId ? recipeById(m.recipeId) : null;
-      const mm = NF.macrosOf(m.items, F);
-      const title = rec ? rec.name : 'Тарелка из твоих продуктов';
-      html += '<li class="meal' + (m.eaten ? ' eaten' : '') + (i === nowIdx ? ' now' : '') + (ui.justEaten === i ? ' just-eaten' : '') + (ui.justSwapped === i ? ' swap-in' : '') + '">' +
-        '<div class="meal-time"><span class="num">' + esc(m.time) + '</span>' + (m.eaten ? '<span class="check" aria-label="съедено">✓</span>' : '') + '<span class="meal-type">' + esc(mealLabel(m)) + '</span>' + (i === nowIdx ? '<span class="now-tag">сейчас</span>' : '') + '</div>' +
-        '<div class="meal-body">' +
-        '<h3>' + esc(title) + (m.night && rec ? ' <span class="tag">перед сном</span>' : '') + '</h3>' + macroLine(mm) +
-        (m.light && !m.eaten ? '<p class="hint">Лёгкий приём: норма почти закрыта едой вне плана.</p>' : '') +
-        '<ul class="items">' + m.items.map((it) => {
-          const f = F[it.id]; if (!f) return '';
-          const miss = m.missing.find((x) => x.id === it.id);
-          const dl = daysLeft(it.id);
-          const urgent = !m.eaten && dl != null && dl >= 0 && dl <= 1;
-          return '<li><span>' + esc(f.name) + (it.sub && F[it.sub] ? ' <em class="sub-tag">вместо: ' + esc(shortName(F[it.sub])) + '</em>' : '') + (urgent ? ' <em class="tag-exp">' + (dl === 0 ? 'сегодня' : 'до завтра') + '</em>' : '') + '</span><span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет ' + r0(miss.g) + '</em>' : '') + '</span></li>';
-        }).join('') + '</ul>' +
-        (m.extra && F[m.extra] ? '<p class="hint">' + (m.extraDense ? 'Калорийная добавка без лишнего объёма: ' : 'Добавка к блюду: ') + esc(F[m.extra].name.toLowerCase()) + ', чтобы добрать калории.</p>' : '') +
-        (m.pinned && !m.eaten ? '<p class="hint">Блюдо выбрано тобой, граммовки подогнаны под норму.</p>' : '') +
-        (m.skipped && m.skipped.length ? '<p class="hint">Можно без: ' + m.skipped.map((id) => esc(F[id] ? F[id].name.toLowerCase() : id)).join(', ') + ' (нет дома).</p>' : '') +
-        (rec ? '<details class="steps"><summary>Как готовить · ' + rec.min + ' мин</summary><ol>' + rec.steps.map((st) => '<li>' + esc(st) + '</li>').join('') + '</ol></details>' : '') +
-        '<div class="meal-actions">' +
-        (m.eaten ? '<button class="btn ghost small" data-act="uneat" data-i="' + i + '">Отменить</button>'
-          : '<button class="btn small" data-act="eat" data-i="' + i + '">Съел</button><button class="btn ghost small" data-act="swap" data-i="' + i + '">Другой вариант</button>') +
-        '</div></div></li>';
-    });
-    html += '</ol>';
-    html += '<p class="hint">Когда отмечаешь «Съел» или добавляешь еду вне плана, продукты списываются из запасов, а оставшиеся приёмы пересчитываются под остаток нормы.</p>';
+    const preIdx = train && !doneToday ? preTrainIndex(plan) : -1;
+    html += '<ol class="timeline">' + plan.meals.map((m, i) => mealCard(m, i, plan, F, i === nowIdx, i === preIdx)).join('') + '</ol>';
     return html;
+  }
+
+  /** Перекус перед тренировкой (за 0–2,5 ч до неё) — помечаем тегом. */
+  function preTrainIndex(plan) {
+    const tt = NF.toMin(S.train.time);
+    if (tt == null) return -1;
+    let idx = -1;
+    plan.meals.forEach((m, i) => { const t = NF.toMin(m.time); if (m.type === 's' && t < tt && tt - t <= 150) idx = i; });
+    return idx;
+  }
+
+  /**
+   * Карточка приёма пищи. Свёрнуто: блюдо, калории и 2–3 главных продукта.
+   * Раскрыто: все граммовки, рецепт и «Другой вариант». Текущий приём раскрыт сам.
+   */
+  function mealCard(m, i, plan, F, isNow, isPre) {
+    const rec = m.recipeId ? recipeById(m.recipeId) : null;
+    const mm = NF.macrosOf(m.items, F);
+    const title = rec ? rec.name : 'Тарелка из твоих продуктов';
+    const key = 'meal-' + plan.date + '-' + i;
+    const open = ui.open[key] != null ? ui.open[key] : isNow && !m.eaten;
+    const main = m.items.filter((it) => F[it.id] && F[it.id].cat !== 'fat').slice(0, 3);
+    const sum = main.map((it) => shortName(F[it.id]) + ' ' + r0(it.g) + (LIQUID[it.id] ? ' мл' : ' г')).join(' · ') + (m.items.length > main.length ? ' · …' : '');
+    const tags = (isNow ? '<span class="now-tag">сейчас</span>' : '') +
+      (isPre ? '<span class="tag">до тренировки</span>' : '') +
+      (m.night ? '<span class="tag">перед сном</span>' : '') +
+      (m.missing.length && !m.eaten ? '<span class="tag warn">надо купить</span>' : '');
+
+    let detail = macroLine(mm) + '<ul class="items">' + m.items.map((it) => {
+      const f = F[it.id]; if (!f) return '';
+      const miss = m.missing.find((x) => x.id === it.id);
+      const dl = daysLeft(it.id);
+      const urgent = !m.eaten && dl != null && dl >= 0 && dl <= 1;
+      return '<li><span>' + esc(f.name) + (it.sub && F[it.sub] ? ' <em class="sub-tag">вместо: ' + esc(shortName(F[it.sub])) + '</em>' : '') + (urgent ? ' <em class="tag-exp">' + (dl === 0 ? 'сегодня' : 'до завтра') + '</em>' : '') + '</span>' +
+        '<span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет ' + r0(miss.g) + '</em>' : '') + '</span></li>';
+    }).join('') + '</ul>';
+    const notes = [];
+    if (m.light && !m.eaten) notes.push('Лёгкий приём: норма почти закрыта едой вне плана.');
+    if (m.extra && F[m.extra]) notes.push((m.extraDense ? 'Калорийная добавка без лишнего объёма: ' : 'Добавка, чтобы добрать калории: ') + F[m.extra].name.toLowerCase() + '.');
+    if (m.pinned && !m.eaten) notes.push('Блюдо выбрано тобой, граммовки подогнаны под норму.');
+    if (m.skipped && m.skipped.length) notes.push('Можно без: ' + m.skipped.map((id) => shortName(F[id])).join(', ') + ' (нет дома).');
+    detail += notes.map((n) => '<p class="hint">' + esc(n) + '</p>').join('');
+    if (rec) detail += '<p class="steps-h">Как готовить · ' + rec.min + ' мин</p><ol class="steps-list">' + rec.steps.map((st) => '<li>' + esc(st) + '</li>').join('') + '</ol>';
+    if (!m.eaten) detail += '<div class="meal-actions"><button class="btn ghost small" data-act="swap" data-i="' + i + '">Другой вариант</button></div>';
+
+    return '<li class="meal' + (m.eaten ? ' eaten' : '') + (isNow ? ' now' : '') + (ui.justEaten === i ? ' just-eaten' : '') + (ui.justSwapped === i ? ' swap-in' : '') + '">' +
+      '<div class="meal-time"><span class="num">' + esc(m.time) + '</span>' + (m.eaten ? '<span class="check" aria-label="съедено">✓</span>' : '') + '<span class="meal-type">' + esc(mealLabel(m)) + '</span></div>' +
+      '<div class="meal-body"><details class="meal-more" data-open-key="' + key + '"' + (open ? ' open' : '') + '>' +
+      '<summary><span class="meal-title">' + esc(title) + '</span><span class="macros"><b>' + r0(mm.kcal) + '</b> ккал · белок ' + r0(mm.p) + ' г</span>' +
+      (sum ? '<span class="meal-sum">' + esc(sum) + '</span>' : '') + (tags ? '<span class="meal-tags">' + tags + '</span>' : '') + '</summary>' +
+      '<div class="meal-detail">' + detail + '</div></details>' +
+      (m.eaten ? '<button class="btn ghost small eat-btn" data-act="uneat" data-i="' + i + '">Отменить</button>'
+        : '<button class="btn small eat-btn" data-act="eat" data-i="' + i + '">Съел</button>') +
+      '</div></li>';
+  }
+
+  /**
+   * Всё, что требует внимания сегодня, — в одном месте. На виду два самых
+   * важных пункта (просрочка, часовой пояс, «скоро испортится»…), остальное — «Ещё».
+   */
+  function notices(plan, stale) {
+    const F = fm();
+    const list = [];
+    const expired = Object.keys(S.inventory).filter((id) => F[id] && daysLeft(id) != null && daysLeft(id) < 0);
+    if (expired.length) list.push({ level: 'danger', text: 'Просрочено: ' + expired.map((id) => shortName(F[id])).join(', ') + '. В меню не попадёт — не ешь.', act: 'drop-expired', label: 'Убрать' });
+    if (S.tzNotice) {
+      const d = S.tzNotice.diff;
+      const h = Math.abs(d) % 1 ? Math.abs(d).toFixed(1).replace('.', ',') : Math.abs(d);
+      list.push({ level: 'info', key: 'tz', cls: 'tz', text: 'Новый часовой пояс: ' + (d > 0 ? '+' : '−') + h + ' ч, ' + (d > 0 ? 'на восток' : 'на запад') + '. Еда, сон и напоминания — по местному времени.',
+        body: jetlagTips(d), bodyLabel: 'Как быстрее привыкнуть', act: 'tz-ok', label: 'Понятно' });
+    }
+    const planned = {};
+    plan.meals.forEach((m) => { if (!m.eaten) m.items.forEach((it) => { planned[it.id] = (planned[it.id] || 0) + it.g; }); });
+    const soon = Object.keys(S.inventory).filter((id) => F[id] && daysLeft(id) != null && daysLeft(id) >= 0 && daysLeft(id) <= 2).sort((a, b) => daysLeft(a) - daysLeft(b));
+    if (soon.length) {
+      const when = (d) => (d === 0 ? 'сегодня' : d === 1 ? 'завтра' : 'через 2 дня');
+      list.push({ level: 'warn', key: 'soon', cls: 'expiring', text: 'Скоро испортится: ' + soon.map((id) => shortName(F[id]) + ' (' + when(daysLeft(id)) + ')').join(', ') + '.',
+        bodyLabel: 'Что из этого в плане',
+        body: '<ul class="dots small">' + soon.map((id) => '<li>' + esc(F[id].name) + ': ' + (planned[id] ? 'в плане ' + r0(Math.min(planned[id], S.inventory[id])) + ' из ' + r0(S.inventory[id]) + (LIQUID[id] ? ' мл' : ' г') : 'пока не в плане') + '</li>').join('') + '</ul>' +
+          (soon.some((id) => !planned[id]) ? '<p class="small">Мясо и рыбу можно заморозить: в морозилке они хранятся месяцы, после разморозки — сутки.</p>' : '') });
+    }
+    if (stale) list.push({ level: 'action', text: 'Запасы или норма изменились.', act: 'rebuild', label: 'Обновить план' });
+    const wk = NF.weekStart(todayStr());
+    if (S.weights.length && S.weights[0].date < wk && S.reportSeen !== wk) list.push({ level: 'info', text: 'Итоги прошлой недели готовы.', act: 'open-report', label: 'Открыть' });
+    const lastM = S.measures.length ? S.measures[S.measures.length - 1].date : null;
+    if (!lastM || NF.daysBetween(lastM, todayStr()) >= 14) list.push({ level: 'info', text: lastM ? 'Прошло 2 недели — пора сделать замеры.' : 'Сделай первые замеры тела: по ним видно, растут мышцы или жир.', act: 'open-measure', label: 'Замерить' });
+    if (S.demoInventory) list.push({ level: 'info', text: 'Запасы сейчас — пример. Замени их на свои, и меню соберётся из твоих продуктов.', act: 'open-stock', label: 'Запасы' });
+    return list;
+  }
+
+  function noticesBlock(list) {
+    if (!list.length) return '';
+    const row = (n) => '<div class="notice n-' + n.level + (n.cls ? ' ' + n.cls : '') + '"><span class="dot" aria-hidden="true"></span>' +
+      '<div class="notice-main"><span>' + esc(n.text) + '</span>' +
+      (n.body ? '<details id="notice-' + n.key + '"><summary>' + esc(n.bodyLabel) + '</summary>' + n.body + '</details>' : '') + '</div>' +
+      (n.act ? '<button class="btn small ' + (n.level === 'danger' ? 'danger' : 'ghost') + '" data-act="' + n.act + '">' + esc(n.label) + '</button>' : '') + '</div>';
+    const shown = ui.noticesAll ? list : list.slice(0, 2);
+    return '<div class="notices">' + shown.map(row).join('') +
+      (list.length > 2 ? '<button class="link small notices-more" data-act="notices-all">' + (ui.noticesAll ? 'Свернуть' : 'Ещё ' + (list.length - 2)) + '</button>' : '') + '</div>';
   }
 
   /** Рекомендация по воде (без трекера): норма, жара, перелёты, ориентиры. */
@@ -391,18 +453,6 @@
     S.lastTz = tz; S.lastOffset = off;
   }
 
-  function tzNotice() {
-    const n = S.tzNotice;
-    if (!n) return '';
-    const d = n.diff;
-    const dir = d > 0 ? 'на восток' : 'на запад';
-    const h = Math.abs(d) % 1 ? Math.abs(d).toFixed(1).replace('.', ',') : Math.abs(d);
-    return '<div class="note note-action tz"><div><b>Новый часовой пояс: ' + esc(n.tz.replace(/_/g, ' ')) + '</b> (' + (d > 0 ? '+' : '−') + h + ' ч, ' + dir + '). ' +
-      'Еда, сон и напоминания теперь по местному времени.</div>' +
-      '<details id="jetlag-tips"><summary class="small">Как быстрее привыкнуть</summary>' + jetlagTips(d) + '</details>' +
-      '<button class="btn small" data-act="tz-ok">Понятно</button></div>';
-  }
-
   function jetlagTips(diff) {
     return '<ul class="dots small">' +
       '<li>С первого дня живи по местным часам: ешь и ложись по местному времени, даже если не хочется.</li>' +
@@ -425,37 +475,6 @@
       if (nm >= t - 30 && nm <= t + 90) idx = i;
     });
     return idx;
-  }
-
-  /** Предупреждения дня: просрочка, что скоро испортится, замеры, отчёт. */
-  function todayAlerts(plan) {
-    const F = fm();
-    let html = '';
-    const expired = Object.keys(S.inventory).filter((id) => F[id] && daysLeft(id) != null && daysLeft(id) < 0);
-    if (expired.length) {
-      html += '<div class="note note-danger"><span><b>Просрочено:</b> ' + expired.map((id) => esc(F[id].name)).join(', ') + '. В меню не попадает. Не ешь, особенно мясо, рыбу и молочку.</span>' +
-        '<button class="btn small danger" data-act="drop-expired">Убрать из запасов</button></div>';
-    }
-    const planned = {};
-    plan.meals.forEach((m) => { if (!m.eaten) m.items.forEach((it) => { planned[it.id] = (planned[it.id] || 0) + it.g; }); });
-    const soon = Object.keys(S.inventory).filter((id) => F[id] && daysLeft(id) != null && daysLeft(id) >= 0 && daysLeft(id) <= 2);
-    if (soon.length) {
-      html += '<div class="note note-warn expiring"><span><b>Скоро испортится</b></span><ul>' + soon.sort((a, b) => daysLeft(a) - daysLeft(b)).map((id) => {
-        const d = daysLeft(id);
-        const inPlan = planned[id] ? 'в плане: ' + r0(Math.min(planned[id], S.inventory[id])) + ' из ' + r0(S.inventory[id]) + (LIQUID[id] ? ' мл' : ' г') : 'пока не в плане';
-        return '<li><span>' + esc(F[id].name) + '</span><span class="small">' + (d === 0 ? 'сегодня' : d === 1 ? 'завтра' : 'через 2 дня') + ' · ' + inPlan + '</span></li>';
-      }).join('') + '</ul>' + (soon.some((id) => !planned[id]) ? '<p class="small">Можно заморозить мясо и рыбу: в морозилке они хранятся месяцы. После разморозки срок — сутки.</p>' : '') + '</div>';
-    }
-    const lastM = S.measures.length ? S.measures[S.measures.length - 1].date : null;
-    if (S.profile && (!lastM || NF.daysBetween(lastM, todayStr()) >= 14)) {
-      html += '<div class="note note-action"><span>' + (lastM ? 'Прошло 2 недели — пора сделать замеры тела.' : 'Сделай первые замеры тела: по ним видно, мышцы растут или жир.') + '</span><button class="btn small" data-act="open-measure">Замерить</button></div>';
-    }
-    const wk = NF.weekStart(todayStr());
-    if (S.profile && S.weights.length && S.weights[0].date < wk && S.reportSeen !== wk) {
-      const r = weekReportFor(-1);
-      html += '<button class="report-teaser" data-act="open-report"><span class="eyebrow">Итоги прошлой недели</span><span class="report-teaser-main">' + esc(r.advice[0].text) + '</span><span class="link">Открыть отчёт →</span></button>';
-    }
-    return html;
   }
 
   function extraPanel() {
@@ -541,7 +560,7 @@
       html += '<h2 class="h3">' + NF.CAT_LABEL[cat] + '</h2><ul class="stock">';
       groups[cat].sort((a, b) => F[a].name.localeCompare(F[b].name, 'ru')).forEach((id) => {
         const f = F[id];
-        html += '<li' + (expClass(id) ? ' class="' + expClass(id) + '"' : '') + '><div class="stock-name"><span>' + esc(f.name) + '</span><span class="muted small">' + qtyLabel(f, S.inventory[id]) + '</span>' + expBadge(id) + '</div>' +
+        html += '<li' + (expClass(id) ? ' class="' + expClass(id) + '"' : '') + '><div class="stock-name"><span>' + esc(f.name) + '</span><span class="stock-sub"><span class="muted small">' + qtyLabel(f, S.inventory[id]) + '</span>' + expBadge(id) + '</span></div>' +
           '<div class="stock-ctrl"><input class="input num-in" type="number" inputmode="numeric" min="0" step="10" id="inv-' + esc(id) + '" data-bind="inv" data-id="' + esc(id) + '" value="' + r0(S.inventory[id]) + '" aria-label="Количество, ' + (LIQUID[id] ? 'мл' : 'г') + '">' +
           '<span class="unit">' + (LIQUID[id] ? 'мл' : 'г') + '</span>' +
           '<button class="icon-btn" data-act="inv-del" data-id="' + esc(id) + '" aria-label="Удалить">×</button></div></li>';
@@ -583,7 +602,9 @@
         '<button class="btn small" data-act="exp-save" data-id="' + esc(id) + '">ОК</button>' + (S.expiry[id] ? '<button class="btn small ghost" data-act="exp-clear" data-id="' + esc(id) + '">Без срока</button>' : '') + '</span>';
     }
     let label, cls;
-    if (d == null) { label = 'указать срок'; cls = 'none'; }
+    // у круп, масла и консервов срок не важен — не показываем лишнего
+    if (d == null && !NF.SHELF[id] && !(fm()[id] || {}).custom) return '';
+    if (d == null) { label = '+ срок'; cls = 'none'; }
     else if (d < 0) { label = 'просрочено'; cls = 'bad'; }
     else if (d === 0) { label = 'годен сегодня'; cls = 'bad'; }
     else if (d === 1) { label = 'до завтра'; cls = 'soon'; }
@@ -650,11 +671,11 @@
 
   function renderRecipes() {
     const filters = [['all', 'Все'], ['b', 'Завтрак'], ['l', 'Обед и ужин'], ['s', 'Перекус']];
-    const times = [[0, 'Любое время'], [10, 'до 10 мин'], [20, 'до 20 мин'], [40, 'до 40 мин']];
-    return '<h2 class="h2 rec-title">Что приготовить из того, что есть</h2><div class="card rec-head">' +
+    const times = [[10, 'до 10 мин'], [20, 'до 20 мин'], [40, 'до 40 мин']];
+    return '<h2 class="h2 rec-title">Что приготовить из того, что есть</h2><div class="rec-head">' +
       '<input id="rec-search" class="input" type="search" autocomplete="off" placeholder="Блюдо или продукт: омлет, курица, рис…" value="' + esc(ui.recQuery) + '" aria-label="Поиск рецептов">' +
       '<div class="seg small" data-k="seg-rec"><span class="seg-thumb" aria-hidden="true"></span>' + filters.map((f) => '<button class="seg-btn' + (ui.recFilter === f[0] ? ' on' : '') + '" data-act="rec-filter" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>' +
-      '<div class="pick">' + times.map((t) => '<button class="pill' + (ui.recTime === t[0] ? ' on' : '') + '" data-act="rec-time" data-t="' + t[0] + '">' + t[1] + '</button>').join('') +
+      '<div class="pick scroll-row">' + times.map((t) => '<button class="pill' + (ui.recTime === t[0] ? ' on' : '') + '" data-act="rec-time" data-t="' + t[0] + '" aria-pressed="' + (ui.recTime === t[0]) + '">' + t[1] + '</button>').join('') +
       '<button class="pill' + (ui.recNoCook ? ' on' : '') + '" data-act="rec-nocook" aria-pressed="' + ui.recNoCook + '">Без готовки</button></div>' +
       '</div><div id="rec-results">' + recipeResults() + '</div>';
   }
@@ -685,11 +706,14 @@
     }
     let html = '<p class="rec-summary"><b class="num">' + g.now.length + '</b> ' + plural(g.now.length, 'блюдо', 'блюда', 'блюд') + ' можно приготовить из того, что есть' +
       (g.one.length ? ' · ещё <b class="num">' + g.one.length + '</b>, если докупить один продукт' : '') + '.</p>';
+    const LIMIT = 6;
     const section = (title, list, id, collapsed) => {
       if (!list.length) return '';
-      const cards = list.map((st) => recipeCard(st, F, inv)).join('');
-      if (collapsed) return '<details class="rec-group" id="' + id + '"><summary>' + title + ' · ' + list.length + '</summary><div class="recipes">' + cards + '</div></details>';
-      return '<h2 class="h3 rec-h">' + title + ' · ' + list.length + '</h2><div class="recipes">' + cards + '</div>';
+      if (collapsed) return '<details class="rec-group" id="' + id + '"><summary>' + title + ' · ' + list.length + '</summary><div class="recipes">' + list.map((st) => recipeCard(st, F, inv)).join('') + '</div></details>';
+      const all = ui.recMore[id] || list.length <= LIMIT + 2;
+      const cards = (all ? list : list.slice(0, LIMIT)).map((st) => recipeCard(st, F, inv)).join('');
+      return '<h2 class="h3 rec-h">' + title + ' · ' + list.length + '</h2><div class="recipes">' + cards + '</div>' +
+        (all ? '' : '<button class="btn ghost wide more-btn" data-act="rec-more" data-g="' + id + '">Показать ещё ' + (list.length - LIMIT) + '</button>');
     };
     html += section('Можно приготовить сейчас', g.now, 'recg-now', false);
     html += section('Не хватает одного продукта', g.one, 'recg-one', false);
@@ -716,15 +740,15 @@
     const fit = recipeFit(r, F, inv);
     const type = recMealType(r);
     const kcal = fit ? r0(fit.macros.kcal) : r0(NF.macrosOf(r.ing.filter((i) => !i[2]).map((i) => ({ id: i[0], g: i[1] })), F).kcal);
-    const tags = r.tags.map((t) => '<span class="tag">' + esc(NF.TAG_LABEL[t] || t) + '</span>').join('');
-    const status = st.group === 'now' ? '<span class="status ok">Всё есть</span>'
-      : '<span class="status ' + (st.group === 'one' ? 'near' : 'no') + '">Нет: ' + st.missing.map((id) => esc(shortName(F[id]))).join(', ') + '</span>';
-    const subLine = st.subs.length ? '<span class="sub-line">' + (st.subs.some((x) => x.title) ? 'Другой главный продукт: ' : 'Замена: ') +
-      st.subs.map((x) => esc(shortName(F[x.from])) + ' → ' + esc(shortName(F[x.to]))).join(', ') + '</span>' : '';
-    let html = '<details class="recipe" id="rec-' + r.id + '"><summary>' + status +
+    // одна самая полезная пометка вместо россыпи тегов
+    const tag = ['nocook', 'blender', 'night', 'oven'].find((t) => r.tags.indexOf(t) >= 0);
+    const miss = st.missing.length ? '<span class="miss-line">нет: ' + st.missing.map((id) => esc(shortName(F[id]))).join(', ') + '</span>' : '';
+    const shownSubs = st.subs.filter((x) => x.title || !(F[x.from].cat === F[x.to].cat && (F[x.from].cat === 'fat' || F[x.from].cat === 'veg')));
+    const subLine = shownSubs.length ? '<span class="sub-line">' + (shownSubs.some((x) => x.title) ? 'другой главный продукт: ' : 'замена: ') +
+      shownSubs.map((x) => esc(shortName(F[x.from])) + ' → ' + esc(shortName(F[x.to]))).join(', ') + '</span>' : '';
+    let html = '<details class="recipe" id="rec-' + r.id + '"><summary>' +
       '<span class="recipe-name">' + esc(r.name) + '</span>' +
-      '<span class="muted small">' + r.meals.split('').map((t) => NF.MEAL_LABEL[t]).join(', ') + ' · ' + r.min + ' мин · ' + kcal + ' ккал</span>' +
-      (tags ? '<span class="tags">' + tags + '</span>' : '') + subLine + '</summary>';
+      '<span class="muted small">' + r.min + ' мин · ' + kcal + ' ккал' + (tag ? ' · ' + esc(NF.TAG_LABEL[tag]) : '') + '</span>' + miss + subLine + '</summary>';
     if (fit) {
       html += '<p class="small muted">Порция под твою норму на ' + NF.MEAL_LABEL[type].toLowerCase() + ':</p><ul class="items">' + fit.items.map((it) => {
         const f = F[it.id];
@@ -808,15 +832,16 @@
     html += '<section class="workout"><div class="workout-head"><h2 class="h2">' + esc(w.title) + '</h2>' +
       (draft ? '<span class="badge">идёт</span>' : '<button class="btn small" data-act="w-start" data-k="' + w.key + '">Начать</button>') + '</div>' +
       (draft ? '<label class="check small"><input type="checkbox" id="auto-rest" data-bind="auto-rest"' + (S.autoRest ? ' checked' : '') + '> Запускать таймер отдыха, как только записал подход</label>' : '');
+    if (!S.workouts.length) html += '<p class="hint">Первая тренировка: подбирай темп так, чтобы 1–2 повтора оставались в запасе. Записывай повторения честно — по ним приложение решает, когда усложнять.</p>';
     html += '<details class="card"><summary class="h3">Разминка · 7–10 мин</summary><ul class="dots">' + NF.WARMUP.map((s) => '<li>' + esc(s) + '</li>').join('') + '</ul></details>';
     w.items.forEach((it) => {
       const ex = exById(it.id);
       const pr = NF.progression(it, S.workouts, eq);
-      html += '<article class="ex"><div class="ex-head"><div><p class="eyebrow">' + esc(NF.SLOT_LABEL[it.slot]) + '</p><h3>' + esc(ex.name) + '</h3><p class="muted small">' + esc(ex.muscles) + '</p></div>' +
+      html += '<article class="ex"><div class="ex-head"><div><p class="eyebrow">' + esc(NF.SLOT_LABEL[it.slot]) + '</p><h3>' + esc(ex.name) + '</h3></div>' +
         '<div class="ex-rx"><b class="num">' + it.sets + ' × ' + it.lo + '–' + it.hi + '</b><span class="small muted">' + it.unit + (ex.uni ? ' на сторону' : '') + ' · отдых ' + it.rest + ' с</span></div></div>' +
         (it.tempo ? '<p class="tempo">' + esc(it.tempo) + '</p>' : '') +
-        '<details><summary class="small">Техника</summary><p class="small">' + esc(ex.tips) + '</p></details>' +
-        '<p class="prog prog-' + pr.status + '">' + esc(pr.text) + '</p>';
+        '<details><summary class="small">Техника</summary><p class="small">' + esc(ex.tips) + ' <span class="muted">Работают: ' + esc(ex.muscles) + '.</span></p></details>' +
+        (pr.status !== 'new' ? '<p class="prog prog-' + pr.status + '">' + esc(pr.text) + '</p>' : '');
       if (draft) {
         const vals = draft.sets[it.id] || [];
         const timed = ex.kind === 'time';
@@ -837,7 +862,6 @@
         return '<li><span>' + esc(fmtDate(h.date, { day: 'numeric', month: 'short' })) + '</span><span>' + esc(h.title) + '</span><span class="num muted">' + vol + ' повт.</span></li>';
       }).join('') + '</ul>';
     }
-    html += '<p class="hint">Повторения записывай честно: прогрессия считается по ним. Подходы заканчивай с запасом 1–2 повтора, до отказа доводи только последний подход изолирующих упражнений.</p>';
     return html;
   }
 
@@ -875,13 +899,13 @@
     else if (avg != null) html += '<p class="note note-ok">Сна достаточно для восстановления.</p>';
     html += '</div>';
 
-    html += '<div class="card"><h2 class="h3">Обычный режим</h2><p class="muted small">По этому режиму строится расписание еды. Если отметил сон за сегодня, используется фактическое время подъёма.</p>' +
+    html += '<div class="card"><h2 class="h3">Обычный режим</h2>' +
       '<div class="grid2"><label>Отбой<input id="sl-def-bed" class="input" type="time" data-bind="sleep-def" data-k="bed" value="' + esc(S.sleep.bed) + '"></label>' +
       '<label>Подъём<input id="sl-def-wake" class="input" type="time" data-bind="sleep-def" data-k="wake" value="' + esc(S.sleep.wake) + '"></label></div>' +
       '<p class="muted small">Сон по режиму: ' + fmtDur(NF.sleepMinutes(S.sleep.bed, S.sleep.wake)) + (teen ? ' (в твоём возрасте нужно 8–10 ч)' : ' (взрослым нужно 7–9 ч)') + '</p>' +
-      '<h3 class="h3">Расписание еды на сегодня</h3><ul class="sched">' + sched.meals.map((m) => '<li><span class="num">' + m.time + '</span><span>' + esc(mealLabel(m)) + '</span><span class="muted small">' + r0(m.share * 100) + ' % нормы</span></li>').join('') +
+      '<details id="sleep-sched"><summary class="small">Расписание еды на сегодня — по этому режиму</summary><ul class="sched">' + sched.meals.map((m) => '<li><span class="num">' + m.time + '</span><span>' + esc(mealLabel(m)) + '</span><span class="muted small">' + r0(m.share * 100) + ' % нормы</span></li>').join('') +
       '<li><span class="num">' + esc(S.sleep.bed) + '</span><span>Отбой</span><span class="muted small">последняя еда за 3 ч</span></li></ul>' +
-      (sched.note ? '<p class="hint">' + esc(sched.note) + '</p>' : '') + '</div>';
+      (sched.note ? '<p class="hint">' + esc(sched.note) + '</p>' : '') + '</details></div>';
 
     html += '<details class="card"><summary class="h3">Как спать лучше для роста мышц</summary><ul class="dots">' +
       '<li>Ложись и вставай в одно время, даже в выходные: разброс не больше часа.</li>' +
@@ -1072,25 +1096,41 @@
   function renderProfile() {
     if (!S.profile) return renderOnboarding();
     const T = targets();
-    let html = '<h1 class="h1">Профиль и норма</h1>';
+    const segs = [['norm', 'Норма'], ['progress', 'Прогресс'], ['settings', 'Настройки']];
+    let html = '<h1 class="h1">Профиль</h1><div class="seg" data-k="seg-prof" role="tablist"><span class="seg-thumb" aria-hidden="true"></span>' + segs.map((x) =>
+      '<button role="tab" aria-selected="' + (ui.profSeg === x[0]) + '" class="seg-btn' + (ui.profSeg === x[0] ? ' on' : '') + '" data-act="pseg" data-seg="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>';
+    if (ui.profSeg === 'progress') return html + progressSection();
+    if (ui.profSeg === 'settings') return html + settingsSection();
     html += '<section class="card targets"><p class="eyebrow">Твоя норма в день</p><div class="big-kcal"><span class="display num">' + T.kcal + '</span> ккал</div>' +
       '<div class="tgrid"><div><b class="num">' + T.protein + ' г</b><span>белки · ' + T.proteinPerKg.toString().replace('.', ',') + ' г/кг</span></div><div><b class="num">' + T.fat + ' г</b><span>жиры</span></div><div><b class="num">' + T.carbs + ' г</b><span>углеводы</span></div>' +
-      '<div><b class="num">' + (T.water / 1000).toFixed(1).replace('.', ',') + ' л</b><span>вода (+0,5 л в день тренировки)</span></div><div><b class="num">' + T.fiber + ' г</b><span>клетчатка</span></div><div><b class="num">+' + T.weekly.toString().replace('.', ',') + ' кг</b><span>в неделю</span></div></div>' +
+      '<div><b class="num">' + (T.water / 1000).toFixed(1).replace('.', ',') + ' л</b><span>вода в день</span></div><div><b class="num">' + T.fiber + ' г</b><span>клетчатка</span></div><div><b class="num">+' + T.weekly.toString().replace('.', ',') + ' кг</b><span>в неделю</span></div></div>' +
       '<p class="calc-line small muted">Базовый обмен ' + T.bmr + ' × активность = расход ' + T.tdee + ' ккал. Профицит +' + T.surplus + (T.adjust ? (T.adjust > 0 ? ' +' : ' ') + T.adjust + ' (подстройка по весу)' : '') + '. ИМТ ' + T.bmi + ' → ' + T.targetBmi + ' на цели, ~' + T.weeks + ' ' + plural(T.weeks, 'неделя', 'недели', 'недель') + '.</p>' +
       warningsBlock(T.warnings) + '</section>';
 
     html += appetiteCard();
-    html += reportCard();
-    html += '<section class="card"><div class="split"><h2 class="h3">Вес</h2><span class="muted small">старт ' + (S.startWeight || S.profile.weight) + ' кг</span></div>' + weightChart() +
+    html += sourcesCard();
+    return html;
+  }
+
+  function progressSection() {
+    let html = '<section class="card"><div class="split"><h2 class="h3">Вес</h2><span class="muted small">старт ' + (S.startWeight || S.profile.weight) + ' кг</span></div>' + weightChart() +
       '<div class="add-row"><input id="w-kg" class="input num-in" type="number" inputmode="decimal" step="0.1" placeholder="' + S.profile.weight + '"><span class="unit">кг</span><button class="btn small" data-act="w-add">Записать вес</button></div>' +
       (S.adaptMsg ? '<p class="note note-info">' + esc(S.adaptMsg) + '</p>' : '') +
       '<p class="hint">Раз в неделю NovaFit сравнивает средний вес за 7 дней с прошлой неделей и сам поправляет калории на ±100 ккал (в сумме не больше ±300).</p></section>';
-
+    html += reportCard();
     html += measuresCard();
-    html += remindersCard();
-    html += '<details class="card"><summary class="h3">Изменить данные</summary>' + profileForm(false) + '</details>';
+    return html;
+  }
 
-    html += '<details class="card"><summary class="h3">Откуда цифры и что безопасно</summary><div class="prose small">' +
+  function settingsSection() {
+    let html = remindersCard();
+    html += '<details class="card" id="profile-edit"><summary class="h3">Мои данные: рост, вес, цель</summary>' + profileForm(false) + '</details>';
+    html += dataCard();
+    return html;
+  }
+
+  function sourcesCard() {
+    return '<details class="card"><summary class="h3">Откуда цифры и что безопасно</summary><div class="prose small">' +
       '<p><b>Калории.</b> Базовый обмен по формуле Миффлина — Сан Жеора × коэффициент активности. Сверху профицит 200–500 ккал, чтобы прибавлять 0,25–0,5 % массы тела в неделю. Быстрее не надо: лишнее уходит в жир, а не в мышцы (Iraki et al., 2019; позиция ISSN).</p>' +
       '<p><b>Белок</b> 1,6–2,2 г на кг веса. Выше 2,2 г/кг дополнительной пользы для мышц нет (метаанализ Morton et al., 2018). Приложение никогда не превышает этот потолок.</p>' +
       '<p><b>Жиры</b> 25–30 % калорий, но не меньше 0,8 г/кг: это нужно для гормонов. <b>Углеводы</b> занимают остальное и дают энергию на тренировки.</p>' +
@@ -1098,13 +1138,14 @@
       '<p><b>Добавки.</b> Достаточно обычной еды. Сывороточный протеин — это просто еда в порошке. Креатин моногидрат 3–5 г в день — самая изученная добавка для взрослых здоровых людей. Больше 5 г пользы не даёт, загрузочные фазы не нужны. До 18 лет, при болезнях почек или при приёме лекарств — только после консультации врача. Никаких «гормональных» и «жиросжигающих» препаратов.</p>' +
       '<p><b>Когда идти к врачу.</b> ИМТ ниже 16; вес падает без причины; есть хронические болезни (почки, печень, диабет, ЖКТ); после еды бывают отёки, сердцебиение или боль.</p>' +
       '<p class="muted">NovaFit не ставит диагнозов и не заменяет врача или диетолога.</p></div></details>';
+  }
 
-    html += '<details class="card"><summary class="h3">Данные</summary><p class="small muted">Всё хранится только на этом устройстве. Сделай копию, чтобы перенести данные на другой телефон.</p>' +
+  function dataCard() {
+    return '<details class="card"><summary class="h3">Данные</summary><p class="small muted">Всё хранится только на этом устройстве. Сделай копию, чтобы перенести данные на другой телефон.</p>' +
       '<div class="row-btns"><button class="btn ghost small" data-act="export">Скопировать данные</button><button class="btn ghost small" data-act="import-toggle">Вставить данные</button></div>' +
       (ui.importOpen ? '<textarea id="import-text" class="input" rows="4" placeholder="Вставь сюда скопированные данные"></textarea><button class="btn small" data-act="import">Загрузить</button>' : '') +
       (ui.confirmReset ? '<div class="note note-danger"><span>Удалить все данные без возможности восстановления?</span><div class="row-btns"><button class="btn small danger" data-act="reset-yes">Удалить</button><button class="btn small ghost" data-act="reset-no">Отмена</button></div></div>'
         : '<button class="link danger-text" data-act="reset">Сбросить всё</button>') + '</details>';
-    return html;
   }
 
   // ───────────────── напоминания ─────────────────
@@ -1300,6 +1341,8 @@
     clearInterval(timerTick);
     syncNativeTimer();
     const el = document.getElementById('timer');
+    // пока таймер на экране, у страницы запас снизу — чтобы плашка не закрывала кнопки
+    document.body.classList.toggle('timer-on', !!S.timer);
     if (!S.timer) { el.classList.remove('show'); setTimeout(() => { if (!S.timer) el.hidden = true; }, 300); return; }
     el.hidden = false;
     requestAnimationFrame(() => el.classList.add('show'));
@@ -1628,7 +1671,7 @@
   function render() {
     const view = document.getElementById('view');
     const tab = TABS[S.tab] ? S.tab : 'today';
-    const screen = tab + (tab === 'food' ? ':' + ui.foodSeg : '');
+    const screen = tab + (tab === 'food' ? ':' + ui.foodSeg : tab === 'profile' ? ':' + ui.profSeg : '');
     const prevTab = lastScreen && lastScreen.split(':')[0];
     const entering = screen !== lastScreen;
     lastScreen = screen;
@@ -1733,8 +1776,8 @@
       if (x.stock) changeInventory(x.id, x.g);
       rebuildPlan(date); save(); render(); toast('Удалено, план пересчитан');
     },
-    'open-measure'() { S.tab = 'profile'; ui.measureOpen = true; save(); render(); const el = document.getElementById('measures'); if (el) el.scrollIntoView({ block: 'start' }); },
-    'open-report'() { S.tab = 'profile'; ui.reportWeek = -1; S.reportSeen = NF.weekStart(todayStr()); save(); render(); const el = document.getElementById('report'); if (el) el.scrollIntoView({ block: 'start' }); },
+    'open-measure'() { S.tab = 'profile'; ui.profSeg = 'progress'; ui.measureOpen = true; save(); render(); const el = document.getElementById('measures'); if (el) el.scrollIntoView({ block: 'start' }); },
+    'open-report'() { S.tab = 'profile'; ui.profSeg = 'progress'; ui.reportWeek = -1; S.reportSeen = NF.weekStart(todayStr()); save(); render(); const el = document.getElementById('report'); if (el) el.scrollIntoView({ block: 'start' }); },
     'custom-toggle'() { ui.customOpen = !ui.customOpen; render(); },
     'custom-add'() {
       const name = val('cf-name').trim(); const kcal = num('cf-kcal'), p = num('cf-p'), f = num('cf-f'), c = num('cf-c');
@@ -1748,13 +1791,17 @@
     },
     'calc-meal'(el) { ui.calcMeal = el.dataset.t; render(); },
     'calc-toggle'(el) { const id = el.dataset.id; const i = ui.calcSel.indexOf(id); if (i >= 0) ui.calcSel.splice(i, 1); else ui.calcSel.push(id); render(); },
-    'rec-filter'(el) { ui.recFilter = el.dataset.f; render(); },
+    'rec-filter'(el) { ui.recFilter = el.dataset.f; ui.recMore = {}; render(); },
     'scan-open'(el) { openScanner(el.dataset.mode || 'stock'); },
     'scan-close'() { closeScanner(); },
     'scan-find'() { const c = val('scan-code').replace(/\D/g, ''); if (!c) { toast('Введи цифры штрихкода'); return; } onScanCode(c); },
     'scan-save'() { saveScan(); },
-    'rec-time'(el) { ui.recTime = +el.dataset.t; render(); },
-    'rec-nocook'() { ui.recNoCook = !ui.recNoCook; render(); },
+    'rec-time'(el) { const t = +el.dataset.t; ui.recTime = ui.recTime === t ? 0 : t; ui.recMore = {}; render(); },
+    'rec-nocook'() { ui.recNoCook = !ui.recNoCook; ui.recMore = {}; render(); },
+    'rec-more'(el) { ui.recMore[el.dataset.g] = true; render(); },
+    'notices-all'() { ui.noticesAll = !ui.noticesAll; render(); },
+    'open-stock'() { S.tab = 'food'; ui.foodSeg = 'stock'; save(); render(); window.scrollTo({ top: 0, behavior: 'instant' }); },
+    pseg(el) { ui.profSeg = el.dataset.seg; render(); },
     'rec-pin'(el) {
       const date = todayStr(); const plan = getPlan(date); const i = +el.dataset.i;
       const inv = usableInventory();
@@ -1784,7 +1831,7 @@
     'water-toggle'() { ui.waterOpen = !ui.waterOpen; render(); },
     'tz-ok'() { S.tzNotice = null; save(); render(); },
     'open-appetite'() {
-      S.tab = 'profile'; save(); render();
+      S.tab = 'profile'; ui.profSeg = 'norm'; save(); render();
       const el = document.getElementById('appetite');
       if (el) { el.scrollIntoView({ block: 'start' }); const d = document.getElementById('appetite-tips'); if (d) d.open = true; }
     },
@@ -1907,6 +1954,11 @@
     }
   });
 
+  document.addEventListener('toggle', (e) => {
+    const el = e.target;
+    if (el && el.dataset && el.dataset.openKey) ui.open[el.dataset.openKey] = el.open;
+  }, true);
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && e.target && e.target.id === 'scan-code') { e.preventDefault(); ACTIONS['scan-find'](); }
     if (e.key === 'Escape' && ui.scan) closeScanner();
@@ -1922,7 +1974,7 @@
   document.addEventListener('input', (e) => {
     const el = e.target;
     if (el.id === 'rec-search') {
-      ui.recQuery = el.value;
+      ui.recQuery = el.value; ui.recMore = {};
       const box = document.getElementById('rec-results');
       if (box) box.innerHTML = recipeResults();
       return;

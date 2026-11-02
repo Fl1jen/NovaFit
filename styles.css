@@ -170,7 +170,7 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
 .meal-time { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .meal-time .num { font-family: var(--font-display); font-weight: 500; font-size: 15px; background: var(--bg); position: relative; }
 .meal-type { font-size: 12px; color: var(--muted); }
-.meal-body { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.meal-body { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: start; min-width: 0; }
 .meal-body h3 { margin: 0; font-size: 16px; font-weight: 600; text-wrap: balance; }
 .meal.eaten .meal-body { opacity: 0.62; }
 .meal.eaten .meal-time .num { color: var(--accent); }
@@ -318,8 +318,8 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
 }
 
 /* ── еда вне плана ── */
-.section-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; }
-.section-head .h2 { margin: 0; }
+.section-head { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.section-head .h2 { margin: 0 auto 0 0; }
 .extra-panel .result.on { border-color: var(--accent); }
 .extras { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 .icon-btn.tiny { width: 26px; height: 26px; font-size: 16px; margin-left: 4px; vertical-align: middle; }
@@ -333,10 +333,6 @@ label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14p
 
 /* сроки годности */
 .tag-exp { font-style: normal; font-size: 11px; background: var(--danger-bg); color: var(--danger); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
-.expiring { flex-direction: column; align-items: stretch; gap: 6px; }
-.expiring ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
-.expiring li { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.expiring p { margin: 0; }
 .exp-badge { align-self: flex-start; margin-top: 2px; border: 0; border-radius: 6px; padding: 1px 7px; font-size: 11px; font-weight: 600; background: var(--surface-2); color: var(--muted); }
 .exp-badge.ok { background: var(--ok-bg); color: var(--ok); }
 .exp-badge.soon { background: var(--warn-bg); color: var(--warn); }
@@ -424,7 +420,8 @@ code { font-size: 12px; background: var(--surface-2); padding: 1px 5px; border-r
 .timer-btn.skip { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
 .timer.ending .timer-txt b { animation: pulse 1s ease-in-out infinite; color: var(--kcal); }
-body:has(.timer.show) .toast { bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 92px); }
+body:has(.timer.show) .toast, body.timer-on .toast { bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 92px); }
+body.timer-on { padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 110px); }
 
 @media (max-width: 380px) {
   .stats { grid-template-columns: 1fr 1fr; }
@@ -460,9 +457,6 @@ body:has(.timer.show) .toast { bottom: calc(var(--nav-h) + env(safe-area-inset-b
 /* ── вода, часовой пояс, режим аппетита ── */
 .water p { margin: 0; }
 .water b { color: var(--accent); font-size: 18px; }
-.note.tz { flex-direction: column; align-items: flex-start; }
-.note.tz details { width: 100%; }
-.note.tz summary { cursor: pointer; color: var(--accent); }
 .appetite .grow { flex: 1; min-width: 0; }
 .appetite p { margin: 2px 0 0; }
 .appetite details summary { cursor: pointer; color: var(--accent); }
@@ -496,6 +490,47 @@ body:has(.timer.show) .toast { bottom: calc(var(--nav-h) + env(safe-area-inset-b
 .scan-choice { display: flex; flex-direction: column; gap: 6px; }
 .scan-loading { margin: 0; color: var(--muted); animation: fade 1s ease-in-out infinite alternate; }
 .scan-credit { margin: 0; }
+
+/* ── разгрузка: «Важное», компактная еда, тихие метки ── */
+.notices { display: flex; flex-direction: column; gap: 6px; }
+.notice { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; }
+.notice .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; margin-top: 7px; background: var(--info); }
+.notice.n-warn .dot { background: var(--kcal); }
+.notice.n-action .dot { background: var(--accent); }
+.notice.n-danger { background: var(--danger-bg); border-color: transparent; color: var(--danger); }
+.notice.n-danger .dot { background: var(--danger); }
+.notice-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.notice-main details summary { cursor: pointer; color: var(--accent); font-size: 13px; }
+.notice-main details ul { margin-top: 6px; }
+.notice-main details p { margin: 6px 0 0; }
+.notice .btn { flex: none; }
+.notices-more { align-self: flex-start; padding: 2px 4px; font-size: 13px; }
+.tag-btn { border: 0; background: var(--surface-2); color: var(--muted); border-radius: 999px; font-size: 12px; padding: 4px 10px; }
+.tag.warn { background: var(--warn-bg); color: var(--warn); }
+
+.meal-more > summary { list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.meal-more > summary::-webkit-details-marker { display: none; }
+.meal-title { font-weight: 600; font-size: 16px; line-height: 1.3; text-wrap: balance; }
+.meal-title::after { content: "›"; display: inline-block; margin-left: 6px; color: var(--muted); transition: transform 0.25s var(--ease-out); }
+.meal-more[open] .meal-title::after { transform: rotate(90deg); }
+.meal-sum { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meal-more[open] .meal-sum { display: none; }
+.meal-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.meal-detail { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.steps-h { margin: 4px 0 0; font-size: 13px; font-weight: 600; color: var(--muted); }
+.eat-btn { min-width: 64px; }
+.meal.eaten .meal-body { opacity: 0.6; }
+
+.rec-head { display: flex; flex-direction: column; gap: 10px; }
+.scroll-row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.scroll-row::-webkit-scrollbar { display: none; }
+.scroll-row .pill { flex: none; }
+.miss-line { font-size: 12px; color: var(--warn); }
+.more-btn { margin-top: 2px; }
+
+.stock-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.stock-sub .exp-badge { margin-top: 0; }
+.exp-badge.ok { background: transparent; color: var(--muted); padding: 0; font-weight: 500; }
 
 /* ───────────────── движение ───────────────── */
 /* кнопки и интерактивные элементы: мягкий отклик на нажатие */

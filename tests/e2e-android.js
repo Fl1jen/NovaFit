@@ -39,6 +39,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
   await p.waitForSelector('.timeline');
   // напоминания → разрешение → расписание на 7 дней
   await p.click('.nav-btn[data-tab=profile]');
+  await p.click('[data-act=pseg][data-seg=settings]');
   await p.click('#reminders > summary');
   await p.check('#rem-enabled', { force: true });
   await p.waitForTimeout(300);
