@@ -2670,8 +2670,10 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     const opt = (k, label) => '<label class="check"><input type="checkbox" data-bind="rem" data-k="' + k + '" id="rem-' + k + '"' + (R[k] ? ' checked' : '') + '> ' + label + '</label>';
     let html = '<details class="card" id="reminders"' + (ui.remOpen ? ' open' : '') + '><summary><span class="h3">Напоминания</span><span class="muted small">' + (R.enabled ? 'включены' : 'выключены') + '</span></summary>';
     html += '<p class="small">Самый надёжный способ — <b>добавить напоминания в календарь телефона</b>. Они сработают, даже если NovaFit закрыт.</p>' +
-      '<button class="btn wide" data-act="ics">Добавить в календарь телефона</button>' +
-      '<p class="hint">Скачается файл <code>novafit.ics</code>. Открой его: iPhone предложит «Добавить все», на Android откроется Google Календарь. Если поменяешь режим сна или дни тренировок, скачай файл заново.</p>';
+      (window.__NF_EMBED
+        ? '<p class="note note-info">В этом превью скачивание файлов недоступно. Кнопка «Добавить в календарь» работает в установленном приложении (ссылка из GitHub Pages, «На экран Домой»).</p>'
+        : '<button class="btn wide" data-act="ics">Добавить в календарь телефона</button>' +
+          '<p class="hint">Скачается файл <code>novafit.ics</code>. Открой его: iPhone предложит «Добавить все», на Android откроется Google Календарь. Если поменяешь режим сна или дни тренировок, скачай файл заново.</p>');
     html += '<hr class="sep"><div class="split"><span class="h3">Уведомления в приложении</span>' +
       '<label class="switch"><input type="checkbox" id="rem-enabled" data-bind="rem-enabled"' + (R.enabled ? ' checked' : '') + '><span class="switch-ui" aria-hidden="true"></span><span class="sr">Включить</span></label></div>';
     if (st === 'unsupported') html += '<p class="note note-info">Здесь системные уведомления недоступны. Пока приложение открыто, напоминания будут всплывать внутри него. Для фоновых используй календарь.</p>';
