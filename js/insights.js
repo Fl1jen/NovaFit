@@ -166,9 +166,10 @@
     const ev = [];
     const at = (hhmm, minus) => NF.fromMin(NF.toMin(hhmm) - (minus || 0));
     const o = ctx.opts;
-    if (o.meals) ctx.meals.forEach((m) => {
+    if (o.meals) ctx.meals.forEach((m, i) => {
       if (m.eaten) return;
-      ev.push({ key: 'meal-' + m.type, at: at(m.time, ctx.lead), title: NF.MEAL_LABEL[m.type] + ' в ' + m.time, body: m.title || 'Открой NovaFit: там блюдо и граммовки' });
+      const label = m.label || NF.MEAL_LABEL[m.type];
+      ev.push({ key: 'meal-' + i + m.type, at: at(m.time, ctx.lead), title: label + ' в ' + m.time, body: m.title || 'Открой NovaFit: там блюдо и граммовки' });
     });
     if (o.train && ctx.trainTime) ev.push({ key: 'train', at: at(ctx.trainTime, 60), title: 'Тренировка через час', body: 'Перекус был? Подготовь воду и гантель.' });
     if (o.sleep) ev.push({ key: 'sleep', at: at(ctx.bed, 30), title: 'Через 30 минут отбой', body: 'Отложи телефон, проветри комнату. Сон — это время роста мышц.' });
@@ -228,12 +229,13 @@
     if (o.meals) {
       // одинаковые по времени приёмы в днях с тренировкой и без объединяем
       c.schedRest.meals.forEach((m, i) => {
-        const mt = c.schedTrain.meals[i];
+        const mt = c.schedTrain.meals[i] || m;
         const body = 'Блюдо и граммовки в NovaFit.';
-        if (mt.time === m.time) add(NF.MEAL_LABEL[m.type] + ' · NovaFit', body, all, m.time, 30, c.lead);
+        const lb = (x) => (x.label || NF.MEAL_LABEL[x.type]) + ' · NovaFit';
+        if (mt.time === m.time) add(lb(m), body, all, m.time, 30, c.lead);
         else {
-          add(NF.MEAL_LABEL[m.type] + ' · NovaFit', body, rest, m.time, 30, c.lead);
-          add(NF.MEAL_LABEL[mt.type] + ' · NovaFit', body + ' Сегодня тренировка.', c.trainDays, mt.time, 30, c.lead);
+          add(lb(m), body, rest, m.time, 30, c.lead);
+          add(lb(mt), body + ' Сегодня тренировка.', c.trainDays, mt.time, 30, c.lead);
         }
       });
     }

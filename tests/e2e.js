@@ -76,7 +76,34 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     await p.click('[data-act=calc-toggle][data-id=chicken_breast]');
     await snap('3-calc');
     await p.click('[data-act=seg][data-seg=recipes]');
+    // «Что приготовить»: группы, фильтры, поиск, в план, в покупки
+    check(/можно приготовить/.test(await p.textContent('.rec-summary')), 'нет сводки «что приготовить»');
+    const nowCount = await p.$$eval('#recg-now ~ .recipes details.recipe, h2.rec-h + .recipes details.recipe', (x) => x.length);
+    check(nowCount > 0, 'нет блюд «можно приготовить сейчас»');
+    await p.click('[data-act=rec-nocook]');
+    const nocook = await p.$$eval('details.recipe', (ds) => ds.every((d) => /без готовки/.test(d.textContent)));
+    check(nocook, 'фильтр «без готовки» пропустил блюдо с готовкой');
+    await p.click('[data-act=rec-nocook]');
+    await p.fill('#rec-search', 'борщ');
+    await p.waitForTimeout(150);
+    check((await p.$$eval('#rec-results details.recipe', (x) => x.length)) === 1, 'поиск «борщ»');
+    const borscht = await p.$('#rec-borscht');
+    await borscht.evaluate((d) => { d.open = true; const grp = d.closest('details.rec-group'); if (grp) grp.open = true; });
+    check(await p.isVisible('#rec-borscht [data-act=rec-shop]'), 'нет кнопки «Недостающее — в покупки»');
+    await p.click('#rec-borscht [data-act=rec-shop]');
+    check(await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('novafit.v1')).shopExtra).length > 0), 'недостающее не попало в покупки');
+    await p.fill('#rec-search', '');
+    await p.waitForTimeout(150);
+    const firstNow = await p.$('h2.rec-h + .recipes details.recipe');
+    await firstNow.evaluate((d) => (d.open = true));
+    const pinBtn = await firstNow.$('[data-act=rec-pin]');
+    const pinId = await pinBtn.getAttribute('data-id');
+    await pinBtn.click();
+    check(await p.evaluate((id) => Object.values(JSON.parse(localStorage.getItem('novafit.v1')).plans)[0].meals.some((m) => m.recipeId === id && m.pinned), pinId), 'рецепт не поставился в план');
+    await snap('4-recipes');
     await p.click('[data-act=seg][data-seg=shop]');
+    check(await p.isVisible('.shop .en'), 'нет английских названий в покупках');
+    check(/из рецепта/.test(await p.textContent('.shop')), 'добавленное из рецепта не видно в покупках');
     await snap('5-shop');
 
     // тренировка и таймер
@@ -109,7 +136,17 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     await p.click('[data-act=sleep-save]');
     await snap('7-sleep');
 
-    // профиль: отчёт, замеры, напоминания
+    // профиль: «нет аппетита», отчёт, замеры, напоминания
+    await p.click('.nav-btn[data-tab=profile]');
+    await p.check('#low-appetite', { force: true });
+    await p.waitForTimeout(300);
+    await p.click('.nav-btn[data-tab=today]');
+    check((await p.$$eval('.timeline .meal', (x) => x.length)) >= 5, 'в режиме «нет аппетита» меньше 5 приёмов');
+    check(/Перед сном/.test(await p.textContent('.timeline')), 'нет перекуса перед сном');
+    check((await p.$$eval('.timeline .meal.eaten', (x) => x.length)) >= 1, 'съеденный завтрак потерялся при смене режима');
+    await p.click('[data-act=water-toggle]');
+    check(/Перелёт/.test(await p.textContent('.water')), 'нет рекомендации по воде');
+    await snap('1c-appetite');
     await p.click('.nav-btn[data-tab=profile]');
     check(await p.isVisible('#report .kchart'), 'нет недельного отчёта');
     await p.click('[data-act=report-week][data-d="-1"]');
@@ -130,6 +167,14 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
     await snap('8-profile');
     const over = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
     check(!over, scheme + ': горизонтальная прокрутка');
+    // смена часового пояса: подсказка и советы при джетлаге
+    await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('novafit.v1')); s.lastOffset = new Date().getTimezoneOffset() + 240; localStorage.setItem('novafit.v1', JSON.stringify(s)); });
+    await p.reload();
+    await p.click('.nav-btn[data-tab=today]');
+    check(await p.isVisible('.note.tz'), 'нет подсказки о смене часового пояса');
+    check(/\+4 ч, на восток/.test(await p.textContent('.note.tz')), 'неверная разница часовых поясов');
+    await p.click('[data-act=tz-ok]');
+    check(!(await p.isVisible('.note.tz')), 'подсказка не скрылась');
     // данные переживают перезагрузку
     await p.reload();
     await p.waitForSelector('.view');

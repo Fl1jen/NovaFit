@@ -19,11 +19,30 @@ final class Alarms {
             long now = System.currentTimeMillis();
             for (int i = 0; i < arr.length(); i++) {
                 JSONObject o = arr.getJSONObject(i);
-                long at = o.getLong("at");
+                long at = localTime(o);
                 if (at <= now) continue;
                 set(ctx, o.getInt("id"), at, o.optString("title"), o.optString("body"), ReminderReceiver.CH_REMIND);
             }
         } catch (Exception ignored) { }
+    }
+
+    /**
+     * Момент срабатывания: если есть местные дата и время («2026-11-03», «13:10»),
+     * считаем их в ТЕКУЩЕМ часовом поясе телефона — после перелёта напоминание
+     * про обед придёт в обед по местному времени. Иначе — сохранённый момент.
+     */
+    static long localTime(JSONObject o) {
+        String date = o.optString("date", ""), time = o.optString("time", "");
+        if (date.length() == 10 && time.length() == 5) {
+            try {
+                java.util.Calendar c = java.util.Calendar.getInstance();
+                c.clear();
+                c.set(Integer.parseInt(date.substring(0, 4)), Integer.parseInt(date.substring(5, 7)) - 1, Integer.parseInt(date.substring(8, 10)),
+                        Integer.parseInt(time.substring(0, 2)), Integer.parseInt(time.substring(3, 5)), 0);
+                return c.getTimeInMillis();
+            } catch (Exception ignored) { }
+        }
+        return o.optLong("at", 0);
     }
 
     static void cancelAll(Context ctx, String json) {

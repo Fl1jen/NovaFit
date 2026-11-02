@@ -56,6 +56,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; } /* атрибут hidden всегда сильнее display у компонентов */
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
@@ -446,6 +447,72 @@ body:has(.timer.show) .toast { bottom: calc(var(--nav-h) + env(safe-area-inset-b
   .timer-btn { min-width: 36px; padding: 0 6px; }
 }
 
+/* ── «Что приготовить» ── */
+.rec-title { margin: 4px 0 -4px; }
+.rec-head { gap: 10px; }
+.rec-summary { margin: 2px 0 0; font-size: 15px; }
+.rec-summary b { color: var(--accent); font-size: 17px; }
+.rec-h { margin-top: 8px; }
+.rec-group { border-top: 1px solid var(--line); padding-top: 10px; }
+.rec-group > summary { cursor: pointer; font-weight: 600; font-size: 16px; padding: 4px 0 10px; list-style: none; display: flex; justify-content: space-between; }
+.rec-group > summary::-webkit-details-marker { display: none; }
+.rec-group > summary::after { content: "+"; color: var(--muted); transition: transform 0.3s var(--ease-out); }
+.rec-group[open] > summary::after { transform: rotate(45deg); }
+.recipe summary .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.tag { display: inline-block; font-style: normal; font-size: 11px; font-weight: 500; color: var(--muted); background: var(--surface-2); border-radius: 6px; padding: 1px 7px; white-space: nowrap; vertical-align: middle; }
+.sub-line { font-size: 12px; color: var(--info); }
+.sub-tag { font-style: normal; font-size: 11px; color: var(--info); background: var(--info-bg); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+.rec-actions, .rec-web { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rec-actions { padding-top: 4px; border-top: 1px dashed var(--line); }
+.link-out { text-decoration: none; color: var(--accent); font-weight: 500; }
+.link-out::after { content: " ↗"; font-size: 11px; }
+.web-card p { margin: 0; }
+.pick.center { justify-content: center; }
+
+/* ── покупки: английские названия ── */
+.shop-name { display: flex; flex-direction: column; min-width: 0; }
+.shop-name .en { font-size: 12px; color: var(--muted); }
+
+/* ── вода, часовой пояс, режим аппетита ── */
+.water p { margin: 0; }
+.water b { color: var(--accent); font-size: 18px; }
+.note.tz { flex-direction: column; align-items: flex-start; }
+.note.tz details { width: 100%; }
+.note.tz summary { cursor: pointer; color: var(--accent); }
+.appetite .grow { flex: 1; min-width: 0; }
+.appetite p { margin: 2px 0 0; }
+.appetite details summary { cursor: pointer; color: var(--accent); }
+
+/* ── сканер штрихкодов ── */
+.search-row { display: flex; gap: 8px; align-items: stretch; }
+.search-row .input { flex: 1; }
+.scan-btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; min-height: 44px; }
+.ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.scanner { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; background: rgba(8, 12, 10, 0.55); opacity: 0; transition: opacity 0.25s ease; }
+.scanner.show { opacity: 1; }
+.scan-sheet {
+  width: 100%; max-width: 560px; max-height: 100%; overflow-y: auto; background: var(--bg); border-radius: 20px 20px 0 0;
+  padding: 14px max(16px, env(safe-area-inset-left, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 10px; transform: translateY(24px); transition: transform 0.35s var(--ease-out);
+}
+.scanner.show .scan-sheet { transform: none; }
+.scan-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.scan-view { position: relative; width: 100%; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 14px; overflow: hidden; background: #000; }
+.scan-view video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scan-frame { position: absolute; left: 10%; right: 10%; top: 28%; bottom: 28%; border: 2px solid rgba(255, 255, 255, 0.85); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.35); }
+.scan-line { position: absolute; left: 6px; right: 6px; top: 50%; height: 2px; background: var(--kcal); box-shadow: 0 0 8px var(--kcal); animation: scanline 1.8s ease-in-out infinite; }
+@keyframes scanline { 0%, 100% { transform: translateY(-36px); } 50% { transform: translateY(36px); } }
+.scan-msg { margin: 0; font-size: 14px; }
+.scan-manual { padding: 0; }
+.scan-manual .input { flex: 1; }
+.scan-result:empty { display: none; }
+.scan-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.scan-card p { margin: 0; }
+.scan-name { font-weight: 600; font-size: 16px; }
+.scan-choice { display: flex; flex-direction: column; gap: 6px; }
+.scan-loading { margin: 0; color: var(--muted); animation: fade 1s ease-in-out infinite alternate; }
+.scan-credit { margin: 0; }
+
 /* ───────────────── движение ───────────────── */
 /* кнопки и интерактивные элементы: мягкий отклик на нажатие */
 .btn, .chip-card, .pill, .day, .icon-btn, .result, .seg-btn, .nav-btn, .link {
@@ -607,12 +674,57 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     ['lentils',         'Чечевица (сухая)',                         352, 24.6,  1.1, 63.0, 'carb',   120],
     ['chickpeas',       'Нут (сухой)',                              364, 19.3,  6.0, 60.7, 'carb',   120],
     ['tomato_paste',    'Томатная паста',                            82,  4.3,  0.5, 18.9, 'veg',     50],
+    ['beet',            'Свёкла',                                    43,  1.6,  0.2,  9.6, 'veg',    250],
+    // ── продукты, которые легко найти в любой стране ──
+    ['quinoa',          'Киноа (сухая)',                            368, 14.1,  6.1, 64.2, 'carb',   120],
+    ['couscous',        'Кускус (сухой)',                           376, 12.8,  0.6, 77.4, 'carb',   120],
+    ['rice_noodles',    'Рисовая лапша (сухая)',                    364,  6.0,  0.6, 80.0, 'carb',   120],
+    ['tortilla',        'Тортилья пшеничная',                       306,  8.2,  7.9, 50.5, 'carb',   180, 'шт', 60],
+    ['sweet_potato',    'Батат',                                     86,  1.6,  0.1, 20.1, 'carb',   400],
+    ['granola',         'Гранола / мюсли',                          450, 10.0, 17.0, 64.0, 'carb',    80],
+    ['corn_can',        'Кукуруза консервированная',                 75,  2.3,  1.2, 15.0, 'carb',   250],
+    ['chickpeas_can',   'Нут консервированный',                     139,  7.0,  2.6, 22.5, 'carb',   250],
+    ['canned_tomatoes', 'Томаты в собственном соку',                 24,  1.2,  0.2,  4.5, 'veg',    400],
+    ['bell_pepper',     'Перец болгарский',                          26,  1.0,  0.3,  6.0, 'veg',    250],
+    ['zucchini',        'Кабачок / цукини',                          17,  1.2,  0.3,  3.1, 'veg',    300],
+    ['spinach',         'Шпинат',                                    23,  2.9,  0.4,  3.6, 'veg',    150],
+    ['tofu',            'Тофу твёрдый',                             144, 15.8,  8.7,  2.8, 'protein',250],
+    ['shrimp',          'Креветки очищенные (сырые)',                85, 20.1,  0.5,  0.0, 'protein',250],
+    ['cottage_cheese',  'Зернёный творог (cottage cheese)',          98, 11.1,  4.3,  3.4, 'dairy',  300],
+    ['skyr',            'Скир (skyr)',                               63, 11.0,  0.2,  4.0, 'dairy',  300],
+    ['milk_whole',      'Молоко 3,2%',                               60,  2.9,  3.2,  4.7, 'dairy',  500],
+    ['feta',            'Фета',                                     264, 14.2, 21.3,  4.1, 'dairy',   80],
+    ['mozzarella',      'Моцарелла',                                280, 22.0, 20.0,  2.5, 'dairy',  100],
+    ['hummus',          'Хумус',                                    166,  7.9,  9.6, 14.3, 'fat',    100],
+    ['cashews',         'Кешью',                                    553, 18.0, 44.0, 30.0, 'fat',     40],
+    ['dark_chocolate',  'Шоколад тёмный 70%',                       598,  7.8, 42.6, 45.9, 'fat',     30],
+    ['dates',           'Финики',                                   282,  2.5,  0.4, 75.0, 'fruit',   60],
   ];
+
+  /* Английские названия: в поездке по ним проще найти продукт в магазине
+   * (показываются в списке покупок). */
+  const EN = {
+    oats: 'rolled oats', buckwheat: 'buckwheat', rice: 'white rice', pasta: 'pasta', bulgur: 'bulgur', potato: 'potatoes',
+    bread: 'wholegrain bread', lavash: 'lavash / flatbread', chicken_breast: 'chicken breast', chicken_thigh: 'chicken thighs, skinless',
+    turkey: 'turkey breast', beef: 'lean beef', minced_beef: 'ground beef 15%', pork: 'pork tenderloin', fish_white: 'white fish (cod, hake, pollock)',
+    salmon: 'salmon', tuna_can: 'canned tuna in water', eggs: 'eggs', cottage5: 'tvorog / quark', cottage9: 'tvorog / quark',
+    milk: 'milk 2%', kefir: 'kefir', yogurt: 'greek yogurt 2%', cheese: 'hard cheese', smetana: 'sour cream', protein_powder: 'whey protein',
+    peanut_butter: 'peanut butter', peanuts: 'peanuts', walnuts: 'walnuts', almonds: 'almonds', olive_oil: 'olive oil',
+    sunflower_oil: 'sunflower oil', butter: 'butter', avocado: 'avocado', banana: 'bananas', apple: 'apples', raisins: 'raisins',
+    dried_apricots: 'dried apricots', honey: 'honey', frozen_berries: 'frozen berries', tomato: 'tomatoes', cucumber: 'cucumbers',
+    cabbage: 'white cabbage', carrot: 'carrots', onion: 'onions', broccoli: 'frozen broccoli', frozen_veg: 'frozen mixed vegetables',
+    mushrooms: 'mushrooms', beans_can: 'canned beans', lentils: 'lentils', chickpeas: 'dry chickpeas', tomato_paste: 'tomato paste',
+    beet: 'beetroot', quinoa: 'quinoa', couscous: 'couscous', rice_noodles: 'rice noodles', tortilla: 'wheat tortillas',
+    sweet_potato: 'sweet potatoes', granola: 'granola / muesli', corn_can: 'canned sweet corn', chickpeas_can: 'canned chickpeas',
+    canned_tomatoes: 'canned chopped tomatoes', bell_pepper: 'bell peppers', zucchini: 'zucchini / courgette', spinach: 'spinach',
+    tofu: 'firm tofu', shrimp: 'peeled shrimp / prawns', cottage_cheese: 'cottage cheese', skyr: 'skyr', milk_whole: 'whole milk',
+    feta: 'feta', mozzarella: 'mozzarella', hummus: 'hummus', cashews: 'cashews', dark_chocolate: 'dark chocolate 70%', dates: 'dates',
+  };
 
   NF.FOODS = rows.map(function (r) {
     return {
       id: r[0], name: r[1], kcal: r[2], p: r[3], f: r[4], c: r[5],
-      cat: r[6], maxMeal: r[7], unit: r[8] || null, perUnit: r[9] || null, custom: false,
+      cat: r[6], maxMeal: r[7], unit: r[8] || null, perUnit: r[9] || null, custom: false, en: EN[r[0]] || null,
     };
   });
 
@@ -624,6 +736,76 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     eggs: 21, cottage5: 5, cottage9: 5, milk: 5, kefir: 7, yogurt: 10, cheese: 21, smetana: 7,
     bread: 5, lavash: 5, potato: 30, banana: 5, apple: 14, avocado: 4,
     tomato: 5, cucumber: 7, cabbage: 14, carrot: 21, onion: 30, mushrooms: 4,
+    beet: 30, tortilla: 10, sweet_potato: 21, bell_pepper: 7, zucchini: 7, spinach: 4, tofu: 5, shrimp: 2,
+    cottage_cheese: 7, skyr: 10, milk_whole: 5, feta: 14, mozzarella: 5, hummus: 5,
+  };
+
+  /* Замены: чем можно заменить продукт, если его нет дома (по порядку — от
+   * самой близкой). Граммы пересчитываются: белковые продукты — по белку,
+   * остальные — по калориям. Помогает и в поездках: нет гречки — киноа. */
+  NF.SUBS = {
+    chicken_breast: ['turkey', 'chicken_thigh', 'pork', 'shrimp', 'fish_white', 'tofu'],
+    chicken_thigh: ['chicken_breast', 'turkey', 'pork', 'beef'],
+    turkey: ['chicken_breast', 'chicken_thigh', 'pork', 'shrimp'],
+    pork: ['beef', 'chicken_thigh', 'turkey', 'chicken_breast'],
+    beef: ['pork', 'chicken_thigh', 'turkey'],
+    minced_beef: ['pork', 'beef', 'chicken_thigh'],
+    fish_white: ['salmon', 'shrimp', 'chicken_breast'],
+    salmon: ['fish_white', 'shrimp', 'chicken_breast'],
+    shrimp: ['fish_white', 'chicken_breast', 'tofu'],
+    tuna_can: ['chicken_breast', 'fish_white', 'eggs'],
+    tofu: ['chicken_breast', 'eggs', 'chickpeas_can'],
+    eggs: ['tofu'],
+    cottage5: ['cottage9', 'cottage_cheese', 'skyr', 'yogurt'],
+    cottage9: ['cottage5', 'cottage_cheese', 'skyr', 'yogurt'],
+    cottage_cheese: ['cottage5', 'cottage9', 'skyr', 'yogurt'],
+    skyr: ['yogurt', 'cottage_cheese', 'cottage5'],
+    yogurt: ['skyr', 'cottage_cheese', 'cottage5'],
+    kefir: ['milk', 'milk_whole', 'yogurt'],
+    milk: ['milk_whole', 'kefir'],
+    milk_whole: ['milk', 'kefir'],
+    smetana: ['yogurt', 'skyr'],
+    cheese: ['mozzarella', 'feta'],
+    mozzarella: ['cheese', 'feta'],
+    feta: ['cheese', 'mozzarella'],
+    buckwheat: ['quinoa', 'bulgur', 'rice', 'couscous'],
+    rice: ['bulgur', 'quinoa', 'couscous', 'buckwheat'],
+    bulgur: ['couscous', 'quinoa', 'rice', 'buckwheat'],
+    couscous: ['bulgur', 'quinoa', 'rice'],
+    quinoa: ['bulgur', 'couscous', 'buckwheat', 'rice'],
+    pasta: ['rice_noodles'],
+    rice_noodles: ['pasta', 'rice'],
+    granola: ['oats'],
+    potato: ['sweet_potato'],
+    sweet_potato: ['potato'],
+    bread: ['tortilla', 'lavash'],
+    lavash: ['tortilla', 'bread'],
+    tortilla: ['lavash', 'bread'],
+    lentils: ['beans_can', 'chickpeas_can'],
+    chickpeas: ['chickpeas_can', 'beans_can'],
+    chickpeas_can: ['beans_can'],
+    beans_can: ['chickpeas_can'],
+    olive_oil: ['sunflower_oil', 'butter'],
+    sunflower_oil: ['olive_oil', 'butter'],
+    butter: ['olive_oil', 'sunflower_oil'],
+    walnuts: ['almonds', 'cashews', 'peanuts'],
+    almonds: ['walnuts', 'cashews', 'peanuts'],
+    peanuts: ['almonds', 'cashews', 'walnuts'],
+    cashews: ['almonds', 'walnuts', 'peanuts'],
+    banana: ['apple', 'frozen_berries'],
+    apple: ['banana'],
+    frozen_berries: ['banana', 'apple'],
+    raisins: ['dried_apricots', 'dates'],
+    dried_apricots: ['raisins', 'dates'],
+    dates: ['raisins', 'dried_apricots'],
+    broccoli: ['frozen_veg', 'zucchini'],
+    frozen_veg: ['broccoli', 'zucchini', 'bell_pepper'],
+    zucchini: ['bell_pepper', 'broccoli', 'frozen_veg'],
+    bell_pepper: ['zucchini', 'frozen_veg'],
+    spinach: ['frozen_veg'],
+    cucumber: ['bell_pepper', 'tomato'],
+    canned_tomatoes: ['tomato', 'tomato_paste'],
+    tomato_paste: ['canned_tomatoes'],
   };
 
   NF.CAT_LABEL = {
@@ -635,98 +817,392 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
 <script>
 /* NovaFit — рецепты.
  * ing: [id продукта, базовые граммы, необязательный?]
- * Граммовки базовые — алгоритм подгоняет их под твою норму на приём пищи
- * (в пределах 0,6–2,2 от базы), сохраняя пропорции блюда.
+ * Граммовки базовые: алгоритм подгоняет их под твою норму на приём пищи
+ * (в пределах 0,6–2,2 от базы), сохраняя пропорции блюда. Если продукта нет,
+ * но есть замена (см. NF.SUBS), подставляется замена.
  * meals: b — завтрак, l — обед, s — перекус, d — ужин.
+ * tags: nocook — без плиты и духовки (подходит для отеля и дороги),
+ *       blender — нужен блендер, liquid — пьётся (жидкие калории),
+ *       night — лёгкий белковый перекус перед сном, oven — духовка.
+ * Крупы, макароны и бобовые указаны в сухом виде.
  */
 (function (g) {
   const NF = (g.NF = g.NF || {});
 
+  function R(id, name, meals, min, tags, ing, steps) {
+    return { id: id, name: name, meals: meals, min: min, tags: tags, ing: ing, steps: steps };
+  }
+
   NF.RECIPES = [
-    { id: 'oat_pb', name: 'Овсянка на молоке с бананом и арахисовой пастой', meals: 'b', min: 10,
-      ing: [['oats', 80], ['milk', 250], ['banana', 120], ['peanut_butter', 20], ['honey', 10, 1]],
-      steps: ['Залей хлопья молоком, вари 5–7 минут на слабом огне, помешивая.', 'Сверху — нарезанный банан и арахисовая паста. Мёд по желанию.'] },
-    { id: 'omelet', name: 'Омлет с сыром и цельнозерновым хлебом', meals: 'bd', min: 12,
-      ing: [['eggs', 165], ['milk', 50], ['cheese', 30], ['bread', 60], ['butter', 5], ['tomato', 100, 1]],
-      steps: ['Взбей яйца с молоком и щепоткой соли.', 'Растопи масло, вылей смесь, накрой крышкой на 4–5 минут.', 'Посыпь тёртым сыром за минуту до готовности. Подавай с хлебом и помидором.'] },
-    { id: 'syrniki', name: 'Сырники на овсяной муке', meals: 'bs', min: 20,
-      ing: [['cottage5', 200], ['eggs', 55], ['oats', 40], ['sunflower_oil', 5], ['smetana', 30], ['raisins', 20, 1]],
-      steps: ['Измельчи хлопья в блендере в муку.', 'Смешай творог, яйцо, муку (и изюм), сформируй 5–6 сырников.', 'Обжарь на капле масла по 3 минуты с каждой стороны. Подавай со сметаной.'] },
-    { id: 'cottage_bowl', name: 'Творог с бананом и орехами', meals: 'bs', min: 3,
-      ing: [['cottage5', 200], ['banana', 120], ['walnuts', 20], ['honey', 10, 1], ['frozen_berries', 80, 1]],
-      steps: ['Выложи творог в миску, добавь нарезанный банан, орехи и ягоды.', 'Полей мёдом по вкусу.'] },
-    { id: 'gainer', name: 'Домашний гейнер-коктейль', meals: 's', min: 3,
-      ing: [['milk', 300], ['banana', 120], ['oats', 50], ['peanut_butter', 20], ['protein_powder', 30, 1]],
-      steps: ['Всё в блендер на 40–60 секунд.', 'Пей медленно, за 5–10 минут: так легче усваивается большая порция.'] },
-    { id: 'buck_chicken', name: 'Гречка с курицей и овощами', meals: 'ld', min: 25,
-      ing: [['buckwheat', 90], ['chicken_breast', 180], ['frozen_veg', 150], ['sunflower_oil', 10]],
-      steps: ['Свари гречку (1 часть крупы на 2 части воды, 15 минут).', 'Нарежь курицу кубиками, обжарь на масле 6–7 минут.', 'Добавь овощи, туши ещё 7 минут под крышкой. Смешай с гречкой.'] },
-    { id: 'rice_chicken', name: 'Рис с курицей и брокколи', meals: 'ld', min: 25,
-      ing: [['rice', 90], ['chicken_breast', 180], ['broccoli', 150], ['olive_oil', 10]],
-      steps: ['Отвари рис (1:2, 15–18 минут).', 'Обжарь курицу на масле до золотистой корочки.', 'Брокколи свари на пару или в кипятке 4 минуты.'] },
-    { id: 'navy_pasta', name: 'Макароны по-флотски', meals: 'ld', min: 25,
-      ing: [['pasta', 100], ['minced_beef', 150], ['onion', 50], ['sunflower_oil', 5], ['tomato_paste', 30, 1]],
-      steps: ['Отвари макароны.', 'Обжарь лук, добавь фарш, жарь 10 минут, разбивая комочки.', 'Добавь томатную пасту, смешай с макаронами.'] },
-    { id: 'plov', name: 'Плов с курицей', meals: 'ld', min: 40,
-      ing: [['rice', 90], ['chicken_thigh', 180], ['carrot', 80], ['onion', 50], ['sunflower_oil', 10]],
-      steps: ['Обжарь курицу кусочками, добавь лук и морковь соломкой.', 'Всыпь промытый рис, залей водой на 1,5 см выше.', 'Туши под крышкой на слабом огне 20–25 минут, не мешая.'] },
-    { id: 'fish_potato', name: 'Запечённая рыба с картофелем', meals: 'ld', min: 40,
-      ing: [['potato', 300], ['fish_white', 220], ['olive_oil', 10], ['smetana', 30, 1]],
-      steps: ['Нарежь картофель дольками, сбрызни маслом, запекай 20 минут при 200 °C.', 'Добавь рыбу (соль, перец, лимон), запекай ещё 15 минут.'] },
-    { id: 'salmon_rice', name: 'Лосось с рисом и огурцом', meals: 'ld', min: 25,
-      ing: [['rice', 80], ['salmon', 150], ['cucumber', 150], ['olive_oil', 5]],
-      steps: ['Отвари рис.', 'Запеки рыбу 15 минут при 200 °C или обжарь по 4 минуты с каждой стороны.', 'Подавай с нарезанным огурцом.'] },
-    { id: 'bulgur_turkey', name: 'Булгур с индейкой и овощами', meals: 'ld', min: 25,
-      ing: [['bulgur', 90], ['turkey', 180], ['frozen_veg', 150], ['olive_oil', 10]],
-      steps: ['Залей булгур кипятком 1:2 и оставь под крышкой на 15 минут.', 'Обжарь индейку, добавь овощи, туши 7 минут.', 'Смешай с булгуром.'] },
-    { id: 'lentil_beef', name: 'Чечевица с говядиной', meals: 'ld', min: 45,
-      ing: [['lentils', 80], ['beef', 120], ['carrot', 60], ['onion', 40], ['tomato_paste', 30], ['sunflower_oil', 10]],
-      steps: ['Обжарь говядину кусочками, добавь лук и морковь.', 'Всыпь промытую чечевицу, томатную пасту и 400 мл воды.', 'Туши 30 минут до мягкости.'] },
-    { id: 'cabbage_pork', name: 'Тушёная капуста со свининой и картофелем', meals: 'ld', min: 45,
-      ing: [['cabbage', 250], ['pork', 150], ['potato', 200], ['carrot', 50], ['sunflower_oil', 10]],
-      steps: ['Обжарь свинину кусочками.', 'Добавь нашинкованную капусту, морковь и картофель кубиками.', 'Влей 100 мл воды, туши под крышкой 30 минут.'] },
-    { id: 'tuna_pasta', name: 'Паста с тунцом и помидорами', meals: 'ld', min: 20,
-      ing: [['pasta', 100], ['tuna_can', 140], ['tomato', 150], ['olive_oil', 10], ['cheese', 20, 1]],
-      steps: ['Отвари пасту.', 'Обжарь нарезанные помидоры на масле 3 минуты, добавь тунец.', 'Смешай с пастой, сверху сыр.'] },
-    { id: 'shawarma', name: 'Домашняя шаурма с курицей', meals: 'lds', min: 20,
-      ing: [['lavash', 90], ['chicken_breast', 150], ['cabbage', 80], ['tomato', 80], ['cucumber', 60], ['smetana', 40]],
-      steps: ['Обжарь курицу полосками со специями.', 'Смажь лаваш сметаной, выложи курицу и овощи.', 'Сверни и подрумянь на сухой сковороде по минуте с каждой стороны.'] },
-    { id: 'egg_sandwich', name: 'Бутерброды с яйцом и сыром', meals: 'sb', min: 12,
-      ing: [['bread', 90], ['eggs', 110], ['cheese', 30], ['cucumber', 80]],
-      steps: ['Свари яйца вкрутую (9 минут).', 'Собери бутерброды: хлеб, сыр, яйцо, огурец.'] },
-    { id: 'kefir_snack', name: 'Кефир, банан и миндаль', meals: 's', min: 1,
-      ing: [['kefir', 400], ['banana', 120], ['almonds', 25]],
-      steps: ['Ничего готовить не нужно: стакан кефира, банан и горсть миндаля.'] },
-    { id: 'yogurt_bowl', name: 'Греческий йогурт с овсянкой и мёдом', meals: 'sb', min: 3,
-      ing: [['yogurt', 200], ['oats', 40], ['honey', 15], ['frozen_berries', 100, 1]],
-      steps: ['Смешай йогурт с хлопьями, оставь на 5 минут.', 'Добавь мёд и ягоды.'] },
-    { id: 'chickpea_curry', name: 'Нут с курицей в томатах', meals: 'ld', min: 30,
-      ing: [['chickpeas', 70], ['chicken_breast', 150], ['tomato', 150], ['onion', 50], ['olive_oil', 10]],
-      steps: ['Замочи нут на ночь и отвари 60 минут (или возьми варёный).', 'Обжарь лук и курицу, добавь помидоры и специи (карри, паприка).', 'Добавь нут, туши 10 минут.'] },
-    { id: 'chili', name: 'Чили с фасолью и рисом', meals: 'ld', min: 30,
-      ing: [['beans_can', 200], ['minced_beef', 130], ['tomato_paste', 40], ['onion', 50], ['rice', 60]],
-      steps: ['Отвари рис.', 'Обжарь лук и фарш, добавь томатную пасту, фасоль и 100 мл воды.', 'Туши 15 минут, подавай с рисом.'] },
-    { id: 'potato_eggs', name: 'Жареная картошка с яйцами', meals: 'ld', min: 25,
-      ing: [['potato', 300], ['eggs', 110], ['sunflower_oil', 12], ['cucumber', 100]],
-      steps: ['Обжарь картофель соломкой на масле 15 минут, помешивая.', 'Разбей сверху яйца, накрой крышкой на 3 минуты.', 'Подавай со свежим огурцом.'] },
-    { id: 'pb_toast', name: 'Тосты с арахисовой пастой, банан и молоко', meals: 'sb', min: 5,
-      ing: [['bread', 60], ['peanut_butter', 25], ['banana', 120], ['milk', 250]],
-      steps: ['Подсуши хлеб, намажь пастой, сверху кружочки банана.', 'Запивай стаканом молока.'] },
-    { id: 'rice_porridge', name: 'Рисовая каша на молоке', meals: 'b', min: 25,
-      ing: [['rice', 60], ['milk', 300], ['butter', 10], ['raisins', 25, 1]],
-      steps: ['Отвари рис в 150 мл воды 10 минут.', 'Влей молоко, вари ещё 10–15 минут, помешивая.', 'Добавь масло и изюм.'] },
-    { id: 'buck_milk', name: 'Гречка с молоком и мёдом', meals: 'b', min: 20,
-      ing: [['buckwheat', 70], ['milk', 250], ['butter', 10], ['honey', 10]],
-      steps: ['Свари гречку (1:2, 15 минут).', 'Залей горячим молоком, добавь масло и мёд.'] },
-    { id: 'thigh_potato', name: 'Курица с запечённым картофелем и салатом', meals: 'ld', min: 45,
-      ing: [['chicken_thigh', 200], ['potato', 300], ['tomato', 100], ['cucumber', 100], ['olive_oil', 10]],
-      steps: ['Замаринуй бёдра (соль, паприка, чеснок).', 'Запекай с дольками картофеля 35 минут при 200 °C.', 'Нарежь салат из помидора и огурца, заправь маслом.'] },
-    { id: 'mushroom_buck', name: 'Гречка с грибами и говядиной', meals: 'ld', min: 35,
-      ing: [['buckwheat', 80], ['beef', 130], ['mushrooms', 150], ['onion', 40], ['sunflower_oil', 10]],
-      steps: ['Свари гречку.', 'Обжарь говядину тонкими полосками 5 минут, добавь лук и грибы.', 'Туши 10 минут, смешай с гречкой.'] },
+    // ───────────── завтраки ─────────────
+    R('oat_pb', 'Овсянка на молоке с бананом и арахисовой пастой', 'b', 10, [],
+      [['oats', 80], ['milk', 250], ['banana', 120], ['peanut_butter', 20], ['honey', 10, 1]],
+      ['Залей хлопья молоком, вари 5–7 минут на слабом огне, помешивая.', 'Сверху — нарезанный банан и арахисовая паста. Мёд по желанию.']),
+    R('omelet', 'Омлет с сыром и цельнозерновым хлебом', 'bd', 12, [],
+      [['eggs', 165], ['milk', 50], ['cheese', 30], ['bread', 60], ['butter', 5], ['tomato', 100, 1]],
+      ['Взбей яйца с молоком и щепоткой соли.', 'Растопи масло, вылей смесь, накрой крышкой на 4–5 минут.', 'Посыпь тёртым сыром за минуту до готовности. Подавай с хлебом и помидором.']),
+    R('syrniki', 'Сырники на овсяной муке', 'bs', 20, [],
+      [['cottage5', 200], ['eggs', 55], ['oats', 40], ['sunflower_oil', 5], ['smetana', 30], ['raisins', 20, 1]],
+      ['Измельчи хлопья в блендере в муку (или возьми их как есть).', 'Смешай творог, яйцо, хлопья (и изюм), сформируй 5–6 сырников.', 'Обжарь на капле масла по 3 минуты с каждой стороны. Подавай со сметаной.']),
+    R('rice_porridge', 'Рисовая каша на молоке', 'b', 25, [],
+      [['rice', 60], ['milk', 300], ['butter', 10], ['raisins', 25, 1]],
+      ['Отвари рис в 150 мл воды 10 минут.', 'Влей молоко, вари ещё 10–15 минут, помешивая.', 'Добавь масло и изюм.']),
+    R('buck_milk', 'Гречка с молоком и мёдом', 'b', 20, [],
+      [['buckwheat', 70], ['milk', 250], ['butter', 10], ['honey', 10]],
+      ['Свари гречку (1:2, 15 минут).', 'Залей горячим молоком, добавь масло и мёд.']),
+    R('overnight_oats', 'Ленивая овсянка в банке', 'b', 5, ['nocook'],
+      [['oats', 70], ['milk', 200], ['yogurt', 100], ['banana', 120], ['honey', 10, 1], ['walnuts', 15, 1]],
+      ['Вечером смешай в банке хлопья, молоко и йогурт, закрой и убери в холодильник.', 'Утром добавь нарезанный банан, орехи и мёд. Ешь холодной или подогрей минуту в микроволновке.']),
+    R('scrambled_toast', 'Скрэмбл на тостах', 'b', 10, [],
+      [['eggs', 165], ['butter', 5], ['bread', 90], ['cheese', 20, 1], ['tomato', 100, 1]],
+      ['Взбей яйца со щепоткой соли.', 'На сливочном масле помешивай лопаткой на слабом огне 2–3 минуты и сними, пока яйца ещё влажные.', 'Выложи на поджаренный хлеб, сверху тёртый сыр.']),
+    R('shakshuka', 'Шакшука', 'bd', 20, [],
+      [['eggs', 165], ['canned_tomatoes', 300], ['onion', 50], ['bell_pepper', 100], ['olive_oil', 10], ['bread', 60]],
+      ['Обжарь лук и перец на масле 5 минут.', 'Добавь томаты, соль и паприку, туши 7 минут, пока соус не загустеет.', 'Сделай ложкой углубления, разбей в них яйца, накрой крышкой на 5–6 минут. Ешь с хлебом.']),
+    R('oat_crepe', 'Овсяноблин с сыром', 'b', 10, [],
+      [['oats', 50], ['eggs', 110], ['milk', 50], ['cheese', 30], ['butter', 5]],
+      ['Взбей яйца с молоком и хлопьями, дай постоять 5 минут.', 'Вылей на сковороду с маслом, жарь 3 минуты под крышкой и переверни.', 'Посыпь сыром и сложи пополам.']),
+    R('banana_pancakes', 'Банановые панкейки', 'b', 15, [],
+      [['banana', 120], ['eggs', 110], ['oats', 50], ['sunflower_oil', 5], ['honey', 15, 1], ['yogurt', 100, 1]],
+      ['Разомни банан вилкой, смешай с яйцами и хлопьями.', 'Жарь небольшие оладьи на капле масла по 2 минуты с каждой стороны.', 'Подавай с йогуртом и мёдом.']),
+    R('granola_yogurt', 'Гранола с йогуртом и ягодами', 'bs', 2, ['nocook'],
+      [['yogurt', 200], ['granola', 60], ['frozen_berries', 100, 1], ['honey', 10, 1]],
+      ['Выложи йогурт, сверху гранолу и ягоды, полей мёдом.']),
+    R('skyr_bowl', 'Скир с бананом и арахисовой пастой', 'bs', 3, ['nocook', 'night'],
+      [['skyr', 250], ['banana', 120], ['peanut_butter', 20], ['granola', 30, 1]],
+      ['Выложи скир в миску, добавь нарезанный банан и арахисовую пасту.', 'Для хруста — немного гранолы.']),
+    R('avocado_toast_egg', 'Тосты с авокадо и яйцом', 'b', 10, [],
+      [['bread', 90], ['avocado', 70], ['eggs', 110], ['tomato', 80, 1]],
+      ['Подсуши хлеб на сухой сковороде или в тостере.', 'Разомни авокадо с солью и лимонным соком, намажь на хлеб.', 'Сверху — жареные яйца и ломтики помидора.']),
+    R('quinoa_porridge', 'Киноа на молоке с бананом', 'b', 20, [],
+      [['quinoa', 70], ['milk', 250], ['banana', 120], ['honey', 10], ['walnuts', 15, 1]],
+      ['Промой киноа и вари в молоке на слабом огне 15 минут, помешивая.', 'Добавь банан, мёд и орехи.']),
+    R('cottage_casserole', 'Творожная запеканка', 'bs', 40, ['oven'],
+      [['cottage5', 250], ['eggs', 55], ['oats', 30], ['smetana', 30], ['raisins', 20, 1], ['honey', 10, 1]],
+      ['Смешай творог, яйцо, хлопья, мёд и изюм.', 'Выложи в форму, сверху смажь сметаной.', 'Запекай 30 минут при 180 °C. В холодильнике хранится 2–3 дня — удобно приготовить сразу на несколько завтраков.']),
+    R('egg_wrap', 'Яичный ролл в тортилье', 'bl', 10, [],
+      [['tortilla', 60], ['eggs', 110], ['cheese', 30], ['bell_pepper', 60, 1], ['spinach', 30, 1]],
+      ['Взбей яйца, вылей на сковороду и сразу накрой тортильей.', 'Через минуту переверни, посыпь сыром и овощами.', 'Сверни рулетом.']),
+    R('breakfast_burrito', 'Буррито на завтрак', 'bl', 15, [],
+      [['tortilla', 60], ['eggs', 110], ['beans_can', 100], ['cheese', 30], ['tomato', 80, 1]],
+      ['Пожарь яйца-болтунью.', 'Прогрей фасоль 2 минуты на сковороде.', 'Выложи на тортилью яйца, фасоль, сыр и помидор, сверни конвертом.']),
+    R('buckwheat_eggs', 'Гречка с яйцами и маслом', 'bl', 20, [],
+      [['buckwheat', 70], ['eggs', 110], ['butter', 10], ['cucumber', 100, 1]],
+      ['Свари гречку (1:2, 15 минут), заправь маслом.', 'Свари яйца всмятку или пожарь глазунью.']),
+    R('oat_cottage', 'Овсянка с творогом и ягодами', 'b', 10, [],
+      [['oats', 60], ['milk', 200], ['cottage5', 150], ['honey', 10], ['frozen_berries', 80, 1]],
+      ['Свари овсянку на молоке за 5 минут.', 'Сними с огня, вмешай творог и мёд, сверху ягоды.']),
+    R('cheese_sandwich_milk', 'Бутерброды с сыром и стакан молока', 'bs', 3, ['nocook'],
+      [['bread', 90], ['butter', 10], ['cheese', 40], ['milk', 250]],
+      ['Намажь хлеб маслом, положи сыр.', 'Запивай стаканом молока.']),
+    R('muesli_milk', 'Гранола с молоком', 'b', 2, ['nocook'],
+      [['granola', 70], ['milk_whole', 250], ['banana', 120, 1]],
+      ['Залей гранолу молоком, добавь нарезанный банан.']),
+    R('french_toast', 'Французские тосты', 'b', 15, [],
+      [['bread', 90], ['eggs', 110], ['milk', 80], ['butter', 10], ['honey', 15], ['frozen_berries', 80, 1]],
+      ['Взбей яйца с молоком.', 'Обмакни ломтики хлеба и обжарь на сливочном масле по 2 минуты с каждой стороны.', 'Полей мёдом, добавь ягоды.']),
+    R('omelet_veg_feta', 'Омлет с овощами и фетой', 'bd', 15, [],
+      [['eggs', 165], ['bell_pepper', 80], ['spinach', 50], ['feta', 40], ['olive_oil', 5], ['bread', 60]],
+      ['Обжарь перец 3 минуты, добавь шпинат на минуту.', 'Залей взбитыми яйцами, раскроши фету, накрой крышкой на 4 минуты.', 'Подавай с хлебом.']),
+    R('tofu_scramble', 'Скрэмбл из тофу с овощами', 'bl', 15, [],
+      [['tofu', 200], ['bell_pepper', 80], ['spinach', 50], ['olive_oil', 10], ['bread', 60]],
+      ['Раскроши тофу руками.', 'Обжарь перец на масле, добавь тофу, куркуму и соль, жарь 5 минут.', 'В конце добавь шпинат. Подавай с хлебом.']),
+    R('eggs_beans_toast', 'Яйца с фасолью в томате на тосте', 'bl', 15, [],
+      [['beans_can', 150], ['canned_tomatoes', 100], ['eggs', 110], ['bread', 60]],
+      ['Прогрей фасоль с томатами 5 минут, посоли и поперчи.', 'Пожарь яйца.', 'Выложи на тост фасоль и яйца.']),
+    R('couscous_milk', 'Кускус на молоке с изюмом', 'b', 7, [],
+      [['couscous', 60], ['milk', 250], ['raisins', 25], ['butter', 5]],
+      ['Вскипяти молоко, всыпь кускус и сними с огня.', 'Накрой крышкой на 5 минут, добавь изюм и масло.']),
+
+    // ───────────── обеды и ужины ─────────────
+    R('buck_chicken', 'Гречка с курицей и овощами', 'ld', 25, [],
+      [['buckwheat', 90], ['chicken_breast', 180], ['frozen_veg', 150], ['sunflower_oil', 10]],
+      ['Свари гречку (1 часть крупы на 2 части воды, 15 минут).', 'Нарежь курицу кубиками, обжарь на масле 6–7 минут.', 'Добавь овощи, туши ещё 7 минут под крышкой. Смешай с гречкой.']),
+    R('rice_chicken', 'Рис с курицей и брокколи', 'ld', 25, [],
+      [['rice', 90], ['chicken_breast', 180], ['broccoli', 150], ['olive_oil', 10]],
+      ['Отвари рис (1:2, 15–18 минут).', 'Обжарь курицу на масле до золотистой корочки.', 'Брокколи свари на пару или в кипятке 4 минуты.']),
+    R('navy_pasta', 'Макароны по-флотски', 'ld', 25, [],
+      [['pasta', 100], ['minced_beef', 150], ['onion', 50], ['sunflower_oil', 5], ['tomato_paste', 30, 1]],
+      ['Отвари макароны.', 'Обжарь лук, добавь фарш, жарь 10 минут, разбивая комочки.', 'Добавь томатную пасту, смешай с макаронами.']),
+    R('plov', 'Плов с курицей', 'ld', 40, [],
+      [['rice', 90], ['chicken_thigh', 180], ['carrot', 80], ['onion', 50], ['sunflower_oil', 10]],
+      ['Обжарь курицу кусками, добавь лук и морковь соломкой.', 'Всыпь промытый рис, залей водой на 1,5 см выше.', 'Туши под крышкой на слабом огне 20–25 минут, не мешая.']),
+    R('fish_potato', 'Запечённая рыба с картофелем', 'ld', 40, ['oven'],
+      [['potato', 300], ['fish_white', 220], ['olive_oil', 10], ['smetana', 30, 1]],
+      ['Нарежь картофель дольками, сбрызни маслом, запекай 20 минут при 200 °C.', 'Добавь рыбу (соль, перец, лимон), запекай ещё 15 минут.']),
+    R('salmon_rice', 'Лосось с рисом и огурцом', 'ld', 25, [],
+      [['rice', 80], ['salmon', 150], ['cucumber', 150], ['olive_oil', 5]],
+      ['Отвари рис.', 'Запеки рыбу 15 минут при 200 °C или обжарь по 4 минуты с каждой стороны.', 'Подавай с нарезанным огурцом.']),
+    R('bulgur_turkey', 'Булгур с индейкой и овощами', 'ld', 25, [],
+      [['bulgur', 90], ['turkey', 180], ['frozen_veg', 150], ['olive_oil', 10]],
+      ['Залей булгур кипятком 1:2 и оставь под крышкой на 15 минут.', 'Обжарь индейку, добавь овощи, туши 7 минут.', 'Смешай с булгуром.']),
+    R('lentil_beef', 'Чечевица с говядиной', 'ld', 45, [],
+      [['lentils', 80], ['beef', 120], ['carrot', 60], ['onion', 40], ['tomato_paste', 30], ['sunflower_oil', 10]],
+      ['Обжарь говядину кусочками, добавь лук и морковь.', 'Всыпь промытую чечевицу, томатную пасту и 400 мл воды.', 'Туши 30 минут до мягкости.']),
+    R('cabbage_pork', 'Тушёная капуста со свининой и картофелем', 'ld', 45, [],
+      [['cabbage', 250], ['pork', 150], ['potato', 200], ['carrot', 50], ['sunflower_oil', 10]],
+      ['Обжарь свинину кусочками.', 'Добавь нашинкованную капусту, морковь и картофель кубиками.', 'Влей 100 мл воды, туши под крышкой 30 минут.']),
+    R('tuna_pasta', 'Паста с тунцом и помидорами', 'ld', 20, [],
+      [['pasta', 100], ['tuna_can', 140], ['tomato', 150], ['olive_oil', 10], ['cheese', 20, 1]],
+      ['Отвари пасту.', 'Обжарь нарезанные помидоры на масле 3 минуты, добавь тунец.', 'Смешай с пастой, сверху сыр.']),
+    R('shawarma', 'Домашняя шаурма с курицей', 'lds', 20, [],
+      [['lavash', 90], ['chicken_breast', 150], ['cabbage', 80], ['tomato', 80], ['cucumber', 60], ['smetana', 40]],
+      ['Обжарь курицу полосками со специями.', 'Смажь лаваш сметаной, выложи курицу и овощи.', 'Сверни и подрумянь на сухой сковороде по минуте с каждой стороны.']),
+    R('chickpea_curry', 'Нут с курицей в томатах', 'ld', 30, [],
+      [['chickpeas', 70], ['chicken_breast', 150], ['tomato', 150], ['onion', 50], ['olive_oil', 10]],
+      ['Замочи нут на ночь и отвари 60 минут (или возьми консервированный).', 'Обжарь лук и курицу, добавь помидоры и специи (карри, паприка).', 'Добавь нут, туши 10 минут.']),
+    R('chili', 'Чили с фасолью и рисом', 'ld', 30, [],
+      [['beans_can', 200], ['minced_beef', 130], ['tomato_paste', 40], ['onion', 50], ['rice', 60]],
+      ['Отвари рис.', 'Обжарь лук и фарш, добавь томатную пасту, фасоль и 100 мл воды.', 'Туши 15 минут, подавай с рисом.']),
+    R('potato_eggs', 'Жареная картошка с яйцами', 'ld', 25, [],
+      [['potato', 300], ['eggs', 110], ['sunflower_oil', 12], ['cucumber', 100]],
+      ['Обжарь картофель соломкой на масле 15 минут, помешивая.', 'Разбей сверху яйца, накрой крышкой на 3 минуты.', 'Подавай со свежим огурцом.']),
+    R('thigh_potato', 'Курица с запечённым картофелем и салатом', 'ld', 45, ['oven'],
+      [['chicken_thigh', 200], ['potato', 300], ['tomato', 100], ['cucumber', 100], ['olive_oil', 10]],
+      ['Замаринуй бёдра (соль, паприка, чеснок).', 'Запекай с дольками картофеля 35 минут при 200 °C.', 'Нарежь салат из помидора и огурца, заправь маслом.']),
+    R('mushroom_buck', 'Гречка с грибами и говядиной', 'ld', 35, [],
+      [['buckwheat', 80], ['beef', 130], ['mushrooms', 150], ['onion', 40], ['sunflower_oil', 10]],
+      ['Свари гречку.', 'Обжарь говядину тонкими полосками 5 минут, добавь лук и грибы.', 'Туши 10 минут, смешай с гречкой.']),
+    R('chicken_quinoa', 'Киноа с курицей и овощами', 'ld', 25, [],
+      [['quinoa', 80], ['chicken_breast', 170], ['bell_pepper', 100], ['zucchini', 100], ['olive_oil', 10]],
+      ['Промой киноа и свари (1:2, 15 минут).', 'Обжарь курицу кубиками 6 минут, добавь перец и кабачок, жарь ещё 5 минут.', 'Смешай с киноа.']),
+    R('couscous_chicken', 'Кускус с курицей и нутом', 'ld', 20, [],
+      [['couscous', 80], ['chicken_breast', 150], ['chickpeas_can', 80], ['tomato', 100], ['olive_oil', 10]],
+      ['Залей кускус кипятком (1:1,5), накрой на 5 минут.', 'Обжарь курицу кубиками со специями 6 минут, добавь нут и помидор, прогрей 2 минуты.', 'Смешай с кускусом.']),
+    R('chicken_wrap', 'Ролл с курицей и овощами', 'lds', 15, [],
+      [['tortilla', 120], ['chicken_breast', 150], ['tomato', 80], ['cucumber', 60], ['yogurt', 50], ['cheese', 20, 1]],
+      ['Обжарь курицу полосками со специями 6–7 минут.', 'Смажь тортильи йогуртом с солью и чесноком.', 'Выложи курицу, овощи и сыр, сверни.']),
+    R('beef_burrito', 'Буррито с говядиной и фасолью', 'ld', 25, [],
+      [['tortilla', 120], ['minced_beef', 120], ['beans_can', 120], ['rice', 50], ['cheese', 30], ['tomato', 80]],
+      ['Отвари рис.', 'Обжарь фарш 8–10 минут, добавь фасоль и специи (паприка, кумин), прогрей.', 'Разложи по тортильям рис, начинку, сыр и помидор, сверни.']),
+    R('quesadilla', 'Кесадилья с курицей и сыром', 'lds', 15, [],
+      [['tortilla', 120], ['chicken_breast', 120], ['cheese', 50], ['bell_pepper', 60], ['sunflower_oil', 5, 1]],
+      ['Обжарь курицу и перец полосками 6 минут.', 'Положи на тортилью сыр и начинку, накрой второй тортильей.', 'Подрумянь на сухой сковороде по 2 минуты с каждой стороны, разрежь на треугольники.']),
+    R('pasta_bolognese', 'Паста болоньезе', 'ld', 30, [],
+      [['pasta', 100], ['minced_beef', 130], ['canned_tomatoes', 200], ['onion', 50], ['carrot', 50], ['olive_oil', 10], ['cheese', 20, 1]],
+      ['Обжарь мелко нарезанные лук и морковь 5 минут.', 'Добавь фарш, жарь 7 минут, затем томаты, туши 15 минут.', 'Смешай с отваренной пастой, посыпь сыром.']),
+    R('pasta_egg_cheese', 'Паста с яйцом и сыром', 'ld', 15, [],
+      [['pasta', 100], ['eggs', 110], ['cheese', 40], ['butter', 5]],
+      ['Отвари пасту, оставь полстакана воды от варки.', 'Взбей яйца с тёртым сыром и перцем.', 'Сними пасту с огня, сразу вмешай яичную смесь и немного воды: соус загустеет от тепла пасты.']),
+    R('pasta_chicken_cream', 'Паста с курицей и грибами в сметанном соусе', 'ld', 25, [],
+      [['pasta', 100], ['chicken_breast', 150], ['smetana', 60], ['cheese', 20], ['butter', 5], ['mushrooms', 100, 1]],
+      ['Обжарь курицу и грибы на масле 8 минут.', 'Добавь сметану и 50 мл воды, прогрей 2 минуты, не давая бурно кипеть.', 'Смешай с отваренной пастой, посыпь сыром.']),
+    R('pasta_shrimp', 'Паста с креветками и томатами', 'ld', 20, [],
+      [['pasta', 100], ['shrimp', 150], ['canned_tomatoes', 150], ['olive_oil', 10], ['spinach', 50, 1]],
+      ['Отвари пасту.', 'Обжарь креветки на масле с чесноком 2–3 минуты, пока не порозовеют.', 'Добавь томаты и шпинат, прогрей 3 минуты, смешай с пастой.']),
+    R('rice_noodles_chicken', 'Рисовая лапша с курицей и овощами', 'ld', 20, [],
+      [['rice_noodles', 90], ['chicken_breast', 150], ['frozen_veg', 150], ['sunflower_oil', 10], ['peanuts', 15, 1]],
+      ['Залей лапшу кипятком на 5–7 минут (смотри упаковку) и слей воду.', 'На сильном огне обжарь курицу 5 минут, добавь овощи, жарь ещё 4 минуты.', 'Добавь лапшу и соевый соус, перемешай, посыпь арахисом.']),
+    R('tofu_rice', 'Тофу с рисом и брокколи', 'ld', 25, [],
+      [['tofu', 200], ['rice', 80], ['broccoli', 150], ['sunflower_oil', 10]],
+      ['Отвари рис.', 'Нарежь тофу кубиками и обжарь до корочки, около 8 минут.', 'Добавь брокколи и соевый соус, туши 4 минуты.']),
+    R('shrimp_fried_rice', 'Жареный рис с креветками и яйцом', 'ld', 20, [],
+      [['rice', 90], ['shrimp', 120], ['eggs', 55], ['frozen_veg', 100], ['sunflower_oil', 10]],
+      ['Отвари рис заранее и остуди: вчерашний рис жарится лучше всего.', 'Обжарь креветки 2 минуты, отодвинь, разбей яйцо и перемешай.', 'Добавь овощи и рис, жарь на сильном огне 4 минуты, заправь соевым соусом.']),
+    R('chicken_fried_rice', 'Жареный рис с курицей и яйцом', 'ld', 20, [],
+      [['rice', 90], ['chicken_breast', 120], ['eggs', 55], ['frozen_veg', 100], ['sunflower_oil', 10]],
+      ['Отвари рис заранее и остуди.', 'Обжарь курицу кубиками 5 минут, добавь яйцо и перемешай.', 'Добавь овощи и рис, жарь 4 минуты на сильном огне, заправь соевым соусом.']),
+    R('beef_stroganoff', 'Бефстроганов с гречкой', 'ld', 35, [],
+      [['beef', 150], ['onion', 50], ['smetana', 50], ['buckwheat', 80], ['sunflower_oil', 10]],
+      ['Свари гречку.', 'Нарежь говядину тонкой соломкой, обжарь на сильном огне 3–4 минуты, добавь лук.', 'Влей сметану и 50 мл воды, туши 10 минут на слабом огне.']),
+    R('meatballs_rice', 'Тефтели в томатном соусе с рисом', 'ld', 40, [],
+      [['minced_beef', 150], ['rice', 80], ['onion', 40], ['carrot', 40], ['tomato_paste', 30]],
+      ['Отвари рис 10 минут. Треть смешай с фаршем и тёртым луком, скатай тефтели.', 'Обжарь морковь, добавь томатную пасту и 300 мл воды.', 'Положи тефтели в соус и туши под крышкой 20 минут. Подавай с оставшимся рисом.']),
+    R('cutlets_puree', 'Котлеты с картофельным пюре', 'ld', 40, [],
+      [['minced_beef', 150], ['eggs', 55], ['onion', 30], ['potato', 300], ['milk', 50], ['butter', 10]],
+      ['Смешай фарш с яйцом и тёртым луком, посоли, сформируй 3 котлеты.', 'Жарь под крышкой по 5–6 минут с каждой стороны.', 'Отвари картофель 20 минут, разомни с горячим молоком и маслом.']),
+    R('chicken_puree', 'Курица с картофельным пюре и огурцом', 'ld', 30, [],
+      [['chicken_breast', 180], ['potato', 300], ['milk', 50], ['butter', 10], ['cucumber', 100]],
+      ['Отвари картофель, разомни с молоком и маслом.', 'Обжарь грудку со специями по 6 минут с каждой стороны.', 'Подавай с огурцом.']),
+    R('chicken_sweet_potato', 'Курица с бататом в духовке', 'ld', 40, ['oven'],
+      [['chicken_thigh', 200], ['sweet_potato', 300], ['olive_oil', 10], ['broccoli', 100, 1]],
+      ['Нарежь батат дольками, курицу кусками, перемешай с маслом, солью и паприкой.', 'Запекай 30–35 минут при 200 °C.', 'Брокколи добавь на противень за 10 минут до конца.']),
+    R('salmon_sweet_potato', 'Лосось с бататом и шпинатом', 'ld', 35, ['oven'],
+      [['salmon', 150], ['sweet_potato', 250], ['spinach', 80], ['olive_oil', 5]],
+      ['Запекай батат дольками 20 минут при 200 °C.', 'Добавь лосось и запекай ещё 12–15 минут.', 'Шпинат быстро обжарь или подай свежим.']),
+    R('fish_rice_veg', 'Рыба с рисом и овощами', 'ld', 25, [],
+      [['fish_white', 220], ['rice', 80], ['frozen_veg', 150], ['butter', 10]],
+      ['Отвари рис.', 'Обжарь рыбу на масле по 3–4 минуты с каждой стороны.', 'Овощи потуши под крышкой 7 минут.']),
+    R('tuna_bowl', 'Боул с тунцом, рисом и авокадо', 'ld', 20, [],
+      [['rice', 80], ['tuna_can', 140], ['cucumber', 100], ['avocado', 70], ['corn_can', 60, 1]],
+      ['Отвари рис и остуди.', 'Выложи в миску рис, тунец, огурец, авокадо и кукурузу.', 'Заправь соевым соусом или лимонным соком.']),
+    R('chicken_caesar', 'Салат с курицей, яйцом и сухариками', 'ld', 20, [],
+      [['chicken_breast', 150], ['eggs', 55], ['cucumber', 100], ['tomato', 100], ['cheese', 20], ['olive_oil', 10], ['bread', 60]],
+      ['Обжарь курицу и нарежь.', 'Подсуши кубики хлеба на сухой сковороде.', 'Смешай овощи, курицу, яйцо, сыр и сухарики, заправь маслом.']),
+    R('greek_salad_chicken', 'Греческий салат с курицей', 'ld', 20, [],
+      [['chicken_breast', 150], ['tomato', 150], ['cucumber', 150], ['feta', 50], ['olive_oil', 10], ['bread', 60]],
+      ['Обжарь курицу со специями и нарежь.', 'Крупно нарежь помидоры и огурцы, добавь фету.', 'Заправь маслом, ешь с хлебом.']),
+    R('lentil_soup', 'Чечевичный суп', 'ld', 40, [],
+      [['lentils', 80], ['potato', 100], ['carrot', 60], ['onion', 50], ['sunflower_oil', 10], ['bread', 60]],
+      ['Обжарь лук и морковь 5 минут.', 'Добавь чечевицу, картофель кубиками и 700 мл воды, вари 25 минут.', 'Посоли, при желании измельчи блендером. Подавай с хлебом.']),
+    R('chicken_noodle_soup', 'Куриный суп с лапшой', 'ld', 40, [],
+      [['chicken_thigh', 150], ['pasta', 50], ['potato', 100], ['carrot', 50], ['onion', 40], ['bread', 60, 1]],
+      ['Вари курицу в 1 л воды 20 минут, снимая пену.', 'Добавь картофель, морковь и лук, вари 10 минут.', 'Добавь лапшу и вари ещё 6–7 минут.']),
+    R('borscht', 'Борщ с говядиной', 'ld', 70, [],
+      [['beef', 120], ['beet', 120], ['cabbage', 150], ['potato', 100], ['carrot', 50], ['onion', 40], ['tomato_paste', 30], ['bread', 60], ['smetana', 30, 1]],
+      ['Вари говядину в 1,2 л воды 40 минут.', 'Обжарь лук, морковь и тёртую свёклу с томатной пастой 7 минут.', 'Добавь в бульон картофель, через 10 минут — капусту и зажарку, вари ещё 10 минут. Подавай со сметаной.']),
+    R('shchi', 'Щи со свининой', 'ld', 50, [],
+      [['pork', 120], ['cabbage', 200], ['potato', 100], ['carrot', 50], ['onion', 40], ['bread', 60], ['smetana', 30, 1]],
+      ['Вари свинину кусочками в 1 л воды 25 минут.', 'Добавь картофель и капусту, через 10 минут — обжаренные лук и морковь.', 'Вари ещё 10 минут, подавай со сметаной.']),
+    R('bean_soup', 'Фасолевый суп с томатами', 'ld', 30, [],
+      [['beans_can', 200], ['potato', 100], ['carrot', 50], ['onion', 40], ['canned_tomatoes', 150], ['olive_oil', 10], ['bread', 60]],
+      ['Обжарь лук и морковь.', 'Добавь картофель, томаты и 600 мл воды, вари 15 минут.', 'Добавь фасоль и вари ещё 5 минут.']),
+    R('goulash_pasta', 'Гуляш с макаронами', 'ld', 60, [],
+      [['beef', 150], ['onion', 50], ['tomato_paste', 30], ['pasta', 90], ['sunflower_oil', 10], ['bell_pepper', 80, 1]],
+      ['Обжарь говядину кубиками 5 минут, добавь лук и перец.', 'Добавь томатную пасту, паприку и 300 мл воды, туши под крышкой 45 минут.', 'Подавай с макаронами.']),
+    R('pork_buckwheat', 'Гречка по-купечески со свининой', 'ld', 40, [],
+      [['pork', 150], ['buckwheat', 80], ['onion', 40], ['carrot', 50], ['sunflower_oil', 10], ['tomato_paste', 20, 1]],
+      ['Обжарь свинину кусочками 7 минут, добавь лук и морковь.', 'Всыпь промытую гречку, влей 200 мл воды, добавь томатную пасту.', 'Туши под крышкой 20 минут.']),
+    R('turkey_couscous', 'Индейка в томатах с кускусом', 'ld', 25, [],
+      [['turkey', 170], ['canned_tomatoes', 200], ['onion', 40], ['couscous', 80], ['olive_oil', 10]],
+      ['Обжарь индейку кубиками с луком 7 минут.', 'Добавь томаты и туши 10 минут.', 'Кускус залей кипятком на 5 минут и подавай вместе.']),
+    R('chicken_curry_rice', 'Курица карри с рисом', 'ld', 30, [],
+      [['chicken_breast', 170], ['rice', 80], ['onion', 50], ['yogurt', 100], ['tomato_paste', 20], ['sunflower_oil', 10]],
+      ['Отвари рис.', 'Обжарь лук и курицу 7 минут, добавь карри и томатную пасту.', 'Сними с огня и вмешай йогурт. Подавай с рисом.']),
+    R('stuffed_peppers', 'Фаршированные перцы', 'ld', 60, [],
+      [['bell_pepper', 300], ['minced_beef', 120], ['rice', 50], ['onion', 40], ['tomato_paste', 30], ['smetana', 30, 1]],
+      ['Отвари рис 10 минут, смешай с фаршем и луком.', 'Начини очищенные от семян перцы.', 'Залей до половины водой с томатной пастой, туши под крышкой 40 минут.']),
+    R('lazy_golubtsy', 'Ленивые голубцы', 'ld', 50, [],
+      [['minced_beef', 130], ['cabbage', 150], ['rice', 60], ['onion', 40], ['carrot', 40], ['tomato_paste', 30], ['smetana', 30, 1]],
+      ['Мелко нашинкуй капусту, смешай с фаршем, промытым рисом и луком.', 'Сформируй котлеты и обжарь с двух сторон.', 'Залей соусом из томатной пасты, моркови и 300 мл воды, туши 30 минут.']),
+    R('chicken_potato_mushrooms', 'Курица с картошкой и грибами', 'ld', 35, [],
+      [['chicken_thigh', 150], ['potato', 300], ['mushrooms', 150], ['onion', 40], ['sunflower_oil', 12], ['smetana', 30, 1]],
+      ['Обжарь картофель брусочками 10 минут.', 'Добавь курицу, грибы и лук, жарь ещё 15 минут, помешивая.', 'Подавай со сметаной.']),
+    R('chicken_zucchini_rice', 'Курица с кабачками и рисом', 'ld', 25, [],
+      [['chicken_breast', 170], ['zucchini', 200], ['rice', 80], ['olive_oil', 10], ['cheese', 20, 1]],
+      ['Отвари рис.', 'Обжарь курицу 6 минут, добавь кабачок кубиками, туши 7 минут.', 'Посыпь сыром.']),
+    R('beef_noodles', 'Говядина с рисовой лапшой и перцем', 'ld', 25, [],
+      [['beef', 140], ['rice_noodles', 90], ['bell_pepper', 100], ['onion', 40], ['sunflower_oil', 10]],
+      ['Замочи лапшу в кипятке по инструкции на упаковке.', 'Обжарь говядину тонкими полосками на сильном огне 3 минуты, добавь перец и лук ещё на 3 минуты.', 'Добавь лапшу и соевый соус, перемешай.']),
+    R('tofu_peanut_noodles', 'Лапша с тофу в арахисовом соусе', 'ld', 20, [],
+      [['rice_noodles', 90], ['tofu', 180], ['frozen_veg', 120], ['peanut_butter', 15], ['sunflower_oil', 5]],
+      ['Замочи лапшу в кипятке.', 'Обжарь тофу кубиками 6 минут, добавь овощи на 4 минуты.', 'Разведи арахисовую пасту 3 ложками горячей воды и соевым соусом, смешай всё с лапшой.']),
+    R('shrimp_couscous', 'Кускус с креветками и кабачком', 'ld', 15, [],
+      [['couscous', 80], ['shrimp', 150], ['zucchini', 120], ['olive_oil', 10], ['feta', 30, 1]],
+      ['Залей кускус кипятком на 5 минут.', 'Обжарь кабачок 4 минуты, добавь креветки на 2–3 минуты.', 'Смешай с кускусом, раскроши фету.']),
+    R('lavash_pizza', 'Пицца на лаваше', 'lds', 15, [],
+      [['lavash', 90], ['mozzarella', 70], ['tomato_paste', 25], ['chicken_breast', 80], ['tomato', 80]],
+      ['Обжарь курицу кусочками 6 минут.', 'Смажь лаваш томатной пастой, разложи курицу, помидоры и моцареллу.', 'Накрой крышкой на сковороде на 5–6 минут или запеки 8 минут при 200 °C.']),
+    R('hummus_bowl', 'Боул с хумусом, курицей и кускусом', 'ld', 15, [],
+      [['couscous', 70], ['chicken_breast', 140], ['hummus', 60], ['cucumber', 100], ['tomato', 100]],
+      ['Залей кускус кипятком на 5 минут.', 'Обжарь курицу со специями и нарежь.', 'Собери в миске кускус, курицу, овощи и хумус.']),
+    R('rice_beans_chicken', 'Рис с фасолью и курицей по-мексикански', 'ld', 25, [],
+      [['rice', 80], ['beans_can', 120], ['chicken_breast', 120], ['corn_can', 60], ['sunflower_oil', 5], ['tomato', 80, 1]],
+      ['Отвари рис.', 'Обжарь курицу кубиками с паприкой и кумином 6 минут.', 'Добавь фасоль и кукурузу, прогрей и смешай с рисом.']),
+    R('pork_potato_oven', 'Свинина с картофелем в духовке', 'ld', 50, ['oven'],
+      [['pork', 170], ['potato', 300], ['onion', 50], ['smetana', 30], ['cheese', 20, 1]],
+      ['Нарежь картофель кружками, свинину — пластами и слегка отбей.', 'Выложи в форму слоями с луком, смажь сметаной, посыпь сыром.', 'Запекай 40 минут при 190 °C.']),
+    R('fish_cakes', 'Рыбные котлеты с рисом', 'ld', 35, [],
+      [['fish_white', 220], ['eggs', 55], ['oats', 20], ['onion', 30], ['rice', 70], ['sunflower_oil', 10]],
+      ['Измельчи рыбу ножом или блендером, смешай с яйцом, хлопьями и луком.', 'Сформируй котлеты и жарь по 4 минуты с каждой стороны.', 'Подавай с отварным рисом.']),
+    R('quinoa_feta_salad', 'Салат с киноа, нутом и фетой', 'ld', 25, [],
+      [['quinoa', 70], ['chickpeas_can', 100], ['feta', 50], ['cucumber', 100], ['tomato', 100], ['olive_oil', 10]],
+      ['Свари киноа и остуди.', 'Нарежь овощи, добавь нут и фету.', 'Заправь маслом и лимонным соком.']),
+    R('tuna_potato_salad', 'Тёплый салат с картофелем и тунцом', 'ld', 25, [],
+      [['potato', 300], ['tuna_can', 140], ['eggs', 55], ['cucumber', 100], ['olive_oil', 10]],
+      ['Отвари картофель и яйцо.', 'Нарежь, добавь тунец и огурец.', 'Заправь маслом и посоли.']),
+    R('salmon_pasta', 'Паста с лососем и шпинатом', 'ld', 20, [],
+      [['pasta', 100], ['salmon', 130], ['spinach', 80], ['smetana', 40], ['olive_oil', 5]],
+      ['Отвари пасту.', 'Обжарь лосось кубиками 3–4 минуты, добавь шпинат и сметану.', 'Прогрей 2 минуты и смешай с пастой.']),
+    R('mac_cheese_chicken', 'Макароны с сыром и курицей', 'ld', 20, [],
+      [['pasta', 100], ['cheese', 40], ['milk', 100], ['butter', 10], ['chicken_breast', 120]],
+      ['Отвари макароны.', 'Обжарь курицу кубиками 6 минут.', 'Влей к макаронам молоко, добавь масло и тёртый сыр, помешивай до густого соуса. Смешай с курицей.']),
+    R('baked_potato_tuna', 'Запечённый картофель с тунцом и сыром', 'ld', 50, ['oven'],
+      [['potato', 350], ['tuna_can', 140], ['cheese', 30], ['smetana', 30, 1]],
+      ['Запеки картофель целиком 40 минут при 200 °C (или 8–10 минут в микроволновке).', 'Разрежь и смешай мякоть с тунцом и сметаной.', 'Посыпь сыром и запекай ещё 5 минут.']),
+    R('turkey_sweet_potato_bowl', 'Боул с индейкой, бататом и авокадо', 'ld', 35, ['oven'],
+      [['turkey', 160], ['sweet_potato', 250], ['avocado', 70], ['olive_oil', 5], ['spinach', 50, 1]],
+      ['Запеки батат кубиками 25 минут при 200 °C.', 'Обжарь индейку со специями 7 минут.', 'Собери в миске с авокадо и шпинатом.']),
+    R('lentil_dal', 'Дал из чечевицы с рисом', 'ld', 35, [],
+      [['lentils', 70], ['rice', 60], ['onion', 40], ['canned_tomatoes', 150], ['sunflower_oil', 10], ['yogurt', 50, 1]],
+      ['Обжарь лук со специями (карри, куркума) 3 минуты.', 'Добавь чечевицу, томаты и 400 мл воды, вари 20 минут до густоты.', 'Подавай с рисом и йогуртом.']),
+    R('beef_rice_broccoli', 'Говядина с рисом и брокколи', 'ld', 25, [],
+      [['beef', 150], ['rice', 80], ['broccoli', 150], ['sunflower_oil', 10]],
+      ['Отвари рис.', 'Обжарь говядину тонкими полосками 4 минуты на сильном огне.', 'Добавь брокколи и соевый соус, туши 4 минуты.']),
+    R('teriyaki_thighs', 'Куриные бёдра в соевом соусе с мёдом и рисом', 'ld', 30, [],
+      [['chicken_thigh', 200], ['rice', 80], ['honey', 10], ['sunflower_oil', 5], ['broccoli', 100, 1]],
+      ['Отвари рис.', 'Обжарь бёдра по 5 минут с каждой стороны.', 'Добавь соевый соус, мёд и 50 мл воды, туши 10 минут до глянцевого соуса. Подавай с рисом и брокколи.']),
+    R('potato_mince_bake', 'Картофельная запеканка с фаршем', 'ld', 60, ['oven'],
+      [['potato', 350], ['minced_beef', 130], ['onion', 40], ['milk', 50], ['butter', 10], ['cheese', 30]],
+      ['Отвари картофель и сделай пюре с молоком и маслом.', 'Обжарь фарш с луком 10 минут.', 'Выложи слоями: пюре, фарш, пюре, сверху сыр. Запекай 20 минут при 190 °C.']),
+
+    // ───────────── перекусы ─────────────
+    R('cottage_bowl', 'Творог с бананом и орехами', 'bs', 3, ['nocook', 'night'],
+      [['cottage5', 200], ['banana', 120], ['walnuts', 20], ['honey', 10, 1], ['frozen_berries', 80, 1]],
+      ['Выложи творог в миску, добавь нарезанный банан, орехи и ягоды.', 'Полей мёдом по вкусу.']),
+    R('gainer', 'Домашний гейнер-коктейль', 's', 3, ['blender', 'liquid'],
+      [['milk', 300], ['banana', 120], ['oats', 50], ['peanut_butter', 20], ['protein_powder', 30, 1]],
+      ['Всё в блендер на 40–60 секунд.', 'Пей медленно, за 5–10 минут: так легче усваивается большая порция.']),
+    R('egg_sandwich', 'Бутерброды с яйцом и сыром', 'sb', 12, [],
+      [['bread', 90], ['eggs', 110], ['cheese', 30], ['cucumber', 80]],
+      ['Свари яйца вкрутую (9 минут).', 'Собери бутерброды: хлеб, сыр, яйцо, огурец.']),
+    R('kefir_snack', 'Кефир, банан и миндаль', 's', 1, ['nocook', 'liquid', 'night'],
+      [['kefir', 400], ['banana', 120], ['almonds', 25]],
+      ['Ничего готовить не нужно: стакан кефира, банан и горсть миндаля.']),
+    R('yogurt_bowl', 'Греческий йогурт с овсянкой и мёдом', 'sb', 3, ['nocook', 'night'],
+      [['yogurt', 200], ['oats', 40], ['honey', 15], ['frozen_berries', 100, 1]],
+      ['Смешай йогурт с хлопьями и оставь на 5 минут.', 'Добавь мёд и ягоды.']),
+    R('pb_toast', 'Тосты с арахисовой пастой, банан и молоко', 'sb', 5, ['nocook'],
+      [['bread', 60], ['peanut_butter', 25], ['banana', 120], ['milk', 250]],
+      ['Намажь хлеб пастой (можно подсушить), сверху кружочки банана.', 'Запивай стаканом молока.']),
+    R('protein_shake_milk', 'Протеиновый коктейль на молоке', 's', 2, ['nocook', 'liquid'],
+      [['milk', 300], ['protein_powder', 30], ['banana', 120, 1], ['oats', 30, 1]],
+      ['Взбей в шейкере молоко с протеином.', 'Если есть блендер, добавь банан и овсянку: так калорийнее.']),
+    R('dates_shake', 'Коктейль с финиками и миндалём', 's', 3, ['blender', 'liquid'],
+      [['milk_whole', 300], ['dates', 40], ['almonds', 20], ['oats', 30]],
+      ['Удали из фиников косточки.', 'Взбей всё в блендере 1 минуту.']),
+    R('kefir_berry_smoothie', 'Смузи: кефир, ягоды, овсянка', 's', 3, ['blender', 'liquid'],
+      [['kefir', 300], ['frozen_berries', 100], ['oats', 30], ['honey', 15]],
+      ['Взбей всё в блендере.', 'Пей медленно, не залпом.']),
+    R('yogurt_pb_smoothie', 'Смузи с бананом и арахисовой пастой', 's', 3, ['blender', 'liquid'],
+      [['yogurt', 150], ['milk', 150], ['banana', 120], ['peanut_butter', 20]],
+      ['Взбей всё в блендере до однородности.']),
+    R('trail_mix', 'Ореховый микс с сухофруктами', 's', 1, ['nocook'],
+      [['almonds', 20], ['walnuts', 15], ['raisins', 20], ['dried_apricots', 20], ['dark_chocolate', 10, 1]],
+      ['Смешай орехи и сухофрукты. Удобно взять в дорогу в пакетике.']),
+    R('dates_nuts_milk', 'Финики с кешью и стакан молока', 's', 1, ['nocook'],
+      [['dates', 50], ['cashews', 20], ['milk', 250]],
+      ['Финики, орехи и стакан молока — перекус без готовки.']),
+    R('cottage_cheese_fruit', 'Зернёный творог с яблоком и мёдом', 's', 3, ['nocook', 'night'],
+      [['cottage_cheese', 250], ['apple', 150], ['honey', 10], ['walnuts', 15, 1]],
+      ['Нарежь яблоко, смешай с творогом, полей мёдом.']),
+    R('hummus_snack', 'Хумус с хлебом и овощами', 's', 3, ['nocook'],
+      [['hummus', 80], ['bread', 60], ['cucumber', 100], ['bell_pepper', 80, 1]],
+      ['Нарежь овощи палочками, макай в хумус, ешь с хлебом.']),
+    R('tuna_sandwich', 'Сэндвич с тунцом', 'sl', 5, ['nocook'],
+      [['bread', 90], ['tuna_can', 100], ['yogurt', 30], ['cucumber', 60], ['cheese', 20, 1]],
+      ['Смешай тунец с йогуртом, солью и перцем.', 'Положи на хлеб с огурцом и сыром.']),
+    R('cheese_apple_nuts', 'Сыр, яблоко и орехи', 's', 1, ['nocook'],
+      [['cheese', 40], ['apple', 180], ['walnuts', 20]],
+      ['Нарежь сыр и яблоко, добавь орехи.']),
+    R('chicken_sandwich', 'Сэндвич с курицей', 'sl', 12, [],
+      [['bread', 90], ['chicken_breast', 100], ['cheese', 20], ['tomato', 60]],
+      ['Обжарь или запеки курицу, нарежь пластинками.', 'Собери сэндвич с сыром и помидором.']),
+    R('banana_pb_tortilla', 'Тортилья с арахисовой пастой и бананом', 'sb', 3, ['nocook'],
+      [['tortilla', 60], ['peanut_butter', 25], ['banana', 120], ['honey', 10, 1]],
+      ['Намажь тортилью пастой, положи банан и сверни.']),
+    R('feta_bruschetta', 'Брускетта с фетой и помидорами', 's', 5, ['nocook'],
+      [['bread', 90], ['feta', 50], ['tomato', 120], ['olive_oil', 5]],
+      ['Подсуши хлеб, если есть где (можно и без этого).', 'Сверху — помидоры кубиками и фета, сбрызни маслом.']),
+    R('caprese', 'Капрезе с хлебом', 's', 3, ['nocook'],
+      [['mozzarella', 100], ['tomato', 150], ['olive_oil', 10], ['bread', 60]],
+      ['Нарежь моцареллу и помидоры кружками, посоли, сбрызни маслом.', 'Ешь с хлебом.']),
+    R('yogurt_nuts_honey', 'Греческий йогурт с орехами и мёдом', 's', 2, ['nocook', 'night'],
+      [['yogurt', 200], ['walnuts', 25], ['honey', 15]],
+      ['Выложи йогурт, сверху орехи и мёд.']),
+    R('night_cottage_kefir', 'Творог с кефиром перед сном', 's', 2, ['nocook', 'night'],
+      [['cottage5', 150], ['kefir', 200], ['frozen_berries', 80, 1]],
+      ['Смешай творог с кефиром до консистенции густого йогурта.', 'Белок творога усваивается медленно, поэтому это хороший перекус за час-полтора до сна.']),
+    R('kefir_granola', 'Кефир с гранолой', 's', 2, ['nocook', 'night'],
+      [['kefir', 300], ['granola', 50]],
+      ['Залей гранолу кефиром и дай постоять 2 минуты.']),
+    R('energy_balls', 'Энергетические шарики из фиников и овсянки', 's', 15, ['blender'],
+      [['dates', 60], ['oats', 40], ['peanut_butter', 20], ['dark_chocolate', 10, 1]],
+      ['Измельчи финики и хлопья в блендере, добавь арахисовую пасту.', 'Скатай 6–8 шариков и убери в холодильник. Хранятся неделю — удобно брать с собой.']),
   ];
 
   NF.MEAL_LABEL = { b: 'Завтрак', l: 'Обед', s: 'Перекус', d: 'Ужин' };
+  NF.TAG_LABEL = { nocook: 'без готовки', blender: 'блендер', liquid: 'пьётся', night: 'перед сном', oven: 'духовка' };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -1036,40 +1512,64 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   }
   function roundTo5(n) { return Math.round(n / 5) * 5; }
 
+  function slotAt(type, min, share, label) { return { type: type, time: fromMin(roundTo5(min)), share: share, label: label }; }
+
   /**
    * Расписание: завтрак через ~40 мин после подъёма, ужин за 3 часа до сна
    * (поздняя еда ухудшает сон), обед и перекус между ними. Если задано время
    * тренировки — перекус ставим за 1,5 ч до неё.
+   * mode 'six' (режим «нет аппетита»): 6 приёмов поменьше — завтрак, перекус,
+   * обед, перекус, ужин и белковый перекус за 1–1,5 ч до сна.
    */
-  function mealSchedule(wake, bed, trainTime) {
+  function mealSchedule(wake, bed, trainTime, mode) {
     const W = toMin(wake) != null ? toMin(wake) : 450;
     let B = toMin(bed) != null ? toMin(bed) : 1410;
     if (B <= W) B += 1440;
     const b = W + 40;
     let d = B - 180;
     if (d - b < 6 * 60) d = Math.min(B - 90, b + 6 * 60); // короткий день — ужин не раньше чем через 6 ч после завтрака
-    let l = b + (d - b) * 0.42;
-    let s = b + (d - b) * 0.72;
     let note = null;
     let T = toMin(trainTime);
-    if (T != null) {
-      if (T < W) T += 1440;
-      if (T > W && T < B) {
+    if (T != null) { if (T < W) T += 1440; if (!(T > W && T < B)) T = null; }
+
+    if (mode === 'six') {
+      const s1 = b + (d - b) * 0.25, l = b + (d - b) * 0.5;
+      let s2 = b + (d - b) * 0.78;
+      let late = Math.max(d + 60, B - 75);
+      if (late > B - 30) late = null; // слишком близко ко сну — без позднего перекуса
+      if (T != null) {
         const pre = T - 90;
-        if (pre > l + 120 && pre < d - 45) { s = pre; note = 'Перекус за 1,5 ч до тренировки, ужин после неё.'; }
+        if (pre > l + 90 && pre < d - 45) { s2 = pre; note = 'Перекус за 1,5 ч до тренировки, ужин после неё.'; }
         else if (T < l) note = 'Тренировка утром: завтрак лёгкий, полноценный обед сразу после.';
         else note = 'Постарайся поесть в течение 1–2 часов после тренировки.';
       }
+      const meals = [
+        slotAt('b', b, 0.20, 'Завтрак'), slotAt('s', s1, 0.12, 'Перекус'), slotAt('l', l, 0.23, 'Обед'),
+        slotAt('s', s2, 0.13, 'Перекус'), slotAt('d', d, 0.20, 'Ужин'),
+      ];
+      if (late != null) { const n = slotAt('s', late, 0.12, 'Перед сном'); n.night = true; meals.push(n); }
+      const total = meals.reduce(function (sum, m) { return sum + m.share; }, 0);
+      meals.forEach(function (m) { m.share = m.share / total; });
+      return { meals: meals, note: note, mode: 'six' };
     }
-    l = roundTo5(l); s = roundTo5(s);
+
+    let l = b + (d - b) * 0.42;
+    let sn = b + (d - b) * 0.72;
+    if (T != null) {
+      const pre = T - 90;
+      if (pre > l + 120 && pre < d - 45) { sn = pre; note = 'Перекус за 1,5 ч до тренировки, ужин после неё.'; }
+      else if (T < l) note = 'Тренировка утром: завтрак лёгкий, полноценный обед сразу после.';
+      else note = 'Постарайся поесть в течение 1–2 часов после тренировки.';
+    }
     return {
       meals: [
-        { type: 'b', time: fromMin(roundTo5(b)), share: MEAL_SHARE.b },
-        { type: 'l', time: fromMin(l), share: MEAL_SHARE.l },
-        { type: 's', time: fromMin(s), share: MEAL_SHARE.s },
-        { type: 'd', time: fromMin(roundTo5(d)), share: MEAL_SHARE.d },
+        slotAt('b', b, MEAL_SHARE.b, 'Завтрак'),
+        slotAt('l', l, MEAL_SHARE.l, 'Обед'),
+        slotAt('s', sn, MEAL_SHARE.s, 'Перекус'),
+        slotAt('d', d, MEAL_SHARE.d, 'Ужин'),
       ],
       note: note,
+      mode: 'four',
     };
   }
 
@@ -1158,63 +1658,99 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   }
 
   // ───────── рецепт под цель ─────────
-  /**
-   * inv — {id: граммы}. mode 'stock' — граммовки не больше запаса,
-   * нехватка уходит в missing.
-   */
   // Мелкие добавки: если их нет дома, блюдо можно приготовить и без них.
   const MINOR = { sunflower_oil: 1, olive_oil: 1, butter: 1, honey: 1, tomato_paste: 1, smetana: 1, onion: 1, raisins: 1 };
 
-  function fitRecipe(recipe, target, inv, fm, strict) {
-    const ings = [];
-    const skipped = [];
+  /** Граммы замены: белковые продукты пересчитываем по белку, остальные — по калориям. */
+  function subGrams(base, from, to) {
+    let g;
+    const sameKind = (from.cat === 'veg' && to.cat === 'veg') || (from.cat === 'fruit' && to.cat === 'fruit');
+    const kcalRatio = Math.max(from.kcal, to.kcal) / Math.max(1, Math.min(from.kcal, to.kcal));
+    if (sameKind && kcalRatio < 2) g = base;
+    else if ((from.cat === 'protein' || from.cat === 'dairy') && from.p >= 8 && to.p >= 5) g = base * from.p / to.p;
+    else g = base * from.kcal / Math.max(1, to.kcal);
+    return Math.max(base * 0.5, Math.min(base * 2.5, g));
+  }
+
+  /**
+   * Что из рецепта есть дома: сам продукт, его замена (NF.SUBS) или нехватка.
+   * ings: [{food, base, opt, sub: id заменённого продукта | null, missing}], skipped: [id].
+   * strict (список покупок): мелкие добавки не пропускаются, а покупаются.
+   */
+  function resolveRecipe(recipe, inv, fm, strict) {
+    const used = {};
+    recipe.ing.forEach(function (row) { used[row[0]] = 1; });
+    const ings = [], skipped = [];
     recipe.ing.forEach(function (row) {
       const f = fm[row[0]];
       if (!f) return;
-      const opt = !!row[2];
-      const have = inv[row[0]] || 0;
-      if (opt && have < row[1] * 0.6) return; // необязательное — только если есть
-      if (!strict && MINOR[row[0]] && have < row[1] * 0.6) { skipped.push(row[0]); return; }
-      ings.push({ food: f, base: row[1], opt: opt, have: have });
+      const base = row[1], opt = !!row[2];
+      if ((inv[f.id] || 0) >= base * 0.6) { ings.push({ food: f, base: base, opt: opt, sub: null, missing: false }); return; }
+      if (opt) return; // необязательное — только если есть
+      const subs = (NF.SUBS && NF.SUBS[f.id]) || [];
+      for (let i = 0; i < subs.length; i++) {
+        const sf = fm[subs[i]];
+        if (!sf || used[sf.id]) continue;
+        const sb = subGrams(base, f, sf);
+        if ((inv[sf.id] || 0) >= sb * 0.6) {
+          used[sf.id] = 1;
+          ings.push({ food: sf, base: sb, opt: false, sub: f.id, missing: false });
+          return;
+        }
+      }
+      if (!strict && MINOR[f.id]) { skipped.push(f.id); return; }
+      ings.push({ food: f, base: base, opt: false, sub: null, missing: true });
     });
-    const baseItems = ings.map(function (i) { return { id: i.food.id, g: i.base }; });
-    const baseM = macrosOf(baseItems, fm);
-    const s = Math.min(2.2, Math.max(0.6, target.kcal / Math.max(1, baseM.kcal)));
+    return { ings: ings, skipped: skipped };
+  }
 
-    const vars = ings.map(function (i) {
+  /**
+   * Подогнать рецепт под цель приёма пищи. inv — {id: граммы} (то, что есть дома);
+   * нехватка уходит в missing, замены — в subs. opt.dense — режим «нет аппетита»
+   * (меньше овощей: они занимают место в желудке).
+   */
+  function fitRecipe(recipe, target, inv, fm, strict, opt) {
+    opt = opt || {};
+    const rs = resolveRecipe(recipe, inv, fm, strict);
+    const baseM = macrosOf(rs.ings.map(function (i) { return { id: i.food.id, g: i.base }; }), fm);
+    const s = Math.min(2.2, Math.max(0.6, target.kcal / Math.max(1, baseM.kcal)));
+    const vars = rs.ings.map(function (i) {
       let lo, hi;
-      if (i.food.cat === 'veg') { lo = i.base * 0.5; hi = i.base * 1.6; }
+      if (i.food.cat === 'veg') { lo = i.base * (opt.dense ? 0.4 : 0.5); hi = i.base * (opt.dense ? 1.0 : 1.6); }
       else { lo = i.base * 0.6; hi = i.base * 2.2; }
       hi = Math.min(hi, Math.max(i.food.maxMeal, i.base));
       if (i.food.id === 'eggs') hi = Math.min(hi, 220); // до 4 яиц за приём
       lo = Math.min(lo, hi);
-      return { food: i.food, lo: lo, hi: hi, x0: Math.min(hi, Math.max(lo, i.base * s)), reg: 0.15 };
+      return { food: i.food, lo: lo, hi: hi, x0: Math.min(hi, Math.max(lo, i.base * s)), reg: 0.15, ing: i };
     });
     const x = solve(vars, target);
-    const items = [];
-    const missing = [];
-    vars.forEach(function (v, i) {
-      const gr = roundFood(v.food, x[i]);
+    const items = [], missing = [], subs = [];
+    vars.forEach(function (v, k) {
+      const gr = roundFood(v.food, x[k]);
       if (gr <= 0) return;
-      items.push({ id: v.food.id, g: gr });
+      const it = { id: v.food.id, g: gr };
+      if (v.ing.sub) { it.sub = v.ing.sub; subs.push({ from: v.ing.sub, to: v.food.id }); }
+      items.push(it);
       const have = inv[v.food.id] || 0;
       if (have < gr) missing.push({ id: v.food.id, g: gr - have });
     });
     const m = macrosOf(items, fm);
-    return { recipeId: recipe.id, items: items, missing: missing, skipped: skipped, macros: m, err: fitError(m, target) };
+    return { recipeId: recipe.id, items: items, missing: missing, skipped: rs.skipped, subs: subs, macros: m, err: fitError(m, target) };
   }
 
   /** «Тарелка» из того, что лежит дома, если ни один рецепт не собирается. */
-  function plateFromStock(type, target, inv, fm, rng, urgency) {
+  function plateFromStock(type, target, inv, fm, rng, urgency, night) {
     urgency = urgency || {};
-    const avail = Object.keys(inv).filter(function (id) { return fm[id] && inv[id] >= 20; }).map(function (id) { return fm[id]; });
+    const avail = Object.keys(inv).filter(function (id) { return fm[id] && !fm[id].noplan && inv[id] >= 20; }).map(function (id) { return fm[id]; });
     if (!avail.length) return null;
     function weight(f) { return (inv[f.id] || 0) * (1 + rng() * 0.3) * (1 + (urgency[f.id] || 0) * 4); }
     function byStock(a, b) { return weight(b) - weight(a); }
     function pick(pred) { return avail.filter(pred).sort(byStock)[0]; }
     const light = type === 'b' || type === 's';
     const chosen = [];
-    const prot = pick(function (f) { return f.p * 4 / Math.max(1, f.kcal) > 0.35 && (light || f.cat === 'protein' || f.cat === 'dairy'); });
+    const isProt = function (f) { return f.p * 4 / Math.max(1, f.kcal) > 0.35 && (light || f.cat === 'protein' || f.cat === 'dairy'); };
+    // перед сном — молочный белок (творог, кефир, йогурт): он усваивается медленно
+    const prot = (night && pick(function (f) { return isProt(f) && f.cat === 'dairy'; })) || pick(isProt);
     if (prot) chosen.push(prot);
     const carb = pick(function (f) { return (f.cat === 'carb' || (light && f.cat === 'fruit')) && chosen.indexOf(f) < 0; });
     if (carb) chosen.push(carb);
@@ -1239,37 +1775,75 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     vars.forEach(function (v, i) { const gr = Math.min(roundFood(v.food, x[i]), v.hi); if (gr >= (v.food.cat === 'fat' ? 5 : 15)) items.push({ id: v.food.id, g: gr }); });
     if (!items.length) return null;
     const m = macrosOf(items, fm);
-    return { recipeId: null, items: items, missing: [], skipped: [], macros: m, err: fitError(m, target) };
+    return { recipeId: null, items: items, missing: [], skipped: [], subs: [], macros: m, err: fitError(m, target) };
   }
 
   /**
    * Добавка к блюду: если после подгонки не хватает калорий (обычно углеводов),
    * докладываем один продукт из запасов (хлеб, банан, крупа, орехи…).
+   * dense (режим «нет аппетита»): только плотные добавки без объёма — орехи,
+   * арахисовая паста, сыр, сухофрукты, а к обеду и ужину — ложка масла в гарнир.
    */
-  function topUp(res, type, target, inv, fm) {
+  // Продукты, которые нужно варить/запекать: добавкой «как есть» не годятся.
+  const NEEDS_COOK = { buckwheat: 1, rice: 1, pasta: 1, bulgur: 1, quinoa: 1, couscous: 1, rice_noodles: 1, lentils: 1, chickpeas: 1, potato: 1, sweet_potato: 1 };
+
+  function topUp(res, type, target, inv, fm, dense) {
     if (!res || res.macros.kcal >= target.kcal * 0.92) return res;
     const have = {};
     res.items.forEach(function (it) { have[it.id] = 1; });
     const light = type === 'b' || type === 's';
-    const ok = light ? { carb: 1, fruit: 1, fat: 1, dairy: 1 } : { carb: 1, fruit: 1, fat: 1, veg: 0 };
+    const ok = light ? { carb: 1, fruit: 1, fat: 1, dairy: 1 } : { carb: 1, fruit: 1, fat: 1, veg: 0, dairy: dense ? 1 : 0 };
     let best = null;
     Object.keys(inv).forEach(function (id) {
       const f = fm[id];
-      if (!f || have[id] || !ok[f.cat] || inv[id] < 20 || f.kcal < 50) return;
-      if (f.id === 'sunflower_oil' || f.id === 'olive_oil') return; // масло ложкой не едят
+      if (!f || f.noplan || have[id] || !ok[f.cat] || inv[id] < 20 || f.kcal < 50) return;
+      const oil = f.id === 'sunflower_oil' || f.id === 'olive_oil' || f.id === 'butter';
+      if (oil && !(dense && !light)) return; // масло ложкой не едят — только в гарнир в режиме «нет аппетита»
+      if (dense && f.kcal < 270) return;
       if (!light && (f.id === 'oats' || f.id === 'honey')) return;
+      const cook = !!NEEDS_COOK[f.id];
+      if (cook && light) return; // сухую крупу к бутерброду не добавишь
       const deficit = target.kcal - res.macros.kcal;
-      let gr = Math.min(f.maxMeal, inv[id], (deficit / f.kcal) * 100);
+      const cap = oil ? 15 : f.maxMeal;
+      let gr = Math.min(cap, inv[id], (deficit / f.kcal) * 100);
       gr = roundFood(f, gr);
       if (gr > inv[id]) gr = roundFood(f, inv[id] * 0.9);
-      if (gr < 10) return;
+      if (gr < (oil ? 5 : cook ? (f.kcal > 200 ? 40 : 120) : 10)) return; // гарнир — так гарнир
       const items = res.items.concat([{ id: id, g: gr }]);
       const m = macrosOf(items, fm);
       const e = fitError(m, target);
-      if (e < res.err - 0.005 && (!best || e < best.err)) best = { items: items, macros: m, err: e, extra: id };
+      if (e < res.err - 0.005 && (!best || e < best.err)) best = { items: items, macros: m, err: e, extra: id, extraDense: !!dense };
     });
     if (!best) return res;
     return Object.assign({}, res, best);
+  }
+
+  function hasTag(r, t) { return !!(r.tags && r.tags.indexOf(t) >= 0); }
+
+  /**
+   * Продукт «из названия» блюда: заменить его — значит приготовить другое блюдо
+   * («Лосось с рисом» из курицы). Такие замены допустимы, но в автоплане
+   * идут в самый конец; на экране рецептов они помечаются.
+   */
+  // Как главный продукт называют в названиях блюд (основы слов).
+  const TITLE_ALIASES = {
+    fish_white: ['рыб'], salmon: ['рыб', 'лосос'], tuna_can: ['тунц', 'тунец'], shrimp: ['кревет'],
+    chicken_breast: ['кур'], chicken_thigh: ['кур'], turkey: ['индейк'], beef: ['говяд', 'бефстроганов', 'гуляш'],
+    pork: ['свин'], minced_beef: ['фарш', 'котлет', 'тефтел', 'болоньез'], eggs: ['яйц', 'омлет', 'скрэмбл', 'яичн', 'шакшук'],
+    cottage5: ['творог', 'сырник', 'запеканк'], cottage9: ['творог', 'сырник', 'запеканк'], cheese: ['сыр'],
+    mozzarella: ['моцарелл', 'капрезе', 'пицц'], tofu: ['тофу'],
+  };
+
+  function isTitleIngredient(recipe, foodId, fm) {
+    const f = fm[foodId];
+    if (!f) return false;
+    const title = recipe.name.toLowerCase().replace(/ё/g, 'е');
+    const words = f.name.toLowerCase().replace(/ё/g, 'е').replace(/\(.*?\)/g, ' ').split(/[^a-zа-я]+/).filter(function (w) { return w.length >= 3; });
+    // первое значимое слово названия продукта (+ варианты через «/»)
+    const keys = [words[0]].concat(f.name.indexOf('/') >= 0 ? words.slice(1) : []);
+    // основа слова без окончания: «перец» → «пер» (найдёт «перцы»), «гречка» → «греч»
+    if (keys.some(function (w) { return w && title.indexOf(w.slice(0, w.length <= 5 ? 3 : 4)) >= 0; })) return true;
+    return (TITLE_ALIASES[foodId] || []).some(function (a) { return title.indexOf(a) >= 0; });
   }
 
   /** Выбор блюда на приём пищи. */
@@ -1278,23 +1852,36 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     const rng = opts.rng || Math.random;
     const avoid = opts.avoid || {};
     const cands = NF.RECIPES.filter(function (r) { return r.meals.indexOf(type) >= 0; }).map(function (r) {
-      const res = fitRecipe(r, target, inv, fm, opts.strict);
+      const res = fitRecipe(r, target, inv, fm, opts.strict, { dense: opts.dense });
       const missKcal = res.missing.reduce(function (s, it) { return s + (fm[it.id].kcal * it.g) / 100; }, 0);
       const missShare = missKcal / Math.max(1, res.macros.kcal);
       // «доедаем остатки»: бонус за долю ингредиентов, которые уже есть
       const usedHome = res.items.filter(function (it) { return (inv[it.id] || 0) > 0; }).length / Math.max(1, res.items.length);
       // срочность: блюдо с продуктом, который скоро испортится, поднимается в выборе
       const urg = opts.urgency ? res.items.reduce(function (mx, it) { return Math.max(mx, (opts.urgency[it.id] || 0) * ((inv[it.id] || 0) > 0 ? 1 : 0)); }, 0) : 0;
-      res.score = res.err + res.missing.length * 0.35 + missShare * 1.5 - usedHome * 0.25 - urg * 0.9 + (avoid[r.id] || 0) + rng() * 0.12;
+      let bonus = 0;
+      if (opts.dense) {
+        // «нет аппетита»: больше калорий в меньшем объёме, на перекус — жидкие калории
+        const grams = res.items.reduce(function (sum, it) { return sum + it.g; }, 0);
+        const density = res.macros.kcal / Math.max(1, grams);
+        bonus += 0.35 * Math.max(0, Math.min(1, (density - 1.0) / 1.5));
+        if (type === 's' && hasTag(r, 'liquid')) bonus += 0.2;
+      }
+      if (opts.night) bonus += hasTag(r, 'night') ? 0.5 : -0.3;
+      // замена продукта из названия («Рыба с рисом» из курицы) — другое блюдо: только если иначе никак;
+      // штраф сильнее бонуса за скоропортящееся, поэтому сначала берутся «честные» рецепты
+      const subPenalty = res.subs.reduce(function (sum, sb) { return sum + (isTitleIngredient(r, sb.from, fm) ? 1.2 : 0.08); }, 0);
+      res.score = res.err + res.missing.length * 0.35 + missShare * 1.5 - usedHome * 0.25 - urg * 0.9 +
+        subPenalty - bonus + (avoid[r.id] || 0) + rng() * 0.12;
       return res;
     });
     cands.sort(function (a, b) { return a.score - b.score; });
     let best = cands[0];
     if (best && best.missing.length && !opts.allowMissing) {
-      const plate = plateFromStock(type, target, inv, fm, rng, opts.urgency);
+      const plate = plateFromStock(type, target, inv, fm, rng, opts.urgency, opts.night);
       if (plate && (plate.err < 0.3 || plate.err < best.err + 0.1)) best = plate;
     }
-    return topUp(best, type, target, inv, fm);
+    return topUp(best, type, target, inv, fm, opts.dense);
   }
 
   // ───────── генератор ─────────
@@ -1316,12 +1903,19 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     items.forEach(function (it) { if (inv[it.id] != null) inv[it.id] = Math.max(0, inv[it.id] - it.g); });
   }
 
-  function mealFromRes(type, time, res, light) {
+  function mealFromRes(slot, time, res, light) {
     return {
-      type: type, time: time, recipeId: res ? res.recipeId : null, items: res ? res.items : [],
-      missing: res ? res.missing : [], skipped: res ? res.skipped : [], extra: res ? res.extra || null : null,
+      type: slot.type, time: time, label: slot.label || NF.MEAL_LABEL[slot.type], night: !!slot.night,
+      recipeId: res ? res.recipeId : null, items: res ? res.items : [],
+      missing: res ? res.missing : [], skipped: res ? res.skipped : [],
+      extra: res ? res.extra || null : null, extraDense: !!(res && res.extraDense),
       light: !!light, eaten: false,
     };
+  }
+
+  function recipeById(id) {
+    for (let i = 0; i < NF.RECIPES.length; i++) if (NF.RECIPES[i].id === id) return NF.RECIPES[i];
+    return null;
   }
 
   /**
@@ -1329,7 +1923,8 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
    * приёмам. Каждый следующий приём получает долю от того, что осталось,
    * поэтому недобор/перебор одного блюда (или еда вне плана) компенсируется.
    * inv изменяется (резервирует продукты) — передавай копию.
-   * opt: { strict, urgency: {id: 0..1}, extraMacros: {kcal,p,f,c}, keep: [meal|null] }
+   * opt: { strict, urgency: {id: 0..1}, extraMacros: {kcal,p,f,c}, keep: [meal|null],
+   *        pinned: {индекс: id рецепта}, dense }
    */
   function planMeals(date, daily, schedule, inv, fm, recent, seed, opt) {
     opt = opt || {};
@@ -1358,15 +1953,20 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
         ? { kcal: Math.max(150, left.kcal * k), p: Math.max(10, base.p * 0.5, Math.min(base.p, left.protein * k)), f: Math.max(3, base.f * 0.3, Math.min(base.f, left.fat * k)), c: Math.max(15, Math.min(base.c, left.carbs * k)) }
         : { kcal: Math.min(base.kcal * 1.6, left.kcal * k), p: Math.max(base.p * 0.7, Math.min(base.p * 1.6, left.protein * k)), f: Math.max(base.f * 0.5, Math.min(base.f * 1.6, left.fat * k)), c: Math.max(base.c * 0.5, Math.min(base.c * 1.6, left.carbs * k)) };
       shareLeft -= slot.share;
-      const res = pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid, strict: opt.strict, urgency: opt.urgency });
+      const pinRec = opt.pinned && opt.pinned[i] ? recipeById(opt.pinned[i]) : null;
+      const res = pinRec
+        ? fitRecipe(pinRec, t, inv, fm, opt.strict, { dense: opt.dense })
+        : pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid, strict: opt.strict, urgency: opt.urgency, dense: opt.dense, night: slot.night });
       if (res && res.recipeId) avoid[res.recipeId] = (avoid[res.recipeId] || 0) + 1.5;
       if (res) {
         subtract(inv, res.items);
         left.kcal -= res.macros.kcal; left.protein -= res.macros.p; left.fat -= res.macros.f; left.carbs -= res.macros.c;
       }
-      return mealFromRes(slot.type, slot.time, res, light);
+      const meal = mealFromRes(slot, slot.time, res, light);
+      if (pinRec) meal.pinned = true;
+      return meal;
     });
-    return { date: date, meals: meals, seed: seed || 0 };
+    return { date: date, meals: meals, seed: seed || 0, mode: schedule.mode || 'four' };
   }
 
   /** План дня с нуля. */
@@ -1376,26 +1976,23 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
 
   /**
    * Пересобрать несъеденные приёмы с учётом съеденного и еды вне плана.
-   * Съеденные приёмы сохраняются как есть.
+   * Съеденные приёмы сохраняются как есть, закреплённые рецепты — подгоняются заново.
    */
   function planRest(plan, daily, schedule, inv, fm, recent, seed, opt) {
-    const keep = plan.meals.map(function (m) { return m.eaten ? m : null; });
-    const res = planMeals(plan.date, daily, schedule, inv, fm, recent, seed, Object.assign({}, opt || {}, { keep: keep }));
+    const same = plan.meals.length === schedule.meals.length;
+    const keep = same ? plan.meals.map(function (m) { return m.eaten ? m : null; }) : [];
+    const pinned = {};
+    if (same) plan.meals.forEach(function (m, i) { if (!m.eaten && m.pinned && m.recipeId) pinned[i] = m.recipeId; });
+    const res = planMeals(plan.date, daily, schedule, inv, fm, recent, seed, Object.assign({}, opt || {}, { keep: keep, pinned: pinned }));
     // время приёмов берём из текущего расписания, у съеденных — фактическое
     res.meals.forEach(function (m, i) { if (!m.eaten && schedule.meals[i]) m.time = schedule.meals[i].time; });
     return res;
   }
 
-  function replanMeal(plan, idx, daily, schedule, inv, fm, recent, seed, opt) {
-    opt = opt || {};
-    const ex = opt.extraMacros || { kcal: 0, p: 0, f: 0, c: 0 };
-    const rng = mulberry32(hashStr(plan.date + ':' + idx + ':' + seed));
-    const avoid = Object.assign({}, recent || {});
-    plan.meals.forEach(function (m, i) { if (i !== idx && m.recipeId) avoid[m.recipeId] = (avoid[m.recipeId] || 0) + 1.5; });
-    const cur = plan.meals[idx];
-    if (cur.recipeId) avoid[cur.recipeId] = (avoid[cur.recipeId] || 0) + 3;
+  /** Цель одного приёма = остаток дня после остальных приёмов (в разумных пределах от доли). */
+  function slotTarget(plan, idx, daily, schedule, fm, opt) {
+    const ex = (opt && opt.extraMacros) || { kcal: 0, p: 0, f: 0, c: 0 };
     const slot = schedule.meals[idx];
-    // цель = остаток дня после остальных приёмов (в разумных пределах от доли)
     const base = targetFor(daily, slot.share);
     const others = macrosOf([].concat.apply([], plan.meals.filter(function (_, i) { return i !== idx; }).map(function (m) { return m.items; })), fm);
     const rest = { kcal: daily.kcal - others.kcal - ex.kcal, p: daily.protein - others.p - ex.p, f: daily.fat - others.f - ex.f, c: daily.carbs - others.c - ex.c };
@@ -1403,18 +2000,41 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     const light = rest.kcal < base.kcal * 0.5;
     ['kcal', 'p', 'f', 'c'].forEach(function (k) { t[k] = Math.min(base[k] * 1.5, Math.max(light ? (k === 'kcal' ? 0 : base[k] * 0.3) : base[k] * 0.6, rest[k])); });
     t.kcal = Math.max(150, t.kcal); t.p = Math.max(10, t.p); t.f = Math.max(3, t.f); t.c = Math.max(15, t.c);
-    const res = pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid, urgency: opt.urgency });
-    return mealFromRes(slot.type, cur.time, res, light);
+    return { t: t, light: light, slot: slot };
+  }
+
+  function replanMeal(plan, idx, daily, schedule, inv, fm, recent, seed, opt) {
+    opt = opt || {};
+    const rng = mulberry32(hashStr(plan.date + ':' + idx + ':' + seed));
+    const avoid = Object.assign({}, recent || {});
+    plan.meals.forEach(function (m, i) { if (i !== idx && m.recipeId) avoid[m.recipeId] = (avoid[m.recipeId] || 0) + 1.5; });
+    const cur = plan.meals[idx];
+    if (cur.recipeId) avoid[cur.recipeId] = (avoid[cur.recipeId] || 0) + 3;
+    const st = slotTarget(plan, idx, daily, schedule, fm, opt);
+    const res = pickMeal(st.slot.type, st.t, inv, fm, { rng: rng, avoid: avoid, urgency: opt.urgency, dense: opt.dense, night: st.slot.night });
+    return mealFromRes(st.slot, cur.time, res, st.light);
+  }
+
+  /** Поставить выбранный рецепт на приём пищи (граммовки — под остаток нормы). */
+  function pinRecipe(plan, idx, recipeId, daily, schedule, inv, fm, opt) {
+    opt = opt || {};
+    const r = recipeById(recipeId);
+    if (!r) return null;
+    const st = slotTarget(plan, idx, daily, schedule, fm, opt);
+    const res = fitRecipe(r, st.t, inv, fm, false, { dense: opt.dense });
+    const meal = mealFromRes(st.slot, plan.meals[idx].time, res, st.light);
+    meal.pinned = true;
+    return meal;
   }
 
   /** Список покупок: прогоняем план на N дней по виртуальному складу. */
-  function shoppingList(startDate, days, daily, schedule, inventory, fm, recent) {
+  function shoppingList(startDate, days, daily, schedule, inventory, fm, recent, opt) {
     const inv = Object.assign({}, inventory);
     const need = {};
     const rec = Object.assign({}, recent || {});
     for (let d = 0; d < days; d++) {
       const date = new Date(new Date(startDate + 'T12:00:00').getTime() + d * 864e5).toISOString().slice(0, 10);
-      const plan = planDay(date, daily, schedule, inv, fm, rec, 0, true);
+      const plan = planDay(date, daily, schedule, inv, fm, rec, 0, true, opt);
       plan.meals.forEach(function (m) {
         m.missing.forEach(function (it) { need[it.id] = (need[it.id] || 0) + it.g; });
         if (m.recipeId) rec[m.recipeId] = (rec[m.recipeId] || 0) + 1;
@@ -1455,6 +2075,11 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   NF.macrosOf = macrosOf;
   NF.solve = solve;
   NF.fitRecipe = fitRecipe;
+  NF.resolveRecipe = resolveRecipe;
+  NF.isTitleIngredient = isTitleIngredient;
+  NF.subGrams = subGrams;
+  NF.pinRecipe = pinRecipe;
+  NF.slotTarget = slotTarget;
   NF.pickMeal = pickMeal;
   NF.planDay = planDay;
   NF.planRest = planRest;
@@ -1769,9 +2394,10 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     const ev = [];
     const at = (hhmm, minus) => NF.fromMin(NF.toMin(hhmm) - (minus || 0));
     const o = ctx.opts;
-    if (o.meals) ctx.meals.forEach((m) => {
+    if (o.meals) ctx.meals.forEach((m, i) => {
       if (m.eaten) return;
-      ev.push({ key: 'meal-' + m.type, at: at(m.time, ctx.lead), title: NF.MEAL_LABEL[m.type] + ' в ' + m.time, body: m.title || 'Открой NovaFit: там блюдо и граммовки' });
+      const label = m.label || NF.MEAL_LABEL[m.type];
+      ev.push({ key: 'meal-' + i + m.type, at: at(m.time, ctx.lead), title: label + ' в ' + m.time, body: m.title || 'Открой NovaFit: там блюдо и граммовки' });
     });
     if (o.train && ctx.trainTime) ev.push({ key: 'train', at: at(ctx.trainTime, 60), title: 'Тренировка через час', body: 'Перекус был? Подготовь воду и гантель.' });
     if (o.sleep) ev.push({ key: 'sleep', at: at(ctx.bed, 30), title: 'Через 30 минут отбой', body: 'Отложи телефон, проветри комнату. Сон — это время роста мышц.' });
@@ -1831,12 +2457,13 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     if (o.meals) {
       // одинаковые по времени приёмы в днях с тренировкой и без объединяем
       c.schedRest.meals.forEach((m, i) => {
-        const mt = c.schedTrain.meals[i];
+        const mt = c.schedTrain.meals[i] || m;
         const body = 'Блюдо и граммовки в NovaFit.';
-        if (mt.time === m.time) add(NF.MEAL_LABEL[m.type] + ' · NovaFit', body, all, m.time, 30, c.lead);
+        const lb = (x) => (x.label || NF.MEAL_LABEL[x.type]) + ' · NovaFit';
+        if (mt.time === m.time) add(lb(m), body, all, m.time, 30, c.lead);
         else {
-          add(NF.MEAL_LABEL[m.type] + ' · NovaFit', body, rest, m.time, 30, c.lead);
-          add(NF.MEAL_LABEL[mt.type] + ' · NovaFit', body + ' Сегодня тренировка.', c.trainDays, mt.time, 30, c.lead);
+          add(lb(m), body, rest, m.time, 30, c.lead);
+          add(lb(mt), body + ' Сегодня тренировка.', c.trainDays, mt.time, 30, c.lead);
         }
       });
     }
@@ -1856,6 +2483,338 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   NF.measureInsight = measureInsight;
   NF.reminderEvents = reminderEvents;
   NF.buildICS = buildICS;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* NovaFit — сканер штрихкодов.
+ *  • камера: встроенный BarcodeDetector (Android Chrome) или ZXing (js/vendor,
+ *    грузится только при первом сканировании);
+ *  • поиск товара в мировой базе Open Food Facts (world.openfoodfacts.org,
+ *    данные под лицензией ODbL) — работает в любой стране;
+ *  • привязка к базовому продукту NovaFit по категории И по КБЖУ, чтобы
+ *    отсканированные макароны участвовали в рецептах, а «греческий йогурт
+ *    с мюсли» не считался обычным йогуртом.
+ * Логика без DOM (parseProduct, matchBase, validCode) проверяется в тестах.
+ */
+(function (g) {
+  const NF = (g.NF = g.NF || {});
+
+  const OFF_FIELDS = 'code,product_name,product_name_ru,product_name_en,generic_name,brands,quantity,product_quantity,product_quantity_unit,nutriments,categories_tags';
+
+  // ───────── штрихкод ─────────
+  /** EAN-8, UPC-A (12), EAN-13, GTIN-14 с проверкой контрольной цифры. */
+  function validCode(code) {
+    code = String(code || '').trim();
+    if (!/^(\d{8}|\d{12,14})$/.test(code)) return false;
+    const d = code.split('').map(Number);
+    const check = d.pop();
+    let sum = 0;
+    d.reverse().forEach(function (x, i) { sum += x * (i % 2 === 0 ? 3 : 1); });
+    return (10 - (sum % 10)) % 10 === check;
+  }
+
+  // ───────── категории Open Food Facts → базовые продукты ─────────
+  // Порядок важен: более частные правила раньше («peanut-butters» раньше «butters»).
+  const RULES = [
+    [/peanut-butter/, 'peanut_butter'],
+    [/whey|protein-powder/, 'protein_powder'],
+    [/skyr/, 'skyr'],
+    [/greek-style-yog|greek-yog/, 'yogurt'],
+    [/cottage-chees/, 'cottage_cheese'],
+    [/quark|tvorog|curd-chees|fromages?-blancs?$/, 'cottage5'],
+    [/kefir/, 'kefir'],
+    [/sour-cream|smetana|creme-fraiche/, 'smetana'],
+    [/mozzarella/, 'mozzarella'],
+    [/feta/, 'feta'],
+    [/hummus/, 'hummus'],
+    [/dark-chocolate/, 'dark_chocolate'],
+    [/rice-noodle|rice-vermicelli/, 'rice_noodles'],
+    [/couscous/, 'couscous'],
+    [/quinoa/, 'quinoa'],
+    [/bulgur/, 'bulgur'],
+    [/buckwheat/, 'buckwheat'],
+    [/granola|muesli/, 'granola'],
+    [/rolled-oats|oat-flakes|porridge-oats|^oats$|oatmeal/, 'oats'],
+    [/tortilla|^wraps$/, 'tortilla'],
+    [/pita|lavash|flatbread/, 'lavash'],
+    [/pasta|spaghetti|penne|fusilli|macaroni|tagliatelle/, 'pasta'],
+    [/basmati|jasmine-rice|long-grain-rice|parboiled-rice|white-rice|^rices$/, 'rice'],
+    [/^breads$|sliced-bread|wholemeal-bread|whole-wheat-bread|rye-bread|wholegrain-bread/, 'bread'],
+    [/chicken-eggs|^eggs$/, 'eggs'],
+    [/whole-milk/, 'milk_whole'],
+    [/semi-skimmed-milk|^milks$|cow-milk|uht-milk|pasteuri[sz]ed-milk/, 'milk'],
+    [/^butters$|salted-butter|unsalted-butter|dairy-butter|sweet-cream-butter/, 'butter'],
+    [/olive-oil/, 'olive_oil'],
+    [/sunflower-oil|vegetable-oil|rapeseed-oil|canola-oil/, 'sunflower_oil'],
+    [/hard-chees|cheddar|gouda|emmental|edam|parmigiano|parmesan/, 'cheese'],
+    [/^peanuts$|roasted-peanuts/, 'peanuts'],
+    [/^almonds$|whole-almonds/, 'almonds'],
+    [/^walnuts$|walnut-kernels/, 'walnuts'],
+    [/cashew/, 'cashews'],
+    [/^raisins$|sultanas/, 'raisins'],
+    [/dried-apricot/, 'dried_apricots'],
+    [/^dates$|medjool|deglet/, 'dates'],
+    [/^honeys$|^honey$/, 'honey'],
+    [/tuna/, 'tuna_can'],
+    [/chickpea/, 'chickpeas_can'],
+    [/lentil/, 'lentils'],
+    [/kidney-beans|black-beans|white-beans|canned-beans|^beans$/, 'beans_can'],
+    [/sweet-corn|canned-corn/, 'corn_can'],
+    [/tomato-paste|tomato-concentrate/, 'tomato_paste'],
+    [/chopped-tomatoes|peeled-tomatoes|canned-tomatoes|passata/, 'canned_tomatoes'],
+    [/frozen-mixed-vegetables|frozen-vegetable-mix|^frozen-vegetables$/, 'frozen_veg'],
+    [/broccoli/, 'broccoli'],
+    [/spinach/, 'spinach'],
+    [/frozen-berries|frozen-red-fruits|frozen-mixed-berries/, 'frozen_berries'],
+    [/tofu/, 'tofu'],
+    [/shrimp|prawn/, 'shrimp'],
+    [/chicken-breast/, 'chicken_breast'],
+    [/chicken-thigh/, 'chicken_thigh'],
+    [/turkey-breast|turkey-fillet|^turkey$/, 'turkey'],
+    [/minced-beef|ground-beef|beef-mince/, 'minced_beef'],
+    [/salmon/, 'salmon'],
+    [/^cod$|cod-fillet|hake|pollock|white-fish|tilapia/, 'fish_white'],
+    [/pork-tenderloin|pork-loin|^pork$/, 'pork'],
+    [/beef-steak|^beef$|lean-beef/, 'beef'],
+    [/sweet-potato/, 'sweet_potato'],
+    [/^potatoes$|fresh-potatoes/, 'potato'],
+    [/^bananas$/, 'banana'],
+    [/^apples$/, 'apple'],
+    [/avocado/, 'avocado'],
+    [/mushroom/, 'mushrooms'],
+  ];
+  // Переработанное и сладкое не привязываем к базовым продуктам.
+  const NOT_BASE = /confectioner|candy|candies|chocolate-bar|biscuit|cookie|cake|crisps|chips|salty-snack|sweet-spread|juice|soft-drink|soda|ice-cream|syrup|^jams$|flavou?red|sweetened|ready-meal|pizza|sandwich|cereal-bar/;
+  // Такое можно записать в «съел», но в автоматический план не ставим.
+  const NO_PLAN = /confectioner|candy|candies|chocolate-bar|biscuit|cookie|cake|crisps|chips|salty-snack|sweet-spread|soft-drink|soda|ice-cream|^sweets$|energy-drink|alcoholic/;
+
+  function tagCore(t) { return String(t).replace(/^[a-z]{2}:/, ''); }
+
+  function macrosClose(base, m) {
+    if (m.kcal == null || m.p == null) return false;
+    const kOk = Math.abs(m.kcal - base.kcal) <= Math.max(25, base.kcal * 0.3);
+    const pOk = Math.abs(m.p - base.p) <= Math.max(4, base.p * 0.4);
+    const fOk = m.f == null || Math.abs(m.f - base.f) <= Math.max(4, base.f * 0.5);
+    return kOk && pOk && fOk;
+  }
+
+  /**
+   * Базовый продукт по категориям (от самой частной к общей) и КБЖУ.
+   * {id} — подходит; {id: null, cat} — категория понятна, но КБЖУ другие.
+   */
+  function matchBase(tags, m, fm) {
+    tags = (tags || []).map(tagCore);
+    if (tags.some(function (t) { return NOT_BASE.test(t); })) return { id: null, cat: null };
+    for (let i = tags.length - 1; i >= 0; i--) {
+      for (let k = 0; k < RULES.length; k++) {
+        if (!RULES[k][0].test(tags[i])) continue;
+        const base = fm[RULES[k][1]];
+        if (!base) return { id: null, cat: null };
+        return macrosClose(base, m) ? { id: base.id, cat: base.cat } : { id: null, cat: base.cat };
+      }
+    }
+    return { id: null, cat: null };
+  }
+
+  function inferCat(m, tags) {
+    const t = (tags || []).map(tagCore).join(' ');
+    if (/dair|milk|yog|chees|kefir|quark|skyr/.test(t)) return 'dairy';
+    const k = Math.max(1, m.kcal || 0);
+    if ((m.p || 0) * 4 / k >= 0.4) return 'protein';
+    if ((m.f || 0) * 9 / k >= 0.55) return 'fat';
+    if (/fruit/.test(t)) return 'fruit';
+    if (k < 70) return /vegetable/.test(t) ? 'veg' : 'fruit';
+    return 'carb';
+  }
+
+  function maxMealFor(cat, kcal) {
+    if (cat === 'protein') return 250;
+    if (cat === 'dairy') return kcal > 250 ? 80 : 300;
+    if (cat === 'fat') return 40;
+    if (cat === 'veg') return 300;
+    if (cat === 'fruit') return kcal > 200 ? 60 : 300;
+    return kcal > 300 ? 120 : 300;
+  }
+
+  const SHELF_BY_CAT = { protein: 2, dairy: 7, veg: 5, fruit: 5 };
+
+  function num(x) { const v = parseFloat(x); return isFinite(v) ? v : null; }
+  function r1(x) { return x == null ? null : Math.round(x * 10) / 10; }
+  function clean(s) { s = String(s || '').replace(/\s+/g, ' ').trim(); return s.length >= 2 ? s : ''; }
+
+  /** Ответ Open Food Facts → продукт NovaFit (на 100 г). */
+  function parseProduct(p, code, fm) {
+    const n = p.nutriments || {};
+    let kcal = num(n['energy-kcal_100g']);
+    if (kcal == null && num(n.energy_100g) != null) kcal = num(n.energy_100g) / 4.184; // energy_100g — в кДж
+    const m = { kcal: kcal, p: num(n.proteins_100g), f: num(n.fat_100g), c: num(n.carbohydrates_100g) };
+    const tags = p.categories_tags || [];
+    const name = clean(p.product_name_ru) || clean(p.product_name) || clean(p.product_name_en) || clean(p.generic_name);
+    const brand = clean(String(p.brands || '').split(',')[0]);
+    let qty = null;
+    const unit = String(p.product_quantity_unit || 'g').toLowerCase();
+    if (num(p.product_quantity) != null && /^(g|ml|г|мл)$/.test(unit)) qty = Math.round(num(p.product_quantity));
+    if (!qty && p.quantity) {
+      const q = /([\d.,]+)\s*(kg|g|l|ml|cl|кг|г|л|мл)\b/i.exec(String(p.quantity));
+      if (q) {
+        let v = parseFloat(q[1].replace(',', '.'));
+        const u = q[2].toLowerCase();
+        if (u === 'kg' || u === 'кг' || u === 'l' || u === 'л') v *= 1000;
+        if (u === 'cl') v *= 10;
+        qty = Math.round(v);
+      }
+    }
+    if (qty && (qty < 5 || qty > 20000)) qty = null;
+    const hasMacros = m.kcal != null && m.p != null && m.f != null && m.c != null;
+    const match = hasMacros ? matchBase(tags, m, fm) : { id: null, cat: null };
+    const cat = match.cat || (hasMacros ? inferCat(m, tags) : 'carb');
+    const core = tags.map(tagCore);
+    return {
+      code: code, name: name, brand: brand,
+      kcal: r1(m.kcal), p: r1(m.p), f: r1(m.f), c: r1(m.c), hasMacros: hasMacros,
+      qty: qty, base: match.id, cat: cat,
+      noplan: core.some(function (t) { return NO_PLAN.test(t); }),
+      shelf: SHELF_BY_CAT[cat] || null,
+    };
+  }
+
+  /** Продукт NovaFit из отсканированного товара (свой продукт со штрихкодом). */
+  function customFromScan(prod, name) {
+    const kcal = prod.kcal || 0;
+    return {
+      id: 'b' + prod.code, name: name || prod.name || ('Товар ' + prod.code), kcal: kcal, p: prod.p || 0, f: prod.f || 0, c: prod.c || 0,
+      cat: prod.cat, maxMeal: maxMealFor(prod.cat, kcal), unit: null, perUnit: null, custom: true,
+      barcode: prod.code, brand: prod.brand || '', noplan: !!prod.noplan,
+    };
+  }
+
+  // ───────── Open Food Facts ─────────
+  async function lookup(code, timeoutMs) {
+    const codes = code.length === 12 ? ['0' + code, code] : [code]; // UPC-A хранится как EAN-13 с нулём
+    for (let i = 0; i < codes.length; i++) {
+      const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const t = setTimeout(function () { if (ctrl) ctrl.abort(); }, timeoutMs || 9000);
+      try {
+        const res = await fetch('https://world.openfoodfacts.org/api/v2/product/' + codes[i] + '.json?fields=' + OFF_FIELDS, {
+          signal: ctrl ? ctrl.signal : undefined,
+          headers: { 'X-User-Agent': 'NovaFit/1.1 (personal fitness app)' },
+        });
+        if (res.status === 404) continue;
+        if (!res.ok) return { status: 'error' };
+        const j = await res.json();
+        if (!j || j.status !== 1 || !j.product) continue;
+        return { status: 'ok', raw: j.product, code: codes[i] };
+      } catch (e) {
+        return { status: (typeof navigator !== 'undefined' && navigator.onLine === false) ? 'offline' : 'error' };
+      } finally { clearTimeout(t); }
+    }
+    return { status: 'notfound' };
+  }
+
+  // ───────── камера ─────────
+  let zxPromise = null, zxReader = null;
+  function loadZXing() {
+    if (g.ZXing) return Promise.resolve(g.ZXing);
+    if (zxPromise) return zxPromise;
+    zxPromise = new Promise(function (resolve, reject) {
+      const s = document.createElement('script');
+      s.src = 'js/vendor/zxing.min.js';
+      s.onload = function () { g.ZXing ? resolve(g.ZXing) : reject(new Error('zxing')); };
+      s.onerror = function () { zxPromise = null; reject(new Error('zxing')); };
+      document.head.appendChild(s);
+    });
+    return zxPromise;
+  }
+
+  /** Распознать штрихкод на canvas через ZXing. */
+  function decodeCanvas(canvas) {
+    const ZX = g.ZXing;
+    if (!ZX) return null;
+    if (!zxReader) {
+      const hints = new Map();
+      hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, [ZX.BarcodeFormat.EAN_13, ZX.BarcodeFormat.EAN_8, ZX.BarcodeFormat.UPC_A, ZX.BarcodeFormat.UPC_E]);
+      hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+      zxReader = new ZX.MultiFormatReader();
+      zxReader.setHints(hints);
+    }
+    try {
+      const src = new ZX.HTMLCanvasElementLuminanceSource(canvas);
+      return zxReader.decode(new ZX.BinaryBitmap(new ZX.HybridBinarizer(src))).getText();
+    } catch (e) { return null; } finally { try { zxReader.reset(); } catch (e2) { /* ignore */ } }
+  }
+
+  /**
+   * Включить камеру и искать штрихкод. onCode(code) вызывается, когда один и
+   * тот же код распознан дважды подряд (защита от ошибочного чтения).
+   * Возвращает { stop() }. Ошибки: 'nocamera' | 'denied' | 'nodecoder'.
+   */
+  async function startCamera(video, onCode) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error('nocamera');
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+    } catch (e) {
+      throw new Error(e && (e.name === 'NotAllowedError' || e.name === 'SecurityError') ? 'denied' : 'nocamera');
+    }
+    video.srcObject = stream;
+    video.setAttribute('playsinline', '');
+    video.muted = true;
+    try { await video.play(); } catch (e) { /* автоплей без звука обычно разрешён */ }
+
+    let detector = null;
+    if ('BarcodeDetector' in g) {
+      try {
+        const fmts = await g.BarcodeDetector.getSupportedFormats();
+        const want = ['ean_13', 'ean_8', 'upc_a', 'upc_e'].filter(function (f) { return fmts.indexOf(f) >= 0; });
+        if (want.length) detector = new g.BarcodeDetector({ formats: want });
+      } catch (e) { detector = null; }
+    }
+    if (!detector) {
+      try { await loadZXing(); } catch (e) { stream.getTracks().forEach(function (t) { t.stop(); }); throw new Error('nodecoder'); }
+    }
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let last = null, hits = 0, stopped = false, busy = false, timer = null;
+    function stop() {
+      stopped = true;
+      clearTimeout(timer);
+      stream.getTracks().forEach(function (t) { t.stop(); });
+      video.srcObject = null;
+    }
+    async function tick() {
+      if (stopped) return;
+      if (!busy && video.readyState >= 2 && video.videoWidth) {
+        busy = true;
+        try {
+          let code = null;
+          if (detector) {
+            const r = await detector.detect(video);
+            if (r && r.length) code = r[0].rawValue;
+          } else {
+            // средняя полоса кадра — там рамка; уменьшаем для скорости
+            const vw = video.videoWidth, vh = video.videoHeight;
+            const w = Math.min(vw, 960), h = Math.round((vh * 0.5) * (w / vw));
+            canvas.width = w; canvas.height = h;
+            ctx.drawImage(video, 0, vh * 0.25, vw, vh * 0.5, 0, 0, w, h);
+            code = decodeCanvas(canvas);
+          }
+          if (code && validCode(code)) {
+            hits = code === last ? hits + 1 : 1;
+            last = code;
+            if (hits >= 2) { stop(); onCode(code); return; }
+          }
+        } catch (e) { /* следующий кадр */ } finally { busy = false; }
+      }
+      timer = setTimeout(tick, detector ? 120 : 160);
+    }
+    tick();
+    return { stop: stop };
+  }
+
+  NF.Scanner = {
+    validCode: validCode, matchBase: matchBase, parseProduct: parseProduct, customFromScan: customFromScan,
+    lookup: lookup, startCamera: startCamera, decodeCanvas: decodeCanvas, loadZXing: loadZXing, RULES: RULES,
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -1907,6 +2866,10 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       timer: null,         // таймер отдыха/подхода: {kind, endAt, total, label, exId}
       autoRest: true,
       icsExported: false,
+      lowAppetite: false,  // режим «нет аппетита»: 6 приёмов, калорийно-плотные блюда
+      shopExtra: {},       // добавлено в покупки вручную (из рецептов): {id: граммы}
+      barcodes: {},        // штрихкод → id продукта (работает без интернета)
+      lastTz: null, lastOffset: null, tzNotice: null,
     };
   }
 
@@ -1933,7 +2896,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   let S = load();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 
-  const ui = { extraOpen: false, extraSearch: '', extraPick: null, editExp: null, reportWeek: 0, measureOpen: false, foodSeg: 'stock', search: '', addFood: null, calcSel: [], calcMeal: 'l', calcStock: true, recFilter: 'all', shopDays: 3, shopChecked: {}, confirmReset: false, customOpen: false, importOpen: false, errors: [] };
+  const ui = { recQuery: '', recTime: 0, recNoCook: false, waterOpen: false, extraOpen: false, extraSearch: '', extraPick: null, editExp: null, reportWeek: 0, measureOpen: false, foodSeg: 'stock', search: '', addFood: null, calcSel: [], calcMeal: 'l', calcStock: true, recFilter: 'all', shopDays: 3, shopChecked: {}, confirmReset: false, customOpen: false, importOpen: false, errors: [] };
 
   // ───────────────── утилиты ─────────────────
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1966,8 +2929,9 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   function scheduleFor(date) {
     const e = sleepEntry(date);
     const wake = e ? e.wake : S.sleep.wake;
-    return NF.mealSchedule(wake, S.sleep.bed, isTrainDay(date) ? S.train.time : null);
+    return NF.mealSchedule(wake, S.sleep.bed, isTrainDay(date) ? S.train.time : null, S.lowAppetite ? 'six' : 'four');
   }
+  const mealLabel = (m) => m.label || NF.MEAL_LABEL[m.type];
 
   function recentPenalty(date) {
     const pen = {};
@@ -2006,7 +2970,40 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   function extrasFor(date) { return S.extras[date] || []; }
   function extraMacros(date) { return NF.macrosOf(extrasFor(date), fm()); }
 
-  function planOpts(date) { return { urgency: urgencyMap(), extraMacros: extraMacros(date) }; }
+  function planOpts(date) { return { urgency: urgencyMap(), extraMacros: extraMacros(date), dense: !!S.lowAppetite }; }
+
+  /**
+   * Переключили режим питания (4 ↔ 6 приёмов): строим новый план, съеденное
+   * сохраняем. Если съеденному приёму не нашлось места в новом расписании,
+   * он уходит в «еду вне плана» — ничего не теряется.
+   */
+  function rebuildForMode() {
+    const date = todayStr();
+    const old = S.plans[date];
+    const fresh = buildPlan(date, old ? old.seed || 0 : 0);
+    S.plans[date] = fresh;
+    if (old) {
+      const used = {};
+      let placed = 0;
+      old.meals.filter((m) => m.eaten).forEach((m) => {
+        let best = -1, bd = 1e9;
+        fresh.meals.forEach((f, i) => {
+          if (used[i] || f.type !== m.type) return;
+          const d = Math.abs(NF.toMin(f.time) - NF.toMin(m.time));
+          if (d < bd) { bd = d; best = i; }
+        });
+        if (best >= 0) {
+          used[best] = 1; placed++;
+          fresh.meals[best] = Object.assign({}, m, { label: fresh.meals[best].label, night: fresh.meals[best].night });
+        } else {
+          const xs = (S.extras[date] = S.extras[date] || []);
+          m.items.forEach((it) => xs.push({ id: it.id, g: it.g, t: m.time, stock: false }));
+        }
+      });
+      if (placed || extrasFor(date).length) rebuildPlan(date);
+    }
+    save();
+  }
 
   function buildPlan(date, seed) {
     const T = targets();
@@ -2135,8 +3132,11 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     html += '<div class="chips-row">' +
       '<button class="chip-card" data-act="tab" data-tab="sleep"><span class="chip-k">Сон</span><span class="chip-v">' + (sl ? fmtDur(NF.sleepMinutes(sl.bed, sl.wake)) : 'отметить') + '</span></button>' +
       '<button class="chip-card" data-act="tab" data-tab="train"><span class="chip-k">' + (train ? 'Тренировка' : 'Отдых') + '</span><span class="chip-v">' + (train ? (doneToday ? 'выполнена ✓' : esc(next.title) + ' · ' + S.train.time) : 'восстановление') + '</span></button>' +
-      '<div class="chip-card"><span class="chip-k">Вода</span><span class="chip-v">' + ((train ? T.waterTrain : T.water) / 1000).toFixed(1).replace('.', ',') + ' л</span></div>' +
+      '<button class="chip-card" data-act="water-toggle" aria-expanded="' + ui.waterOpen + '"><span class="chip-k">Вода</span><span class="chip-v">' + ((train ? T.waterTrain : T.water) / 1000).toFixed(1).replace('.', ',') + ' л</span></button>' +
       '</div>';
+    if (ui.waterOpen) html += waterCard(T, train);
+    html += tzNotice();
+    if (S.lowAppetite) html += '<div class="note note-info"><span>Режим «Нет аппетита»: ' + plan.meals.length + ' приёмов поменьше, больше калорий в каждом глотке.</span><button class="btn small ghost" data-act="open-appetite">Советы</button></div>';
 
     html += todayAlerts(plan);
 
@@ -2160,18 +3160,19 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       const mm = NF.macrosOf(m.items, F);
       const title = rec ? rec.name : 'Тарелка из твоих продуктов';
       html += '<li class="meal' + (m.eaten ? ' eaten' : '') + (i === nowIdx ? ' now' : '') + (ui.justEaten === i ? ' just-eaten' : '') + (ui.justSwapped === i ? ' swap-in' : '') + '">' +
-        '<div class="meal-time"><span class="num">' + esc(m.time) + '</span>' + (m.eaten ? '<span class="check" aria-label="съедено">✓</span>' : '') + '<span class="meal-type">' + NF.MEAL_LABEL[m.type] + '</span>' + (i === nowIdx ? '<span class="now-tag">сейчас</span>' : '') + '</div>' +
+        '<div class="meal-time"><span class="num">' + esc(m.time) + '</span>' + (m.eaten ? '<span class="check" aria-label="съедено">✓</span>' : '') + '<span class="meal-type">' + esc(mealLabel(m)) + '</span>' + (i === nowIdx ? '<span class="now-tag">сейчас</span>' : '') + '</div>' +
         '<div class="meal-body">' +
-        '<h3>' + esc(title) + '</h3>' + macroLine(mm) +
+        '<h3>' + esc(title) + (m.night && rec ? ' <span class="tag">перед сном</span>' : '') + '</h3>' + macroLine(mm) +
         (m.light && !m.eaten ? '<p class="hint">Лёгкий приём: норма почти закрыта едой вне плана.</p>' : '') +
         '<ul class="items">' + m.items.map((it) => {
           const f = F[it.id]; if (!f) return '';
           const miss = m.missing.find((x) => x.id === it.id);
           const dl = daysLeft(it.id);
           const urgent = !m.eaten && dl != null && dl >= 0 && dl <= 1;
-          return '<li><span>' + esc(f.name) + (urgent ? ' <em class="tag-exp">' + (dl === 0 ? 'сегодня' : 'до завтра') + '</em>' : '') + '</span><span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет ' + r0(miss.g) + '</em>' : '') + '</span></li>';
+          return '<li><span>' + esc(f.name) + (it.sub && F[it.sub] ? ' <em class="sub-tag">вместо: ' + esc(shortName(F[it.sub])) + '</em>' : '') + (urgent ? ' <em class="tag-exp">' + (dl === 0 ? 'сегодня' : 'до завтра') + '</em>' : '') + '</span><span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет ' + r0(miss.g) + '</em>' : '') + '</span></li>';
         }).join('') + '</ul>' +
-        (m.extra && F[m.extra] ? '<p class="hint">Добавка к блюду: ' + esc(F[m.extra].name.toLowerCase()) + ', чтобы добрать калории.</p>' : '') +
+        (m.extra && F[m.extra] ? '<p class="hint">' + (m.extraDense ? 'Калорийная добавка без лишнего объёма: ' : 'Добавка к блюду: ') + esc(F[m.extra].name.toLowerCase()) + ', чтобы добрать калории.</p>' : '') +
+        (m.pinned && !m.eaten ? '<p class="hint">Блюдо выбрано тобой, граммовки подогнаны под норму.</p>' : '') +
         (m.skipped && m.skipped.length ? '<p class="hint">Можно без: ' + m.skipped.map((id) => esc(F[id] ? F[id].name.toLowerCase() : id)).join(', ') + ' (нет дома).</p>' : '') +
         (rec ? '<details class="steps"><summary>Как готовить · ' + rec.min + ' мин</summary><ol>' + rec.steps.map((st) => '<li>' + esc(st) + '</li>').join('') + '</ol></details>' : '') +
         '<div class="meal-actions">' +
@@ -2182,6 +3183,56 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     html += '</ol>';
     html += '<p class="hint">Когда отмечаешь «Съел» или добавляешь еду вне плана, продукты списываются из запасов, а оставшиеся приёмы пересчитываются под остаток нормы.</p>';
     return html;
+  }
+
+  /** Рекомендация по воде (без трекера): норма, жара, перелёты, ориентиры. */
+  function waterCard(T, train) {
+    const l = (ml) => (ml / 1000).toFixed(1).replace('.', ',');
+    return '<div class="card water"><h2 class="h3">Сколько пить сегодня</h2>' +
+      '<p><b class="num">' + l(train ? T.waterTrain : T.water) + ' л</b>' + (train ? ' — день тренировки, это уже с запасом +0,5 л.' : '.') + ' Это около 35 мл на килограмм веса, вместе с чаем, супом и молоком.</p>' +
+      '<ul class="dots small">' +
+      '<li><b>Жара</b> от +28 °C или сильно потеешь — добавь 0,5–1 л.</li>' +
+      '<li><b>Перелёт</b> — ещё стакан (около 250 мл) на каждый час в самолёте: воздух в салоне очень сухой.</li>' +
+      '<li><b>Ориентир</b> — светлая моча цвета соломы. Тёмная — пей больше.</li>' +
+      '<li>Стакан сразу после подъёма, по стакану между приёмами пищи, бутылка на тренировку.</li>' +
+      '<li>Чай и кофе тоже считаются, алкоголь — нет: он выводит воду.</li>' +
+      (S.lowAppetite ? '<li>В режиме «нет аппетита» не пей много прямо перед едой и во время неё: вода займёт место в желудке.</li>' : '') +
+      '</ul></div>';
+  }
+
+  // ── часовой пояс: в поездках еда, сон и напоминания идут по местному времени ──
+  function checkTimezone() {
+    let tz = 'local';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'local'; } catch (e) { /* ignore */ }
+    const off = new Date().getTimezoneOffset();
+    if (S.lastOffset != null && S.lastOffset !== off) {
+      S.tzNotice = { tz: tz, diff: (S.lastOffset - off) / 60, date: todayStr() };
+    }
+    S.lastTz = tz; S.lastOffset = off;
+  }
+
+  function tzNotice() {
+    const n = S.tzNotice;
+    if (!n) return '';
+    const d = n.diff;
+    const dir = d > 0 ? 'на восток' : 'на запад';
+    const h = Math.abs(d) % 1 ? Math.abs(d).toFixed(1).replace('.', ',') : Math.abs(d);
+    return '<div class="note note-action tz"><div><b>Новый часовой пояс: ' + esc(n.tz.replace(/_/g, ' ')) + '</b> (' + (d > 0 ? '+' : '−') + h + ' ч, ' + dir + '). ' +
+      'Еда, сон и напоминания теперь по местному времени.</div>' +
+      '<details id="jetlag-tips"><summary class="small">Как быстрее привыкнуть</summary>' + jetlagTips(d) + '</details>' +
+      '<button class="btn small" data-act="tz-ok">Понятно</button></div>';
+  }
+
+  function jetlagTips(diff) {
+    return '<ul class="dots small">' +
+      '<li>С первого дня живи по местным часам: ешь и ложись по местному времени, даже если не хочется.</li>' +
+      '<li>Утром — 20–30 минут дневного света на улице, вечером — приглушённый свет и меньше экрана.</li>' +
+      (diff == null ? '<li>Летел на восток — ложись чуть раньше, на запад — продержись бодрым до местного вечера.</li>'
+        : diff > 0 ? '<li>Ты летел на восток: первые вечера ложись чуть раньше и не отсыпайся утром допоздна.</li>'
+          : '<li>Ты летел на запад: продержись бодрым до местного вечера, утром вставай по будильнику.</li>') +
+      '<li>Если днём очень хочется спать — не больше 20–30 минут.</li>' +
+      '<li>Кофеин — только до обеда по местному времени.</li>' +
+      '<li>Первые 1–2 дня тренируйся полегче: сон и восстановление ещё не наладились.</li></ul>';
   }
 
   /** Приём пищи «сейчас»: от 30 мин до его времени и до 90 мин после, если не съеден. */
@@ -2231,7 +3282,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     const F = fm();
     const q = ui.extraSearch.trim().toLowerCase();
     let html = '<div class="card extra-panel"><label class="label" for="extra-search">Что съел вне плана?</label>' +
-      '<input id="extra-search" class="input" type="search" autocomplete="off" placeholder="Например: банан, хлеб, творог" value="' + esc(ui.extraSearch) + '">' +
+      '<div class="search-row"><input id="extra-search" class="input" type="search" autocomplete="off" placeholder="Например: банан, хлеб, творог" value="' + esc(ui.extraSearch) + '">' + scanButton('extra') + '</div>' +
       '<div id="extra-results">' + extraResults() + '</div>';
     if (!q) {
       const quick = ['banana', 'bread', 'peanuts', 'cottage5', 'eggs', 'milk', 'apple', 'cheese'].filter((id) => F[id]);
@@ -2290,7 +3341,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   function renderStock() {
     const F = fm();
     let html = '<div class="card"><label class="label" for="food-search">Добавить продукт</label>' +
-      '<input id="food-search" class="input" type="search" autocomplete="off" placeholder="Например: гречка, яйца, творог" value="' + esc(ui.search) + '">' +
+      '<div class="search-row"><input id="food-search" class="input" type="search" autocomplete="off" placeholder="Например: гречка, яйца, творог" value="' + esc(ui.search) + '">' + scanButton('stock') + '</div>' +
       '<div id="search-results">' + searchResults() + '</div>' +
       '<button class="link" data-act="custom-toggle">' + (ui.customOpen ? 'Скрыть' : 'Нет в списке? Добавить свой продукт') + '</button>' +
       (ui.customOpen ? customFoodForm() : '') + '</div>';
@@ -2387,49 +3438,165 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     return html;
   }
 
-  function recipeStatus(r) {
-    const req = r.ing.filter((i) => !i[2]);
-    const missing = req.filter((i) => (S.inventory[i[0]] || 0) < i[1] * 0.6);
-    return missing;
+  // ───────── «Что приготовить» ─────────
+  function shortName(f) { return f ? f.name.split(' (')[0].split(' / ')[0].toLowerCase() : ''; }
+
+  function webLinks(query) {
+    const q = encodeURIComponent(query);
+    return '<a class="pill link-out" href="https://www.google.com/search?q=' + q + '" target="_blank" rel="noopener">Google</a>' +
+      '<a class="pill link-out" href="https://www.youtube.com/results?search_query=' + q + '" target="_blank" rel="noopener">YouTube</a>';
+  }
+
+  /** Состояние рецепта по запасам: чего нет, что заменяется. */
+  function recipeState(r, inv, F) {
+    const rs = NF.resolveRecipe(r, inv, F, false);
+    const missing = rs.ings.filter((i) => i.missing).map((i) => i.food.id);
+    const subs = rs.ings.filter((i) => i.sub).map((i) => ({ from: i.sub, to: i.food.id, title: NF.isTitleIngredient(r, i.sub, F) }));
+    const group = missing.length === 0 ? 'now' : missing.length === 1 ? 'one' : missing.length <= 3 ? 'few' : 'rest';
+    return { r: r, missing: missing, subs: subs, skipped: rs.skipped, group: group };
+  }
+
+  function recMealType(r) {
+    if (ui.recFilter === 'b' || ui.recFilter === 's') return ui.recFilter;
+    if (ui.recFilter === 'l') return r.meals.indexOf('l') >= 0 ? 'l' : 'd';
+    return r.meals[0];
+  }
+
+  function recipeFit(r, F, inv) {
+    const T = targets();
+    if (!T) return null;
+    return NF.fitRecipe(r, NF.targetFor(T, NF.MEAL_SHARE[recMealType(r)]), inv, F, false, { dense: !!S.lowAppetite });
   }
 
   function renderRecipes() {
+    const filters = [['all', 'Все'], ['b', 'Завтрак'], ['l', 'Обед и ужин'], ['s', 'Перекус']];
+    const times = [[0, 'Любое время'], [10, 'до 10 мин'], [20, 'до 20 мин'], [40, 'до 40 мин']];
+    return '<h2 class="h2 rec-title">Что приготовить из того, что есть</h2><div class="card rec-head">' +
+      '<input id="rec-search" class="input" type="search" autocomplete="off" placeholder="Блюдо или продукт: омлет, курица, рис…" value="' + esc(ui.recQuery) + '" aria-label="Поиск рецептов">' +
+      '<div class="seg small" data-k="seg-rec"><span class="seg-thumb" aria-hidden="true"></span>' + filters.map((f) => '<button class="seg-btn' + (ui.recFilter === f[0] ? ' on' : '') + '" data-act="rec-filter" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>' +
+      '<div class="pick">' + times.map((t) => '<button class="pill' + (ui.recTime === t[0] ? ' on' : '') + '" data-act="rec-time" data-t="' + t[0] + '">' + t[1] + '</button>').join('') +
+      '<button class="pill' + (ui.recNoCook ? ' on' : '') + '" data-act="rec-nocook" aria-pressed="' + ui.recNoCook + '">Без готовки</button></div>' +
+      '</div><div id="rec-results">' + recipeResults() + '</div>';
+  }
+
+  function recipeResults() {
     const F = fm();
-    const filters = [['all', 'Все'], ['b', 'Завтрак'], ['l', 'Обед/ужин'], ['s', 'Перекус']];
-    let list = NF.RECIPES.filter((r) => ui.recFilter === 'all' || r.meals.indexOf(ui.recFilter) >= 0);
-    list = list.map((r) => ({ r: r, miss: recipeStatus(r) })).sort((a, b) => a.miss.length - b.miss.length);
-    let html = '<div class="seg small" data-k="seg-rec"><span class="seg-thumb" aria-hidden="true"></span>' + filters.map((f) => '<button class="seg-btn' + (ui.recFilter === f[0] ? ' on' : '') + '" data-act="rec-filter" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
-    html += '<p class="hint">Граммовки указаны базовые. В плане на день они пересчитываются под твою норму.</p><div class="recipes">';
-    list.forEach((x) => {
-      const r = x.r;
-      const baseItems = r.ing.filter((i) => !i[2]).map((i) => ({ id: i[0], g: i[1] }));
-      const m = NF.macrosOf(baseItems, F);
-      const ok = x.miss.length === 0;
-      html += '<details class="recipe"><summary><span class="status ' + (ok ? 'ok' : x.miss.length <= 2 ? 'near' : 'no') + '">' + (ok ? 'Можно готовить' : 'Не хватает: ' + x.miss.length) + '</span>' +
-        '<span class="recipe-name">' + esc(r.name) + '</span><span class="muted small">' + r.meals.split('').map((t) => NF.MEAL_LABEL[t]).join(', ') + ' · ' + r.min + ' мин · ' + r0(m.kcal) + ' ккал</span></summary>' +
-        '<ul class="items">' + r.ing.map((i) => {
-          const f = F[i[0]]; const have = (S.inventory[i[0]] || 0) >= i[1] * 0.6;
-          return '<li class="' + (have ? '' : 'lack') + '"><span>' + esc(f.name) + (i[2] ? ' <span class="muted">(по желанию)</span>' : '') + '</span><span class="num">' + qtyLabel(f, i[1]) + '</span></li>';
-        }).join('') + '</ul>' + macroLine(m) +
-        '<ol class="steps-list">' + r.steps.map((s) => '<li>' + esc(s) + '</li>').join('') + '</ol></details>';
+    const inv = usableInventory();
+    const q = ui.recQuery.trim().toLowerCase();
+    const urg = urgencyMap();
+    const states = NF.RECIPES.filter((r) => {
+      if (ui.recFilter === 'l') { if (r.meals.indexOf('l') < 0 && r.meals.indexOf('d') < 0) return false; }
+      else if (ui.recFilter !== 'all' && r.meals.indexOf(ui.recFilter) < 0) return false;
+      if (ui.recTime && r.min > ui.recTime) return false;
+      if (ui.recNoCook && r.tags.indexOf('nocook') < 0) return false;
+      if (q && r.name.toLowerCase().indexOf(q) < 0 && !r.ing.some((i) => F[i[0]] && F[i[0]].name.toLowerCase().indexOf(q) >= 0)) return false;
+      return true;
+    }).map((r) => recipeState(r, inv, F));
+    // сначала — блюда со скоропортящимся, потом без замен, потом быстрые
+    const rank = (st) => st.subs.reduce((sum, x) => sum + (x.title ? 2 : 0.3), 0) -
+      st.r.ing.reduce((mx, i) => Math.max(mx, (inv[i[0]] || 0) > 0 ? (urg[i[0]] || 0) : 0), 0) * 3;
+    states.sort((a, b) => rank(a) - rank(b) || a.r.min - b.r.min);
+    const g = { now: [], one: [], few: [], rest: [] };
+    states.forEach((st) => g[st.group].push(st));
+
+    if (!states.length) {
+      return '<div class="empty"><p>Ничего не нашлось.</p><p class="muted">Сними фильтры или поищи рецепт в интернете.</p>' +
+        '<div class="pick center">' + webLinks('рецепт ' + (q || 'из того что есть')) + '</div></div>';
+    }
+    let html = '<p class="rec-summary"><b class="num">' + g.now.length + '</b> ' + plural(g.now.length, 'блюдо', 'блюда', 'блюд') + ' можно приготовить из того, что есть' +
+      (g.one.length ? ' · ещё <b class="num">' + g.one.length + '</b>, если докупить один продукт' : '') + '.</p>';
+    const section = (title, list, id, collapsed) => {
+      if (!list.length) return '';
+      const cards = list.map((st) => recipeCard(st, F, inv)).join('');
+      if (collapsed) return '<details class="rec-group" id="' + id + '"><summary>' + title + ' · ' + list.length + '</summary><div class="recipes">' + cards + '</div></details>';
+      return '<h2 class="h3 rec-h">' + title + ' · ' + list.length + '</h2><div class="recipes">' + cards + '</div>';
+    };
+    html += section('Можно приготовить сейчас', g.now, 'recg-now', false);
+    html += section('Не хватает одного продукта', g.one, 'recg-one', false);
+    html += section('Не хватает 2–3 продуктов', g.few, 'recg-few', true);
+    html += section('Остальные рецепты', g.rest, 'recg-rest', true);
+    const names = stockNames(inv, F);
+    if (names.length) {
+      html += '<div class="card web-card"><p><b>Хочется чего-то нового?</b> Поищи рецепты по своим продуктам: ' + esc(names.join(', ')) + '.</p>' +
+        '<div class="pick">' + webLinks('рецепт ' + names.join(' ')) + '</div></div>';
+    }
+    return html;
+  }
+
+  /** Главные продукты из запасов для поиска в интернете (сначала то, что скоро испортится). */
+  function stockNames(inv, F) {
+    const urg = urgencyMap();
+    const skip = { tomato_paste: 1, onion: 1, honey: 1 };
+    return Object.keys(inv).filter((id) => F[id] && !F[id].noplan && !skip[id] && F[id].cat !== 'fat' && inv[id] >= 50)
+      .sort((a, b) => (urg[b] || 0) - (urg[a] || 0) || inv[b] - inv[a]).slice(0, 4).map((id) => shortName(F[id]));
+  }
+
+  function recipeCard(st, F, inv) {
+    const r = st.r;
+    const fit = recipeFit(r, F, inv);
+    const type = recMealType(r);
+    const kcal = fit ? r0(fit.macros.kcal) : r0(NF.macrosOf(r.ing.filter((i) => !i[2]).map((i) => ({ id: i[0], g: i[1] })), F).kcal);
+    const tags = r.tags.map((t) => '<span class="tag">' + esc(NF.TAG_LABEL[t] || t) + '</span>').join('');
+    const status = st.group === 'now' ? '<span class="status ok">Всё есть</span>'
+      : '<span class="status ' + (st.group === 'one' ? 'near' : 'no') + '">Нет: ' + st.missing.map((id) => esc(shortName(F[id]))).join(', ') + '</span>';
+    const subLine = st.subs.length ? '<span class="sub-line">' + (st.subs.some((x) => x.title) ? 'Другой главный продукт: ' : 'Замена: ') +
+      st.subs.map((x) => esc(shortName(F[x.from])) + ' → ' + esc(shortName(F[x.to]))).join(', ') + '</span>' : '';
+    let html = '<details class="recipe" id="rec-' + r.id + '"><summary>' + status +
+      '<span class="recipe-name">' + esc(r.name) + '</span>' +
+      '<span class="muted small">' + r.meals.split('').map((t) => NF.MEAL_LABEL[t]).join(', ') + ' · ' + r.min + ' мин · ' + kcal + ' ккал</span>' +
+      (tags ? '<span class="tags">' + tags + '</span>' : '') + subLine + '</summary>';
+    if (fit) {
+      html += '<p class="small muted">Порция под твою норму на ' + NF.MEAL_LABEL[type].toLowerCase() + ':</p><ul class="items">' + fit.items.map((it) => {
+        const f = F[it.id];
+        const miss = fit.missing.find((x) => x.id === it.id);
+        return '<li class="' + (miss ? 'lack' : '') + '"><span>' + esc(f.name) + (it.sub ? ' <em class="sub-tag">вместо: ' + esc(shortName(F[it.sub])) + '</em>' : '') + '</span><span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет</em>' : '') + '</span></li>';
+      }).join('') + '</ul>' + macroLine(fit.macros);
+      if (fit.skipped.length) html += '<p class="hint">Можно без: ' + fit.skipped.map((id) => esc(shortName(F[id]))).join(', ') + ' (нет дома).</p>';
+    }
+    html += '<ol class="steps-list">' + r.steps.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol>';
+    // поставить в план на сегодня
+    let slots = [];
+    if (S.profile) {
+      const plan = getPlan(todayStr());
+      slots = plan.meals.map((m, i) => [i, m]).filter((x) => !x[1].eaten && r.meals.indexOf(x[1].type) >= 0);
+    }
+    html += '<div class="rec-actions">' +
+      (slots.length ? '<span class="small muted">Поставить на сегодня:</span>' + slots.map((x) => '<button class="btn small" data-act="rec-pin" data-id="' + r.id + '" data-i="' + x[0] + '">' + esc(mealLabel(x[1])) + ' · ' + x[1].time + '</button>').join('') : '') +
+      (fit && fit.missing.length ? '<button class="btn small ghost" data-act="rec-shop" data-id="' + r.id + '">Недостающее — в покупки</button>' : '') +
+      '</div><div class="rec-web"><span class="small muted">Похожие рецепты:</span>' + webLinks('рецепт ' + r.name) + '</div>';
+    return html + '</details>';
+  }
+
+  function shopList() {
+    const T = targets();
+    const F = fm();
+    const list = NF.shoppingList(todayStr(), ui.shopDays, T, scheduleFor(todayStr()), usableInventory(), F, recentPenalty(todayStr()), { dense: !!S.lowAppetite });
+    Object.keys(S.shopExtra || {}).forEach((id) => {
+      if (!F[id]) return;
+      const it = list.find((x) => x.id === id);
+      if (it) { it.g = Math.max(it.g, S.shopExtra[id]); it.manual = true; }
+      else list.push({ id: id, g: S.shopExtra[id], manual: true });
     });
-    return html + '</div>';
+    return list;
   }
 
   function renderShop() {
     const T = targets();
     if (!T) return '<div class="empty"><p>Сначала заполни профиль.</p></div>';
     const F = fm();
-    const list = NF.shoppingList(todayStr(), ui.shopDays, T, scheduleFor(todayStr()), S.inventory, F, recentPenalty(todayStr()));
+    const list = shopList();
     let html = '<div class="seg small" data-k="seg-shop"><span class="seg-thumb" aria-hidden="true"></span>' + [3, 7].map((d) => '<button class="seg-btn' + (ui.shopDays === d ? ' on' : '') + '" data-act="shop-days" data-d="' + d + '">На ' + d + ' ' + plural(d, 'день', 'дня', 'дней') + '</button>').join('') + '</div>';
     if (!list.length) return html + '<div class="empty"><p>Всё необходимое на ' + ui.shopDays + ' ' + plural(ui.shopDays, 'день', 'дня', 'дней') + ' уже есть дома.</p></div>';
-    html += '<p class="hint">Список собран по меню на ближайшие дни с учётом того, что уже лежит дома. Отметь купленное и нажми кнопку внизу: продукты добавятся в запасы.</p><ul class="shop">';
+    html += '<p class="hint">Список собран по меню на ближайшие дни с учётом того, что уже лежит дома. Английские названия помогут найти продукт в магазине в другой стране. Отметь купленное и нажми кнопку внизу: продукты добавятся в запасы.</p><ul class="shop">';
     list.forEach((it) => {
       const f = F[it.id];
       const on = !!ui.shopChecked[it.id];
-      html += '<li><label class="check"><input type="checkbox" id="shop-' + esc(it.id) + '" data-bind="shop" data-id="' + esc(it.id) + '" data-g="' + it.g + '"' + (on ? ' checked' : '') + '><span>' + esc(f.name) + '</span></label><span class="num">' + qtyLabel(f, it.g) + '</span></li>';
+      html += '<li><label class="check"><input type="checkbox" id="shop-' + esc(it.id) + '" data-bind="shop" data-id="' + esc(it.id) + '" data-g="' + it.g + '"' + (on ? ' checked' : '') + '>' +
+        '<span class="shop-name"><span>' + esc(f.name) + (it.manual ? ' <em class="tag">из рецепта</em>' : '') + '</span>' + (f.en ? '<span class="en">' + esc(f.en) + '</span>' : '') + '</span></label>' +
+        '<span class="num">' + qtyLabel(f, it.g) + '</span></li>';
     });
-    html += '</ul><button class="btn wide" data-act="shop-apply">Добавить купленное в запасы</button>';
+    html += '</ul><div class="row-btns"><button class="btn wide" data-act="shop-apply">Добавить купленное в запасы</button><button class="btn ghost" data-act="shop-copy">Скопировать список</button></div>' +
+      (Object.keys(S.shopExtra || {}).length ? '<button class="link" data-act="shop-clear-extra">Убрать добавленное из рецептов</button>' : '');
     return html;
   }
 
@@ -2532,7 +3699,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       '<div class="grid2"><label>Отбой<input id="sl-def-bed" class="input" type="time" data-bind="sleep-def" data-k="bed" value="' + esc(S.sleep.bed) + '"></label>' +
       '<label>Подъём<input id="sl-def-wake" class="input" type="time" data-bind="sleep-def" data-k="wake" value="' + esc(S.sleep.wake) + '"></label></div>' +
       '<p class="muted small">Сон по режиму: ' + fmtDur(NF.sleepMinutes(S.sleep.bed, S.sleep.wake)) + (teen ? ' (в твоём возрасте нужно 8–10 ч)' : ' (взрослым нужно 7–9 ч)') + '</p>' +
-      '<h3 class="h3">Расписание еды на сегодня</h3><ul class="sched">' + sched.meals.map((m) => '<li><span class="num">' + m.time + '</span><span>' + NF.MEAL_LABEL[m.type] + '</span><span class="muted small">' + r0(m.share * 100) + ' % нормы</span></li>').join('') +
+      '<h3 class="h3">Расписание еды на сегодня</h3><ul class="sched">' + sched.meals.map((m) => '<li><span class="num">' + m.time + '</span><span>' + esc(mealLabel(m)) + '</span><span class="muted small">' + r0(m.share * 100) + ' % нормы</span></li>').join('') +
       '<li><span class="num">' + esc(S.sleep.bed) + '</span><span>Отбой</span><span class="muted small">последняя еда за 3 ч</span></li></ul>' +
       (sched.note ? '<p class="hint">' + esc(sched.note) + '</p>' : '') + '</div>';
 
@@ -2542,7 +3709,9 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       '<li>Кофеин — не позже, чем за 8 часов до сна.</li>' +
       '<li>Экран — за 30–60 минут до сна убрать или включить ночной режим.</li>' +
       '<li>В спальне прохладно (18–20 °C) и темно.</li>' +
-      '<li>Тяжёлую тренировку заканчивай хотя бы за 2–3 часа до отбоя.</li></ul></details>';
+      '<li>Тяжёлую тренировку заканчивай хотя бы за 2–3 часа до отбоя.</li></ul></details>' +
+      '<details class="card" id="sleep-travel"><summary class="h3">Перелёт и смена часового пояса</summary>' + jetlagTips(null) +
+      '<p class="hint">NovaFit сам замечает смену часового пояса: расписание еды, сна и напоминаний переходит на местное время.</p></details>';
     if (log.length) {
       html += '<h2 class="h3">Журнал</h2><ul class="history">' + log.slice(-10).reverse().map((x) => '<li><span>' + esc(fmtDate(x.date, { day: 'numeric', month: 'short' })) + '</span><span class="num">' + esc(x.bed) + ' → ' + esc(x.wake) + '</span><span class="num">' + fmtDur(NF.sleepMinutes(x.bed, x.wake)) + ' · ' + x.q + '/5</span></li>').join('') + '</ul>';
     }
@@ -2588,6 +3757,22 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       '<text x="' + L + '" y="' + (H - 6) + '" class="axis">' + esc(fmtDate(pts[0].date, { day: 'numeric', month: 'short' })) + '</text>' +
       '<text x="' + (W - R) + '" y="' + (H - 6) + '" class="axis" text-anchor="end">' + esc(fmtDate(last.date, { day: 'numeric', month: 'short' })) + '</text>' +
       '</svg></div>';
+  }
+
+  // ── режим «Нет аппетита» ──
+  function appetiteCard() {
+    return '<section class="card appetite" id="appetite"><div class="split"><div class="grow"><h2 class="h3">Режим «Нет аппетита»</h2>' +
+      '<p class="small muted">6 приёмов поменьше вместо 4, калорийные блюда, жидкие калории на перекус и белковый перекус перед сном.</p></div>' +
+      '<label class="switch"><input type="checkbox" id="low-appetite" data-bind="low-appetite"' + (S.lowAppetite ? ' checked' : '') + '><span class="switch-ui" aria-hidden="true"></span><span class="sr">Включить режим «Нет аппетита»</span></label></div>' +
+      '<details id="appetite-tips"' + (S.lowAppetite ? ' open' : '') + '><summary class="small">Как съедать норму, когда не хочется есть</summary><ul class="dots small">' +
+      '<li>Ешь по расписанию, а не по голоду: на наборе голод часто не успевает появиться. Включи напоминания.</li>' +
+      '<li>Пей калории: коктейль, молоко или кефир даются легче, чем тарелка еды той же калорийности.</li>' +
+      '<li>Не пей воду прямо перед едой и во время неё — пей между приёмами.</li>' +
+      '<li>Добавляй калории без объёма: чайная ложка масла в кашу или гарнир — около 45 ккал, столовая ложка арахисовой пасты — около 90, горсть орехов (30 г) — около 180.</li>' +
+      '<li>Начинай с белка и гарнира, овощи — в конце: клетчатка быстро даёт сытость.</li>' +
+      '<li>Держи под рукой перекусы без готовки: орехи, сухофрукты, сыр, питьевой йогурт. В дороге это спасает день.</li>' +
+      '<li>Если аппетита нет неделями, вес падает, есть тошнота или боль в животе — покажись врачу.</li>' +
+      '</ul></details></section>';
   }
 
   // ── недельный отчёт ──
@@ -2714,6 +3899,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       '<p class="calc-line small muted">Базовый обмен ' + T.bmr + ' × активность = расход ' + T.tdee + ' ккал. Профицит +' + T.surplus + (T.adjust ? (T.adjust > 0 ? ' +' : ' ') + T.adjust + ' (подстройка по весу)' : '') + '. ИМТ ' + T.bmi + ' → ' + T.targetBmi + ' на цели, ~' + T.weeks + ' ' + plural(T.weeks, 'неделя', 'недели', 'недель') + '.</p>' +
       warningsBlock(T.warnings) + '</section>';
 
+    html += appetiteCard();
     html += reportCard();
     html += '<section class="card"><div class="split"><h2 class="h3">Вес</h2><span class="muted small">старт ' + (S.startWeight || S.profile.weight) + ' кг</span></div>' + weightChart() +
       '<div class="add-row"><input id="w-kg" class="input num-in" type="number" inputmode="decimal" step="0.1" placeholder="' + S.profile.weight + '"><span class="unit">кг</span><button class="btn small" data-act="w-add">Записать вес</button></div>' +
@@ -2751,7 +3937,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     const e = sleepEntry(date);
     return NF.reminderEvents({
       date: date,
-      meals: plan.meals.map((m) => ({ type: m.type, time: m.time, eaten: m.eaten, title: m.recipeId && recipeById(m.recipeId) ? recipeById(m.recipeId).name : 'Тарелка из твоих продуктов' })),
+      meals: plan.meals.map((m) => ({ type: m.type, label: mealLabel(m), time: m.time, eaten: m.eaten, title: m.recipeId && recipeById(m.recipeId) ? recipeById(m.recipeId).name : 'Тарелка из твоих продуктов' })),
       bed: S.sleep.bed, wake: e ? e.wake : S.sleep.wake,
       trainTime: isTrainDay(date) && !S.workouts.some((w) => w.date === date) ? S.train.time : null,
       lead: S.reminders.lead, opts: S.reminders,
@@ -2774,13 +3960,13 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
         const date = addDays(todayStr(), d);
         const evs = d === 0 ? todaysEvents(date) : NF.reminderEvents({
           date: date,
-          meals: scheduleFor(date).meals.map((m) => ({ type: m.type, time: m.time, eaten: false, title: 'Блюдо и граммовки — в NovaFit' })),
+          meals: scheduleFor(date).meals.map((m) => ({ type: m.type, label: m.label, time: m.time, eaten: false, title: 'Блюдо и граммовки — в NovaFit' })),
           bed: S.sleep.bed, wake: S.sleep.wake, trainTime: isTrainDay(date) ? S.train.time : null,
           lead: S.reminders.lead, opts: S.reminders, measureDue: !lastM || NF.daysBetween(lastM, date) >= 14,
         });
         evs.forEach((e, i) => {
           const at = new Date(date + 'T' + e.at + ':00').getTime();
-          if (at > nowMs + 30000) list.push({ id: 1000 + d * 20 + i, at: at, title: e.title, body: e.body });
+          if (at > nowMs + 30000) list.push({ id: 1000 + d * 20 + i, at: at, date: date, time: e.at, title: e.title, body: e.body });
         });
       }
     }
@@ -2847,7 +4033,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     const ics = NF.buildICS({
       start: todayStr(), lead: S.reminders.lead || 10, opts: S.reminders, wake: S.sleep.wake, bed: S.sleep.bed,
       trainDays: S.train.days, trainTime: S.train.time,
-      schedRest: NF.mealSchedule(S.sleep.wake, S.sleep.bed, null), schedTrain: NF.mealSchedule(S.sleep.wake, S.sleep.bed, S.train.time),
+      schedRest: NF.mealSchedule(S.sleep.wake, S.sleep.bed, null, S.lowAppetite ? 'six' : 'four'), schedTrain: NF.mealSchedule(S.sleep.wake, S.sleep.bed, S.train.time, S.lowAppetite ? 'six' : 'four'),
       stamp: new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z',
     });
     if (NA) {
@@ -2986,6 +4172,212 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     if (!S.draft) return null;
     const w = currentProgram().find((p) => p.key === S.draft.key);
     return w ? w.items.find((i) => i.id === exId) : null;
+  }
+
+  // ───────────────── сканер штрихкодов ─────────────────
+  let scanCam = null;
+  const BARCODE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M3 6v12M6 6v12M9.5 6v12M12 6v12M15.5 6v12M18 6v12M21 6v12"/></svg>';
+
+  function scanButton(mode) {
+    return '<button class="btn small ghost scan-btn" data-act="scan-open" data-mode="' + mode + '" aria-label="Сканировать штрихкод">' + BARCODE_ICON + '<span>Штрихкод</span></button>';
+  }
+
+  function openScanner(mode) {
+    ui.scan = { mode: mode, phase: 'camera', code: '', prod: null };
+    let el = document.getElementById('scanner');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'scanner'; el.className = 'scanner';
+      el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Сканер штрихкода');
+      document.body.appendChild(el);
+    }
+    el.innerHTML = '<div class="scan-sheet">' +
+      '<div class="scan-top"><b>' + (mode === 'extra' ? 'Что съел — по штрихкоду' : 'Продукт по штрихкоду') + '</b><button class="icon-btn" data-act="scan-close" aria-label="Закрыть">×</button></div>' +
+      '<div class="scan-view" id="scan-view"><video id="scan-video" playsinline muted></video><div class="scan-frame" aria-hidden="true"><span class="scan-line"></span></div></div>' +
+      '<p class="scan-msg" id="scan-msg" role="status">Включаю камеру… Наведи её на штрихкод на упаковке.</p>' +
+      '<div class="add-row scan-manual"><input id="scan-code" class="input" inputmode="numeric" pattern="[0-9]*" maxlength="14" autocomplete="off" placeholder="Или введи цифры под штрихкодом" aria-label="Цифры штрихкода"><button class="btn small" data-act="scan-find">Найти</button></div>' +
+      '<div id="scan-result" class="scan-result"></div>' +
+      '<p class="scan-credit small muted">Данные о товарах — из открытой базы Open Food Facts (лицензия ODbL). Работает в любой стране, но не все товары там есть: тогда введи КБЖУ с упаковки, и NovaFit запомнит товар.</p>' +
+      '</div>';
+    el.hidden = false;
+    requestAnimationFrame(() => el.classList.add('show'));
+    startScanCamera();
+  }
+
+  function setScanMsg(t) { const m = document.getElementById('scan-msg'); if (m) m.textContent = t; }
+
+  async function startScanCamera() {
+    if (window.__NF_EMBED) {
+      // в превью-ссылке камера и запросы в интернет запрещены
+      const view = document.getElementById('scan-view');
+      if (view) view.hidden = true;
+      const manual = document.querySelector('.scan-manual');
+      if (manual) manual.hidden = true;
+      setScanMsg('В этом превью камера и поиск по базе товаров недоступны — сканер работает в установленном приложении. Здесь можно добавить товар вручную, по КБЖУ с упаковки.');
+      ui.scan.code = 'manual' + Date.now();
+      ui.scan.phase = 'manual';
+      renderScanResult();
+      return;
+    }
+    const video = document.getElementById('scan-video');
+    try {
+      scanCam = await NF.Scanner.startCamera(video, (code) => {
+        scanCam = null;
+        if (!ui.scan || ui.scan.manual) return; // уже вводят цифры вручную
+        vibrate([60]); onScanCode(code);
+      });
+      // закрыли сканер или начали вводить цифры, пока включалась камера
+      if (!ui.scan || ui.scan.manual) { stopScanCamera(); return; }
+      setScanMsg('Наведи камеру на штрихкод. Держи телефон ровно, в 10–20 см от упаковки.');
+    } catch (e) {
+      const view = document.getElementById('scan-view');
+      if (view) view.hidden = true;
+      setScanMsg(e.message === 'denied' ? 'Нет доступа к камере. Разреши камеру для NovaFit в настройках или введи цифры штрихкода вручную.'
+        : e.message === 'nodecoder' ? 'Не получилось включить распознавание. Введи цифры штрихкода вручную.'
+          : 'Камера недоступна. Введи цифры штрихкода вручную — они напечатаны под полосками.');
+    }
+  }
+
+  function stopScanCamera() { if (scanCam) { try { scanCam.stop(); } catch (e) { /* ignore */ } scanCam = null; } }
+
+  function closeScanner() {
+    stopScanCamera();
+    ui.scan = null;
+    const el = document.getElementById('scanner');
+    if (el) { el.classList.remove('show'); setTimeout(() => { if (!ui.scan) { el.hidden = true; el.innerHTML = ''; } }, 260); }
+  }
+
+  async function onScanCode(code) {
+    code = String(code || '').replace(/\D/g, '');
+    if (!ui.scan) return;
+    if (!NF.Scanner.validCode(code)) { setScanMsg('Такого штрихкода не бывает — проверь цифры.'); return; }
+    stopScanCamera();
+    const view = document.getElementById('scan-view');
+    if (view) view.hidden = true;
+    const input = document.getElementById('scan-code');
+    if (input) input.value = code;
+    ui.scan.code = code;
+    const F = fm();
+    const known = S.barcodes[code];
+    if (known && F[known]) { ui.scan.phase = 'known'; ui.scan.foodId = known; setScanMsg('Этот товар уже знаком.'); renderScanResult(); return; }
+    ui.scan.phase = 'loading';
+    setScanMsg('Штрихкод ' + code + '. Ищу товар в мировой базе…');
+    renderScanResult();
+    const res = await NF.Scanner.lookup(code);
+    if (!ui.scan || ui.scan.code !== code) return; // закрыли или отсканировали другое
+    if (res.status === 'ok') {
+      const prod = NF.Scanner.parseProduct(res.raw, code, F);
+      ui.scan.prod = prod;
+      ui.scan.phase = prod.hasMacros ? 'found' : 'manual';
+      ui.scan.reason = prod.hasMacros ? null : 'nomacros';
+      ui.scan.choice = prod.base ? 'base' : 'custom';
+      setScanMsg(prod.hasMacros ? 'Нашёл.' : 'Товар есть в базе, но без КБЖУ.');
+    } else {
+      ui.scan.phase = 'manual'; ui.scan.reason = res.status; ui.scan.prod = null;
+      setScanMsg(res.status === 'notfound' ? 'Этого товара нет в базе Open Food Facts.' : res.status === 'offline' ? 'Нет интернета: в базе не поискать.' : 'Не получилось связаться с базой товаров.');
+    }
+    renderScanResult();
+  }
+
+  function scanQtyField(defG) {
+    const extra = ui.scan.mode === 'extra';
+    return '<label>' + (extra ? 'Сколько съел, г или мл' : 'Сколько дома, г или мл') +
+      '<input id="scan-qty" class="input" type="number" inputmode="decimal" min="1" value="' + (defG ? r0(defG) : '') + '" placeholder="' + (extra ? '100' : '500') + '"></label>';
+  }
+
+  function scanExpField(suggestDays) {
+    if (ui.scan.mode === 'extra') return '';
+    const v = suggestDays ? addDays(todayStr(), suggestDays) : '';
+    return '<label>Годен до (необязательно)<input id="scan-exp" class="input" type="date" value="' + v + '"></label>';
+  }
+
+  function scanStockToggle(foodId) {
+    if (ui.scan.mode !== 'extra' || !foodId || !(S.inventory[foodId] > 0)) return '';
+    return '<label class="check small"><input type="checkbox" id="scan-from-stock" checked> списать из запасов</label>';
+  }
+
+  function renderScanResult() {
+    const box = document.getElementById('scan-result');
+    const sc = ui.scan;
+    if (!box || !sc) return;
+    const F = fm();
+    let html = '';
+    if (sc.phase === 'loading') {
+      html = '<p class="scan-loading">Ищу…</p>';
+    } else if (sc.phase === 'known') {
+      const f = F[sc.foodId];
+      html = '<div class="scan-card"><p class="scan-name">' + esc(f.name) + '</p>' + macroLine({ kcal: f.kcal, p: f.p, f: f.f, c: f.c }) + ' <span class="small muted">на 100 г</span>' +
+        '<div class="grid2">' + scanQtyField(sc.mode === 'extra' ? 100 : null) + scanExpField(NF.SHELF[f.id] || null) + '</div>' + scanStockToggle(f.id) +
+        '<button class="btn wide" data-act="scan-save">' + (sc.mode === 'extra' ? 'Записать, что съел' : 'Добавить в запасы') + '</button></div>';
+    } else if (sc.phase === 'found') {
+      const p = sc.prod;
+      const base = p.base ? F[p.base] : null;
+      const fullName = p.name + (p.brand && p.name.indexOf(p.brand) < 0 ? ' · ' + p.brand : '');
+      html = '<div class="scan-card"><p class="scan-name">' + esc(p.name || 'Без названия') + (p.brand ? ' <span class="muted">· ' + esc(p.brand) + '</span>' : '') + '</p>' +
+        macroLine({ kcal: p.kcal, p: p.p, f: p.f, c: p.c }) + ' <span class="small muted">на 100 г</span>' +
+        (p.noplan ? '<p class="hint">Это сладкое или снек: запишется в «съел» и в калькулятор, но в автоматическое меню не попадёт.</p>' : '') +
+        (base ? '<div class="scan-choice"><label class="check"><input type="radio" name="scan-choice" value="base"' + (sc.choice === 'base' ? ' checked' : '') + '> Как «' + esc(base.name) + '» — будет участвовать в рецептах</label>' +
+          '<label class="check"><input type="radio" name="scan-choice" value="custom"' + (sc.choice === 'custom' ? ' checked' : '') + '> Как отдельный продукт</label></div>' : '') +
+        '<label>Название<input id="scan-name" class="input" value="' + esc(fullName) + '"></label>' +
+        '<div class="grid2">' + scanQtyField(sc.mode === 'extra' ? 100 : p.qty) + scanExpField(base ? (NF.SHELF[base.id] || null) : p.shelf) + '</div>' + scanStockToggle(base ? base.id : 'b' + p.code) +
+        '<button class="btn wide" data-act="scan-save">' + (sc.mode === 'extra' ? 'Записать, что съел' : 'Добавить в запасы') + '</button></div>';
+    } else if (sc.phase === 'manual') {
+      const p = sc.prod;
+      html = '<div class="scan-card"><p class="small">Введи данные с упаковки (на 100 г) — я запомню товар по штрихкоду, и в следующий раз он найдётся даже без интернета.</p>' +
+        '<label>Название<input id="scan-name" class="input" value="' + esc(p && p.name ? p.name : '') + '" placeholder="Например: Йогурт питьевой"></label>' +
+        '<div class="grid4"><label>ккал<input id="scan-kcal" class="input" type="number" inputmode="decimal"></label><label>Б<input id="scan-p" class="input" type="number" inputmode="decimal"></label><label>Ж<input id="scan-f" class="input" type="number" inputmode="decimal"></label><label>У<input id="scan-c" class="input" type="number" inputmode="decimal"></label></div>' +
+        '<label>Категория<select id="scan-cat" class="input">' + Object.keys(NF.CAT_LABEL).map((k) => '<option value="' + k + '">' + NF.CAT_LABEL[k] + '</option>').join('') + '</select></label>' +
+        '<div class="grid2">' + scanQtyField(sc.mode === 'extra' ? 100 : null) + scanExpField(null) + '</div>' +
+        '<button class="btn wide" data-act="scan-save">' + (sc.mode === 'extra' ? 'Записать, что съел' : 'Добавить в запасы') + '</button></div>';
+    }
+    box.innerHTML = html;
+  }
+
+  /** Сохранить отсканированный товар как свой продукт (id по штрихкоду — без дублей). */
+  function upsertScanned(prod, name) {
+    const food = NF.Scanner.customFromScan(prod, name);
+    const i = S.customFoods.findIndex((f) => f.id === food.id);
+    if (i >= 0) S.customFoods[i] = food; else S.customFoods.push(food);
+    return food.id;
+  }
+
+  function saveScan() {
+    const sc = ui.scan;
+    if (!sc) return;
+    const g = num('scan-qty');
+    if (!(g > 0 && g <= 20000)) { toast('Укажи количество в граммах'); return; }
+    let foodId = null;
+    if (sc.phase === 'known') foodId = sc.foodId;
+    else if (sc.phase === 'found') {
+      const ch = document.querySelector('input[name="scan-choice"]:checked');
+      if (ch && ch.value === 'base' && sc.prod.base) foodId = sc.prod.base;
+      else foodId = upsertScanned(sc.prod, val('scan-name').trim() || sc.prod.name);
+    } else if (sc.phase === 'manual') {
+      const kcal = num('scan-kcal'), p = num('scan-p'), f = num('scan-f'), c = num('scan-c');
+      const name = val('scan-name').trim();
+      if (!name || !(kcal >= 0) || !(p >= 0) || !(f >= 0) || !(c >= 0)) { toast('Заполни название и КБЖУ на 100 г'); return; }
+      if (Math.abs(p * 4 + f * 9 + c * 4 - kcal) > Math.max(40, kcal * 0.25)) { toast('КБЖУ не сходятся с калориями. Проверь цифры на упаковке.'); return; }
+      foodId = upsertScanned({ code: sc.code, name: name, brand: '', kcal: kcal, p: p, f: f, c: c, cat: val('scan-cat') || 'carb', noplan: false }, name);
+    } else return;
+    if (NF.Scanner.validCode(sc.code)) S.barcodes[sc.code] = foodId;
+    const F = fm();
+    const food = F[foodId];
+    const date = todayStr();
+    if (sc.mode === 'extra') {
+      const fromStock = !!(document.getElementById('scan-from-stock') || {}).checked;
+      const now = new Date();
+      (S.extras[date] = S.extras[date] || []).push({ id: foodId, g: Math.round(g), t: NF.fromMin(now.getHours() * 60 + now.getMinutes()), stock: fromStock });
+      if (fromStock) changeInventory(foodId, -g);
+      rebuildPlan(date);
+      save(); closeScanner(); ui.extraOpen = false; render();
+      toast(shortName(food) + ': +' + r0(food.kcal * g / 100) + ' ккал. План пересчитан', 3500);
+    } else {
+      setExpiryOnAdd(foodId, val('scan-exp'));
+      changeInventory(foodId, g);
+      S.demoInventory = false;
+      save(); closeScanner(); render();
+      toast(food.name + ': +' + r0(g) + ' г в запасах', 3500);
+    }
   }
 
   // ───────────────── рендер ─────────────────
@@ -3177,10 +4569,50 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     'calc-meal'(el) { ui.calcMeal = el.dataset.t; render(); },
     'calc-toggle'(el) { const id = el.dataset.id; const i = ui.calcSel.indexOf(id); if (i >= 0) ui.calcSel.splice(i, 1); else ui.calcSel.push(id); render(); },
     'rec-filter'(el) { ui.recFilter = el.dataset.f; render(); },
+    'scan-open'(el) { openScanner(el.dataset.mode || 'stock'); },
+    'scan-close'() { closeScanner(); },
+    'scan-find'() { const c = val('scan-code').replace(/\D/g, ''); if (!c) { toast('Введи цифры штрихкода'); return; } onScanCode(c); },
+    'scan-save'() { saveScan(); },
+    'rec-time'(el) { ui.recTime = +el.dataset.t; render(); },
+    'rec-nocook'() { ui.recNoCook = !ui.recNoCook; render(); },
+    'rec-pin'(el) {
+      const date = todayStr(); const plan = getPlan(date); const i = +el.dataset.i;
+      const inv = usableInventory();
+      plan.meals.forEach((m, j) => { if (j !== i && !m.eaten) m.items.forEach((it) => { if (inv[it.id] != null) inv[it.id] = Math.max(0, inv[it.id] - it.g); }); });
+      const meal = NF.pinRecipe(plan, i, el.dataset.id, targets(), scheduleFor(date), inv, fm(), planOpts(date));
+      if (!meal) return;
+      plan.meals[i] = meal; ui.justSwapped = i; save(); render();
+      toast('«' + recipeById(el.dataset.id).name + '» — ' + mealLabel(meal).toLowerCase() + ' в ' + meal.time + '. План — во вкладке «Сегодня»', 4000);
+    },
+    'rec-shop'(el) {
+      const r = recipeById(el.dataset.id); const F = fm();
+      const fit = recipeFit(r, F, usableInventory());
+      if (!fit || !fit.missing.length) return;
+      S.shopExtra = S.shopExtra || {};
+      fit.missing.forEach((it) => { S.shopExtra[it.id] = (S.shopExtra[it.id] || 0) + Math.ceil(it.g / 10) * 10; });
+      save(); render();
+      toast('В покупки: ' + fit.missing.map((it) => shortName(F[it.id])).join(', '));
+    },
+    'shop-copy'() {
+      const F = fm();
+      const text = 'Покупки NovaFit:\n' + shopList().map((it) => '— ' + F[it.id].name + (F[it.id].en ? ' (' + F[it.id].en + ')' : '') + ': ' + qtyLabel(F[it.id], it.g)).join('\n');
+      const done = () => toast('Список скопирован');
+      if (NA) { let ok = false; try { ok = NA.copy(text); } catch (e) { ok = false; } if (ok) { done(); return; } }
+      try { navigator.clipboard.writeText(text).then(done, () => toast('Не получилось скопировать')); } catch (e) { toast('Не получилось скопировать'); }
+    },
+    'shop-clear-extra'() { S.shopExtra = {}; save(); render(); },
+    'water-toggle'() { ui.waterOpen = !ui.waterOpen; render(); },
+    'tz-ok'() { S.tzNotice = null; save(); render(); },
+    'open-appetite'() {
+      S.tab = 'profile'; save(); render();
+      const el = document.getElementById('appetite');
+      if (el) { el.scrollIntoView({ block: 'start' }); const d = document.getElementById('appetite-tips'); if (d) d.open = true; }
+    },
+
     'shop-days'(el) { ui.shopDays = +el.dataset.d; ui.shopChecked = {}; render(); },
     'shop-apply'() {
       const ids = Object.keys(ui.shopChecked); if (!ids.length) { toast('Отметь, что купил'); return; }
-      ids.forEach((id) => changeInventory(id, ui.shopChecked[id]));
+      ids.forEach((id) => { changeInventory(id, ui.shopChecked[id]); if (S.shopExtra) delete S.shopExtra[id]; });
       S.demoInventory = false; ui.shopChecked = {}; save(); render(); toast('Добавлено в запасы: ' + ids.length);
     },
     day(el) {
@@ -3284,6 +4716,22 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     toast('Выделил данные: скопируй их вручную');
   }
 
+  // начал вводить цифры штрихкода вручную — камеру выключаем, чтобы она не перебила ввод
+  document.addEventListener('focusin', (e) => {
+    if (e.target && e.target.id === 'scan-code' && ui.scan) {
+      ui.scan.manual = true;
+      stopScanCamera();
+      const view = document.getElementById('scan-view');
+      if (view) view.hidden = true;
+      setScanMsg('Введи цифры под штрихкодом и нажми «Найти».');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target && e.target.id === 'scan-code') { e.preventDefault(); ACTIONS['scan-find'](); }
+    if (e.key === 'Escape' && ui.scan) closeScanner();
+  });
+
   document.addEventListener('click', (e) => {
     const el = e.target.closest('[data-act]');
     if (!el) return;
@@ -3293,6 +4741,12 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
 
   document.addEventListener('input', (e) => {
     const el = e.target;
+    if (el.id === 'rec-search') {
+      ui.recQuery = el.value;
+      const box = document.getElementById('rec-results');
+      if (box) box.innerHTML = recipeResults();
+      return;
+    }
     if (el.id === 'extra-search') {
       ui.extraSearch = el.value; ui.extraPick = null;
       const box = document.getElementById('extra-results');
@@ -3333,6 +4787,12 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       const box = el.closest('.set'); if (box) box.classList.toggle('done', v > 0);
     }
     else if (b === 'auto-rest') { S.autoRest = el.checked; save(); }
+    else if (b === 'low-appetite') {
+      S.lowAppetite = el.checked;
+      if (S.profile) rebuildForMode();
+      save(); render();
+      toast(S.lowAppetite ? 'Режим «Нет аппетита»: 6 приёмов поменьше, план пересобран' : 'Обычный режим: 4 приёма пищи');
+    }
     else if (b === 'rem-enabled') {
       const on = el.checked;
       ui.remOpen = true;
@@ -3371,7 +4831,9 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   });
 
   // ───────────────── старт ─────────────────
-  if (S.profile) { runAdaptation(); save(); }
+  checkTimezone();
+  if (S.profile) runAdaptation();
+  save();
   render();
   if (S.timer) runTimer();
   document.addEventListener('visibilitychange', () => {
@@ -3389,6 +4851,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
 
   // Android: кнопка «Назад» и возврат в приложение
   window.__nfBack = () => {
+    if (ui.scan) { closeScanner(); return true; }
     if (S.timer || S.tab === 'today') return false;
     S.tab = 'today'; save(); render(); window.scrollTo({ top: 0, behavior: 'instant' });
     return true;

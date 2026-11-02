@@ -46,6 +46,10 @@
       timer: null,         // таймер отдыха/подхода: {kind, endAt, total, label, exId}
       autoRest: true,
       icsExported: false,
+      lowAppetite: false,  // режим «нет аппетита»: 6 приёмов, калорийно-плотные блюда
+      shopExtra: {},       // добавлено в покупки вручную (из рецептов): {id: граммы}
+      barcodes: {},        // штрихкод → id продукта (работает без интернета)
+      lastTz: null, lastOffset: null, tzNotice: null,
     };
   }
 
@@ -72,7 +76,7 @@
   let S = load();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } }
 
-  const ui = { extraOpen: false, extraSearch: '', extraPick: null, editExp: null, reportWeek: 0, measureOpen: false, foodSeg: 'stock', search: '', addFood: null, calcSel: [], calcMeal: 'l', calcStock: true, recFilter: 'all', shopDays: 3, shopChecked: {}, confirmReset: false, customOpen: false, importOpen: false, errors: [] };
+  const ui = { recQuery: '', recTime: 0, recNoCook: false, waterOpen: false, extraOpen: false, extraSearch: '', extraPick: null, editExp: null, reportWeek: 0, measureOpen: false, foodSeg: 'stock', search: '', addFood: null, calcSel: [], calcMeal: 'l', calcStock: true, recFilter: 'all', shopDays: 3, shopChecked: {}, confirmReset: false, customOpen: false, importOpen: false, errors: [] };
 
   // ───────────────── утилиты ─────────────────
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -105,8 +109,9 @@
   function scheduleFor(date) {
     const e = sleepEntry(date);
     const wake = e ? e.wake : S.sleep.wake;
-    return NF.mealSchedule(wake, S.sleep.bed, isTrainDay(date) ? S.train.time : null);
+    return NF.mealSchedule(wake, S.sleep.bed, isTrainDay(date) ? S.train.time : null, S.lowAppetite ? 'six' : 'four');
   }
+  const mealLabel = (m) => m.label || NF.MEAL_LABEL[m.type];
 
   function recentPenalty(date) {
     const pen = {};
@@ -145,7 +150,40 @@
   function extrasFor(date) { return S.extras[date] || []; }
   function extraMacros(date) { return NF.macrosOf(extrasFor(date), fm()); }
 
-  function planOpts(date) { return { urgency: urgencyMap(), extraMacros: extraMacros(date) }; }
+  function planOpts(date) { return { urgency: urgencyMap(), extraMacros: extraMacros(date), dense: !!S.lowAppetite }; }
+
+  /**
+   * Переключили режим питания (4 ↔ 6 приёмов): строим новый план, съеденное
+   * сохраняем. Если съеденному приёму не нашлось места в новом расписании,
+   * он уходит в «еду вне плана» — ничего не теряется.
+   */
+  function rebuildForMode() {
+    const date = todayStr();
+    const old = S.plans[date];
+    const fresh = buildPlan(date, old ? old.seed || 0 : 0);
+    S.plans[date] = fresh;
+    if (old) {
+      const used = {};
+      let placed = 0;
+      old.meals.filter((m) => m.eaten).forEach((m) => {
+        let best = -1, bd = 1e9;
+        fresh.meals.forEach((f, i) => {
+          if (used[i] || f.type !== m.type) return;
+          const d = Math.abs(NF.toMin(f.time) - NF.toMin(m.time));
+          if (d < bd) { bd = d; best = i; }
+        });
+        if (best >= 0) {
+          used[best] = 1; placed++;
+          fresh.meals[best] = Object.assign({}, m, { label: fresh.meals[best].label, night: fresh.meals[best].night });
+        } else {
+          const xs = (S.extras[date] = S.extras[date] || []);
+          m.items.forEach((it) => xs.push({ id: it.id, g: it.g, t: m.time, stock: false }));
+        }
+      });
+      if (placed || extrasFor(date).length) rebuildPlan(date);
+    }
+    save();
+  }
 
   function buildPlan(date, seed) {
     const T = targets();
@@ -274,8 +312,11 @@
     html += '<div class="chips-row">' +
       '<button class="chip-card" data-act="tab" data-tab="sleep"><span class="chip-k">Сон</span><span class="chip-v">' + (sl ? fmtDur(NF.sleepMinutes(sl.bed, sl.wake)) : 'отметить') + '</span></button>' +
       '<button class="chip-card" data-act="tab" data-tab="train"><span class="chip-k">' + (train ? 'Тренировка' : 'Отдых') + '</span><span class="chip-v">' + (train ? (doneToday ? 'выполнена ✓' : esc(next.title) + ' · ' + S.train.time) : 'восстановление') + '</span></button>' +
-      '<div class="chip-card"><span class="chip-k">Вода</span><span class="chip-v">' + ((train ? T.waterTrain : T.water) / 1000).toFixed(1).replace('.', ',') + ' л</span></div>' +
+      '<button class="chip-card" data-act="water-toggle" aria-expanded="' + ui.waterOpen + '"><span class="chip-k">Вода</span><span class="chip-v">' + ((train ? T.waterTrain : T.water) / 1000).toFixed(1).replace('.', ',') + ' л</span></button>' +
       '</div>';
+    if (ui.waterOpen) html += waterCard(T, train);
+    html += tzNotice();
+    if (S.lowAppetite) html += '<div class="note note-info"><span>Режим «Нет аппетита»: ' + plan.meals.length + ' приёмов поменьше, больше калорий в каждом глотке.</span><button class="btn small ghost" data-act="open-appetite">Советы</button></div>';
 
     html += todayAlerts(plan);
 
@@ -299,18 +340,19 @@
       const mm = NF.macrosOf(m.items, F);
       const title = rec ? rec.name : 'Тарелка из твоих продуктов';
       html += '<li class="meal' + (m.eaten ? ' eaten' : '') + (i === nowIdx ? ' now' : '') + (ui.justEaten === i ? ' just-eaten' : '') + (ui.justSwapped === i ? ' swap-in' : '') + '">' +
-        '<div class="meal-time"><span class="num">' + esc(m.time) + '</span>' + (m.eaten ? '<span class="check" aria-label="съедено">✓</span>' : '') + '<span class="meal-type">' + NF.MEAL_LABEL[m.type] + '</span>' + (i === nowIdx ? '<span class="now-tag">сейчас</span>' : '') + '</div>' +
+        '<div class="meal-time"><span class="num">' + esc(m.time) + '</span>' + (m.eaten ? '<span class="check" aria-label="съедено">✓</span>' : '') + '<span class="meal-type">' + esc(mealLabel(m)) + '</span>' + (i === nowIdx ? '<span class="now-tag">сейчас</span>' : '') + '</div>' +
         '<div class="meal-body">' +
-        '<h3>' + esc(title) + '</h3>' + macroLine(mm) +
+        '<h3>' + esc(title) + (m.night && rec ? ' <span class="tag">перед сном</span>' : '') + '</h3>' + macroLine(mm) +
         (m.light && !m.eaten ? '<p class="hint">Лёгкий приём: норма почти закрыта едой вне плана.</p>' : '') +
         '<ul class="items">' + m.items.map((it) => {
           const f = F[it.id]; if (!f) return '';
           const miss = m.missing.find((x) => x.id === it.id);
           const dl = daysLeft(it.id);
           const urgent = !m.eaten && dl != null && dl >= 0 && dl <= 1;
-          return '<li><span>' + esc(f.name) + (urgent ? ' <em class="tag-exp">' + (dl === 0 ? 'сегодня' : 'до завтра') + '</em>' : '') + '</span><span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет ' + r0(miss.g) + '</em>' : '') + '</span></li>';
+          return '<li><span>' + esc(f.name) + (it.sub && F[it.sub] ? ' <em class="sub-tag">вместо: ' + esc(shortName(F[it.sub])) + '</em>' : '') + (urgent ? ' <em class="tag-exp">' + (dl === 0 ? 'сегодня' : 'до завтра') + '</em>' : '') + '</span><span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет ' + r0(miss.g) + '</em>' : '') + '</span></li>';
         }).join('') + '</ul>' +
-        (m.extra && F[m.extra] ? '<p class="hint">Добавка к блюду: ' + esc(F[m.extra].name.toLowerCase()) + ', чтобы добрать калории.</p>' : '') +
+        (m.extra && F[m.extra] ? '<p class="hint">' + (m.extraDense ? 'Калорийная добавка без лишнего объёма: ' : 'Добавка к блюду: ') + esc(F[m.extra].name.toLowerCase()) + ', чтобы добрать калории.</p>' : '') +
+        (m.pinned && !m.eaten ? '<p class="hint">Блюдо выбрано тобой, граммовки подогнаны под норму.</p>' : '') +
         (m.skipped && m.skipped.length ? '<p class="hint">Можно без: ' + m.skipped.map((id) => esc(F[id] ? F[id].name.toLowerCase() : id)).join(', ') + ' (нет дома).</p>' : '') +
         (rec ? '<details class="steps"><summary>Как готовить · ' + rec.min + ' мин</summary><ol>' + rec.steps.map((st) => '<li>' + esc(st) + '</li>').join('') + '</ol></details>' : '') +
         '<div class="meal-actions">' +
@@ -321,6 +363,56 @@
     html += '</ol>';
     html += '<p class="hint">Когда отмечаешь «Съел» или добавляешь еду вне плана, продукты списываются из запасов, а оставшиеся приёмы пересчитываются под остаток нормы.</p>';
     return html;
+  }
+
+  /** Рекомендация по воде (без трекера): норма, жара, перелёты, ориентиры. */
+  function waterCard(T, train) {
+    const l = (ml) => (ml / 1000).toFixed(1).replace('.', ',');
+    return '<div class="card water"><h2 class="h3">Сколько пить сегодня</h2>' +
+      '<p><b class="num">' + l(train ? T.waterTrain : T.water) + ' л</b>' + (train ? ' — день тренировки, это уже с запасом +0,5 л.' : '.') + ' Это около 35 мл на килограмм веса, вместе с чаем, супом и молоком.</p>' +
+      '<ul class="dots small">' +
+      '<li><b>Жара</b> от +28 °C или сильно потеешь — добавь 0,5–1 л.</li>' +
+      '<li><b>Перелёт</b> — ещё стакан (около 250 мл) на каждый час в самолёте: воздух в салоне очень сухой.</li>' +
+      '<li><b>Ориентир</b> — светлая моча цвета соломы. Тёмная — пей больше.</li>' +
+      '<li>Стакан сразу после подъёма, по стакану между приёмами пищи, бутылка на тренировку.</li>' +
+      '<li>Чай и кофе тоже считаются, алкоголь — нет: он выводит воду.</li>' +
+      (S.lowAppetite ? '<li>В режиме «нет аппетита» не пей много прямо перед едой и во время неё: вода займёт место в желудке.</li>' : '') +
+      '</ul></div>';
+  }
+
+  // ── часовой пояс: в поездках еда, сон и напоминания идут по местному времени ──
+  function checkTimezone() {
+    let tz = 'local';
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'local'; } catch (e) { /* ignore */ }
+    const off = new Date().getTimezoneOffset();
+    if (S.lastOffset != null && S.lastOffset !== off) {
+      S.tzNotice = { tz: tz, diff: (S.lastOffset - off) / 60, date: todayStr() };
+    }
+    S.lastTz = tz; S.lastOffset = off;
+  }
+
+  function tzNotice() {
+    const n = S.tzNotice;
+    if (!n) return '';
+    const d = n.diff;
+    const dir = d > 0 ? 'на восток' : 'на запад';
+    const h = Math.abs(d) % 1 ? Math.abs(d).toFixed(1).replace('.', ',') : Math.abs(d);
+    return '<div class="note note-action tz"><div><b>Новый часовой пояс: ' + esc(n.tz.replace(/_/g, ' ')) + '</b> (' + (d > 0 ? '+' : '−') + h + ' ч, ' + dir + '). ' +
+      'Еда, сон и напоминания теперь по местному времени.</div>' +
+      '<details id="jetlag-tips"><summary class="small">Как быстрее привыкнуть</summary>' + jetlagTips(d) + '</details>' +
+      '<button class="btn small" data-act="tz-ok">Понятно</button></div>';
+  }
+
+  function jetlagTips(diff) {
+    return '<ul class="dots small">' +
+      '<li>С первого дня живи по местным часам: ешь и ложись по местному времени, даже если не хочется.</li>' +
+      '<li>Утром — 20–30 минут дневного света на улице, вечером — приглушённый свет и меньше экрана.</li>' +
+      (diff == null ? '<li>Летел на восток — ложись чуть раньше, на запад — продержись бодрым до местного вечера.</li>'
+        : diff > 0 ? '<li>Ты летел на восток: первые вечера ложись чуть раньше и не отсыпайся утром допоздна.</li>'
+          : '<li>Ты летел на запад: продержись бодрым до местного вечера, утром вставай по будильнику.</li>') +
+      '<li>Если днём очень хочется спать — не больше 20–30 минут.</li>' +
+      '<li>Кофеин — только до обеда по местному времени.</li>' +
+      '<li>Первые 1–2 дня тренируйся полегче: сон и восстановление ещё не наладились.</li></ul>';
   }
 
   /** Приём пищи «сейчас»: от 30 мин до его времени и до 90 мин после, если не съеден. */
@@ -370,7 +462,7 @@
     const F = fm();
     const q = ui.extraSearch.trim().toLowerCase();
     let html = '<div class="card extra-panel"><label class="label" for="extra-search">Что съел вне плана?</label>' +
-      '<input id="extra-search" class="input" type="search" autocomplete="off" placeholder="Например: банан, хлеб, творог" value="' + esc(ui.extraSearch) + '">' +
+      '<div class="search-row"><input id="extra-search" class="input" type="search" autocomplete="off" placeholder="Например: банан, хлеб, творог" value="' + esc(ui.extraSearch) + '">' + scanButton('extra') + '</div>' +
       '<div id="extra-results">' + extraResults() + '</div>';
     if (!q) {
       const quick = ['banana', 'bread', 'peanuts', 'cottage5', 'eggs', 'milk', 'apple', 'cheese'].filter((id) => F[id]);
@@ -429,7 +521,7 @@
   function renderStock() {
     const F = fm();
     let html = '<div class="card"><label class="label" for="food-search">Добавить продукт</label>' +
-      '<input id="food-search" class="input" type="search" autocomplete="off" placeholder="Например: гречка, яйца, творог" value="' + esc(ui.search) + '">' +
+      '<div class="search-row"><input id="food-search" class="input" type="search" autocomplete="off" placeholder="Например: гречка, яйца, творог" value="' + esc(ui.search) + '">' + scanButton('stock') + '</div>' +
       '<div id="search-results">' + searchResults() + '</div>' +
       '<button class="link" data-act="custom-toggle">' + (ui.customOpen ? 'Скрыть' : 'Нет в списке? Добавить свой продукт') + '</button>' +
       (ui.customOpen ? customFoodForm() : '') + '</div>';
@@ -526,49 +618,165 @@
     return html;
   }
 
-  function recipeStatus(r) {
-    const req = r.ing.filter((i) => !i[2]);
-    const missing = req.filter((i) => (S.inventory[i[0]] || 0) < i[1] * 0.6);
-    return missing;
+  // ───────── «Что приготовить» ─────────
+  function shortName(f) { return f ? f.name.split(' (')[0].split(' / ')[0].toLowerCase() : ''; }
+
+  function webLinks(query) {
+    const q = encodeURIComponent(query);
+    return '<a class="pill link-out" href="https://www.google.com/search?q=' + q + '" target="_blank" rel="noopener">Google</a>' +
+      '<a class="pill link-out" href="https://www.youtube.com/results?search_query=' + q + '" target="_blank" rel="noopener">YouTube</a>';
+  }
+
+  /** Состояние рецепта по запасам: чего нет, что заменяется. */
+  function recipeState(r, inv, F) {
+    const rs = NF.resolveRecipe(r, inv, F, false);
+    const missing = rs.ings.filter((i) => i.missing).map((i) => i.food.id);
+    const subs = rs.ings.filter((i) => i.sub).map((i) => ({ from: i.sub, to: i.food.id, title: NF.isTitleIngredient(r, i.sub, F) }));
+    const group = missing.length === 0 ? 'now' : missing.length === 1 ? 'one' : missing.length <= 3 ? 'few' : 'rest';
+    return { r: r, missing: missing, subs: subs, skipped: rs.skipped, group: group };
+  }
+
+  function recMealType(r) {
+    if (ui.recFilter === 'b' || ui.recFilter === 's') return ui.recFilter;
+    if (ui.recFilter === 'l') return r.meals.indexOf('l') >= 0 ? 'l' : 'd';
+    return r.meals[0];
+  }
+
+  function recipeFit(r, F, inv) {
+    const T = targets();
+    if (!T) return null;
+    return NF.fitRecipe(r, NF.targetFor(T, NF.MEAL_SHARE[recMealType(r)]), inv, F, false, { dense: !!S.lowAppetite });
   }
 
   function renderRecipes() {
+    const filters = [['all', 'Все'], ['b', 'Завтрак'], ['l', 'Обед и ужин'], ['s', 'Перекус']];
+    const times = [[0, 'Любое время'], [10, 'до 10 мин'], [20, 'до 20 мин'], [40, 'до 40 мин']];
+    return '<h2 class="h2 rec-title">Что приготовить из того, что есть</h2><div class="card rec-head">' +
+      '<input id="rec-search" class="input" type="search" autocomplete="off" placeholder="Блюдо или продукт: омлет, курица, рис…" value="' + esc(ui.recQuery) + '" aria-label="Поиск рецептов">' +
+      '<div class="seg small" data-k="seg-rec"><span class="seg-thumb" aria-hidden="true"></span>' + filters.map((f) => '<button class="seg-btn' + (ui.recFilter === f[0] ? ' on' : '') + '" data-act="rec-filter" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>' +
+      '<div class="pick">' + times.map((t) => '<button class="pill' + (ui.recTime === t[0] ? ' on' : '') + '" data-act="rec-time" data-t="' + t[0] + '">' + t[1] + '</button>').join('') +
+      '<button class="pill' + (ui.recNoCook ? ' on' : '') + '" data-act="rec-nocook" aria-pressed="' + ui.recNoCook + '">Без готовки</button></div>' +
+      '</div><div id="rec-results">' + recipeResults() + '</div>';
+  }
+
+  function recipeResults() {
     const F = fm();
-    const filters = [['all', 'Все'], ['b', 'Завтрак'], ['l', 'Обед/ужин'], ['s', 'Перекус']];
-    let list = NF.RECIPES.filter((r) => ui.recFilter === 'all' || r.meals.indexOf(ui.recFilter) >= 0);
-    list = list.map((r) => ({ r: r, miss: recipeStatus(r) })).sort((a, b) => a.miss.length - b.miss.length);
-    let html = '<div class="seg small" data-k="seg-rec"><span class="seg-thumb" aria-hidden="true"></span>' + filters.map((f) => '<button class="seg-btn' + (ui.recFilter === f[0] ? ' on' : '') + '" data-act="rec-filter" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
-    html += '<p class="hint">Граммовки указаны базовые. В плане на день они пересчитываются под твою норму.</p><div class="recipes">';
-    list.forEach((x) => {
-      const r = x.r;
-      const baseItems = r.ing.filter((i) => !i[2]).map((i) => ({ id: i[0], g: i[1] }));
-      const m = NF.macrosOf(baseItems, F);
-      const ok = x.miss.length === 0;
-      html += '<details class="recipe"><summary><span class="status ' + (ok ? 'ok' : x.miss.length <= 2 ? 'near' : 'no') + '">' + (ok ? 'Можно готовить' : 'Не хватает: ' + x.miss.length) + '</span>' +
-        '<span class="recipe-name">' + esc(r.name) + '</span><span class="muted small">' + r.meals.split('').map((t) => NF.MEAL_LABEL[t]).join(', ') + ' · ' + r.min + ' мин · ' + r0(m.kcal) + ' ккал</span></summary>' +
-        '<ul class="items">' + r.ing.map((i) => {
-          const f = F[i[0]]; const have = (S.inventory[i[0]] || 0) >= i[1] * 0.6;
-          return '<li class="' + (have ? '' : 'lack') + '"><span>' + esc(f.name) + (i[2] ? ' <span class="muted">(по желанию)</span>' : '') + '</span><span class="num">' + qtyLabel(f, i[1]) + '</span></li>';
-        }).join('') + '</ul>' + macroLine(m) +
-        '<ol class="steps-list">' + r.steps.map((s) => '<li>' + esc(s) + '</li>').join('') + '</ol></details>';
+    const inv = usableInventory();
+    const q = ui.recQuery.trim().toLowerCase();
+    const urg = urgencyMap();
+    const states = NF.RECIPES.filter((r) => {
+      if (ui.recFilter === 'l') { if (r.meals.indexOf('l') < 0 && r.meals.indexOf('d') < 0) return false; }
+      else if (ui.recFilter !== 'all' && r.meals.indexOf(ui.recFilter) < 0) return false;
+      if (ui.recTime && r.min > ui.recTime) return false;
+      if (ui.recNoCook && r.tags.indexOf('nocook') < 0) return false;
+      if (q && r.name.toLowerCase().indexOf(q) < 0 && !r.ing.some((i) => F[i[0]] && F[i[0]].name.toLowerCase().indexOf(q) >= 0)) return false;
+      return true;
+    }).map((r) => recipeState(r, inv, F));
+    // сначала — блюда со скоропортящимся, потом без замен, потом быстрые
+    const rank = (st) => st.subs.reduce((sum, x) => sum + (x.title ? 2 : 0.3), 0) -
+      st.r.ing.reduce((mx, i) => Math.max(mx, (inv[i[0]] || 0) > 0 ? (urg[i[0]] || 0) : 0), 0) * 3;
+    states.sort((a, b) => rank(a) - rank(b) || a.r.min - b.r.min);
+    const g = { now: [], one: [], few: [], rest: [] };
+    states.forEach((st) => g[st.group].push(st));
+
+    if (!states.length) {
+      return '<div class="empty"><p>Ничего не нашлось.</p><p class="muted">Сними фильтры или поищи рецепт в интернете.</p>' +
+        '<div class="pick center">' + webLinks('рецепт ' + (q || 'из того что есть')) + '</div></div>';
+    }
+    let html = '<p class="rec-summary"><b class="num">' + g.now.length + '</b> ' + plural(g.now.length, 'блюдо', 'блюда', 'блюд') + ' можно приготовить из того, что есть' +
+      (g.one.length ? ' · ещё <b class="num">' + g.one.length + '</b>, если докупить один продукт' : '') + '.</p>';
+    const section = (title, list, id, collapsed) => {
+      if (!list.length) return '';
+      const cards = list.map((st) => recipeCard(st, F, inv)).join('');
+      if (collapsed) return '<details class="rec-group" id="' + id + '"><summary>' + title + ' · ' + list.length + '</summary><div class="recipes">' + cards + '</div></details>';
+      return '<h2 class="h3 rec-h">' + title + ' · ' + list.length + '</h2><div class="recipes">' + cards + '</div>';
+    };
+    html += section('Можно приготовить сейчас', g.now, 'recg-now', false);
+    html += section('Не хватает одного продукта', g.one, 'recg-one', false);
+    html += section('Не хватает 2–3 продуктов', g.few, 'recg-few', true);
+    html += section('Остальные рецепты', g.rest, 'recg-rest', true);
+    const names = stockNames(inv, F);
+    if (names.length) {
+      html += '<div class="card web-card"><p><b>Хочется чего-то нового?</b> Поищи рецепты по своим продуктам: ' + esc(names.join(', ')) + '.</p>' +
+        '<div class="pick">' + webLinks('рецепт ' + names.join(' ')) + '</div></div>';
+    }
+    return html;
+  }
+
+  /** Главные продукты из запасов для поиска в интернете (сначала то, что скоро испортится). */
+  function stockNames(inv, F) {
+    const urg = urgencyMap();
+    const skip = { tomato_paste: 1, onion: 1, honey: 1 };
+    return Object.keys(inv).filter((id) => F[id] && !F[id].noplan && !skip[id] && F[id].cat !== 'fat' && inv[id] >= 50)
+      .sort((a, b) => (urg[b] || 0) - (urg[a] || 0) || inv[b] - inv[a]).slice(0, 4).map((id) => shortName(F[id]));
+  }
+
+  function recipeCard(st, F, inv) {
+    const r = st.r;
+    const fit = recipeFit(r, F, inv);
+    const type = recMealType(r);
+    const kcal = fit ? r0(fit.macros.kcal) : r0(NF.macrosOf(r.ing.filter((i) => !i[2]).map((i) => ({ id: i[0], g: i[1] })), F).kcal);
+    const tags = r.tags.map((t) => '<span class="tag">' + esc(NF.TAG_LABEL[t] || t) + '</span>').join('');
+    const status = st.group === 'now' ? '<span class="status ok">Всё есть</span>'
+      : '<span class="status ' + (st.group === 'one' ? 'near' : 'no') + '">Нет: ' + st.missing.map((id) => esc(shortName(F[id]))).join(', ') + '</span>';
+    const subLine = st.subs.length ? '<span class="sub-line">' + (st.subs.some((x) => x.title) ? 'Другой главный продукт: ' : 'Замена: ') +
+      st.subs.map((x) => esc(shortName(F[x.from])) + ' → ' + esc(shortName(F[x.to]))).join(', ') + '</span>' : '';
+    let html = '<details class="recipe" id="rec-' + r.id + '"><summary>' + status +
+      '<span class="recipe-name">' + esc(r.name) + '</span>' +
+      '<span class="muted small">' + r.meals.split('').map((t) => NF.MEAL_LABEL[t]).join(', ') + ' · ' + r.min + ' мин · ' + kcal + ' ккал</span>' +
+      (tags ? '<span class="tags">' + tags + '</span>' : '') + subLine + '</summary>';
+    if (fit) {
+      html += '<p class="small muted">Порция под твою норму на ' + NF.MEAL_LABEL[type].toLowerCase() + ':</p><ul class="items">' + fit.items.map((it) => {
+        const f = F[it.id];
+        const miss = fit.missing.find((x) => x.id === it.id);
+        return '<li class="' + (miss ? 'lack' : '') + '"><span>' + esc(f.name) + (it.sub ? ' <em class="sub-tag">вместо: ' + esc(shortName(F[it.sub])) + '</em>' : '') + '</span><span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет</em>' : '') + '</span></li>';
+      }).join('') + '</ul>' + macroLine(fit.macros);
+      if (fit.skipped.length) html += '<p class="hint">Можно без: ' + fit.skipped.map((id) => esc(shortName(F[id]))).join(', ') + ' (нет дома).</p>';
+    }
+    html += '<ol class="steps-list">' + r.steps.map((x) => '<li>' + esc(x) + '</li>').join('') + '</ol>';
+    // поставить в план на сегодня
+    let slots = [];
+    if (S.profile) {
+      const plan = getPlan(todayStr());
+      slots = plan.meals.map((m, i) => [i, m]).filter((x) => !x[1].eaten && r.meals.indexOf(x[1].type) >= 0);
+    }
+    html += '<div class="rec-actions">' +
+      (slots.length ? '<span class="small muted">Поставить на сегодня:</span>' + slots.map((x) => '<button class="btn small" data-act="rec-pin" data-id="' + r.id + '" data-i="' + x[0] + '">' + esc(mealLabel(x[1])) + ' · ' + x[1].time + '</button>').join('') : '') +
+      (fit && fit.missing.length ? '<button class="btn small ghost" data-act="rec-shop" data-id="' + r.id + '">Недостающее — в покупки</button>' : '') +
+      '</div><div class="rec-web"><span class="small muted">Похожие рецепты:</span>' + webLinks('рецепт ' + r.name) + '</div>';
+    return html + '</details>';
+  }
+
+  function shopList() {
+    const T = targets();
+    const F = fm();
+    const list = NF.shoppingList(todayStr(), ui.shopDays, T, scheduleFor(todayStr()), usableInventory(), F, recentPenalty(todayStr()), { dense: !!S.lowAppetite });
+    Object.keys(S.shopExtra || {}).forEach((id) => {
+      if (!F[id]) return;
+      const it = list.find((x) => x.id === id);
+      if (it) { it.g = Math.max(it.g, S.shopExtra[id]); it.manual = true; }
+      else list.push({ id: id, g: S.shopExtra[id], manual: true });
     });
-    return html + '</div>';
+    return list;
   }
 
   function renderShop() {
     const T = targets();
     if (!T) return '<div class="empty"><p>Сначала заполни профиль.</p></div>';
     const F = fm();
-    const list = NF.shoppingList(todayStr(), ui.shopDays, T, scheduleFor(todayStr()), S.inventory, F, recentPenalty(todayStr()));
+    const list = shopList();
     let html = '<div class="seg small" data-k="seg-shop"><span class="seg-thumb" aria-hidden="true"></span>' + [3, 7].map((d) => '<button class="seg-btn' + (ui.shopDays === d ? ' on' : '') + '" data-act="shop-days" data-d="' + d + '">На ' + d + ' ' + plural(d, 'день', 'дня', 'дней') + '</button>').join('') + '</div>';
     if (!list.length) return html + '<div class="empty"><p>Всё необходимое на ' + ui.shopDays + ' ' + plural(ui.shopDays, 'день', 'дня', 'дней') + ' уже есть дома.</p></div>';
-    html += '<p class="hint">Список собран по меню на ближайшие дни с учётом того, что уже лежит дома. Отметь купленное и нажми кнопку внизу: продукты добавятся в запасы.</p><ul class="shop">';
+    html += '<p class="hint">Список собран по меню на ближайшие дни с учётом того, что уже лежит дома. Английские названия помогут найти продукт в магазине в другой стране. Отметь купленное и нажми кнопку внизу: продукты добавятся в запасы.</p><ul class="shop">';
     list.forEach((it) => {
       const f = F[it.id];
       const on = !!ui.shopChecked[it.id];
-      html += '<li><label class="check"><input type="checkbox" id="shop-' + esc(it.id) + '" data-bind="shop" data-id="' + esc(it.id) + '" data-g="' + it.g + '"' + (on ? ' checked' : '') + '><span>' + esc(f.name) + '</span></label><span class="num">' + qtyLabel(f, it.g) + '</span></li>';
+      html += '<li><label class="check"><input type="checkbox" id="shop-' + esc(it.id) + '" data-bind="shop" data-id="' + esc(it.id) + '" data-g="' + it.g + '"' + (on ? ' checked' : '') + '>' +
+        '<span class="shop-name"><span>' + esc(f.name) + (it.manual ? ' <em class="tag">из рецепта</em>' : '') + '</span>' + (f.en ? '<span class="en">' + esc(f.en) + '</span>' : '') + '</span></label>' +
+        '<span class="num">' + qtyLabel(f, it.g) + '</span></li>';
     });
-    html += '</ul><button class="btn wide" data-act="shop-apply">Добавить купленное в запасы</button>';
+    html += '</ul><div class="row-btns"><button class="btn wide" data-act="shop-apply">Добавить купленное в запасы</button><button class="btn ghost" data-act="shop-copy">Скопировать список</button></div>' +
+      (Object.keys(S.shopExtra || {}).length ? '<button class="link" data-act="shop-clear-extra">Убрать добавленное из рецептов</button>' : '');
     return html;
   }
 
@@ -671,7 +879,7 @@
       '<div class="grid2"><label>Отбой<input id="sl-def-bed" class="input" type="time" data-bind="sleep-def" data-k="bed" value="' + esc(S.sleep.bed) + '"></label>' +
       '<label>Подъём<input id="sl-def-wake" class="input" type="time" data-bind="sleep-def" data-k="wake" value="' + esc(S.sleep.wake) + '"></label></div>' +
       '<p class="muted small">Сон по режиму: ' + fmtDur(NF.sleepMinutes(S.sleep.bed, S.sleep.wake)) + (teen ? ' (в твоём возрасте нужно 8–10 ч)' : ' (взрослым нужно 7–9 ч)') + '</p>' +
-      '<h3 class="h3">Расписание еды на сегодня</h3><ul class="sched">' + sched.meals.map((m) => '<li><span class="num">' + m.time + '</span><span>' + NF.MEAL_LABEL[m.type] + '</span><span class="muted small">' + r0(m.share * 100) + ' % нормы</span></li>').join('') +
+      '<h3 class="h3">Расписание еды на сегодня</h3><ul class="sched">' + sched.meals.map((m) => '<li><span class="num">' + m.time + '</span><span>' + esc(mealLabel(m)) + '</span><span class="muted small">' + r0(m.share * 100) + ' % нормы</span></li>').join('') +
       '<li><span class="num">' + esc(S.sleep.bed) + '</span><span>Отбой</span><span class="muted small">последняя еда за 3 ч</span></li></ul>' +
       (sched.note ? '<p class="hint">' + esc(sched.note) + '</p>' : '') + '</div>';
 
@@ -681,7 +889,9 @@
       '<li>Кофеин — не позже, чем за 8 часов до сна.</li>' +
       '<li>Экран — за 30–60 минут до сна убрать или включить ночной режим.</li>' +
       '<li>В спальне прохладно (18–20 °C) и темно.</li>' +
-      '<li>Тяжёлую тренировку заканчивай хотя бы за 2–3 часа до отбоя.</li></ul></details>';
+      '<li>Тяжёлую тренировку заканчивай хотя бы за 2–3 часа до отбоя.</li></ul></details>' +
+      '<details class="card" id="sleep-travel"><summary class="h3">Перелёт и смена часового пояса</summary>' + jetlagTips(null) +
+      '<p class="hint">NovaFit сам замечает смену часового пояса: расписание еды, сна и напоминаний переходит на местное время.</p></details>';
     if (log.length) {
       html += '<h2 class="h3">Журнал</h2><ul class="history">' + log.slice(-10).reverse().map((x) => '<li><span>' + esc(fmtDate(x.date, { day: 'numeric', month: 'short' })) + '</span><span class="num">' + esc(x.bed) + ' → ' + esc(x.wake) + '</span><span class="num">' + fmtDur(NF.sleepMinutes(x.bed, x.wake)) + ' · ' + x.q + '/5</span></li>').join('') + '</ul>';
     }
@@ -727,6 +937,22 @@
       '<text x="' + L + '" y="' + (H - 6) + '" class="axis">' + esc(fmtDate(pts[0].date, { day: 'numeric', month: 'short' })) + '</text>' +
       '<text x="' + (W - R) + '" y="' + (H - 6) + '" class="axis" text-anchor="end">' + esc(fmtDate(last.date, { day: 'numeric', month: 'short' })) + '</text>' +
       '</svg></div>';
+  }
+
+  // ── режим «Нет аппетита» ──
+  function appetiteCard() {
+    return '<section class="card appetite" id="appetite"><div class="split"><div class="grow"><h2 class="h3">Режим «Нет аппетита»</h2>' +
+      '<p class="small muted">6 приёмов поменьше вместо 4, калорийные блюда, жидкие калории на перекус и белковый перекус перед сном.</p></div>' +
+      '<label class="switch"><input type="checkbox" id="low-appetite" data-bind="low-appetite"' + (S.lowAppetite ? ' checked' : '') + '><span class="switch-ui" aria-hidden="true"></span><span class="sr">Включить режим «Нет аппетита»</span></label></div>' +
+      '<details id="appetite-tips"' + (S.lowAppetite ? ' open' : '') + '><summary class="small">Как съедать норму, когда не хочется есть</summary><ul class="dots small">' +
+      '<li>Ешь по расписанию, а не по голоду: на наборе голод часто не успевает появиться. Включи напоминания.</li>' +
+      '<li>Пей калории: коктейль, молоко или кефир даются легче, чем тарелка еды той же калорийности.</li>' +
+      '<li>Не пей воду прямо перед едой и во время неё — пей между приёмами.</li>' +
+      '<li>Добавляй калории без объёма: чайная ложка масла в кашу или гарнир — около 45 ккал, столовая ложка арахисовой пасты — около 90, горсть орехов (30 г) — около 180.</li>' +
+      '<li>Начинай с белка и гарнира, овощи — в конце: клетчатка быстро даёт сытость.</li>' +
+      '<li>Держи под рукой перекусы без готовки: орехи, сухофрукты, сыр, питьевой йогурт. В дороге это спасает день.</li>' +
+      '<li>Если аппетита нет неделями, вес падает, есть тошнота или боль в животе — покажись врачу.</li>' +
+      '</ul></details></section>';
   }
 
   // ── недельный отчёт ──
@@ -853,6 +1079,7 @@
       '<p class="calc-line small muted">Базовый обмен ' + T.bmr + ' × активность = расход ' + T.tdee + ' ккал. Профицит +' + T.surplus + (T.adjust ? (T.adjust > 0 ? ' +' : ' ') + T.adjust + ' (подстройка по весу)' : '') + '. ИМТ ' + T.bmi + ' → ' + T.targetBmi + ' на цели, ~' + T.weeks + ' ' + plural(T.weeks, 'неделя', 'недели', 'недель') + '.</p>' +
       warningsBlock(T.warnings) + '</section>';
 
+    html += appetiteCard();
     html += reportCard();
     html += '<section class="card"><div class="split"><h2 class="h3">Вес</h2><span class="muted small">старт ' + (S.startWeight || S.profile.weight) + ' кг</span></div>' + weightChart() +
       '<div class="add-row"><input id="w-kg" class="input num-in" type="number" inputmode="decimal" step="0.1" placeholder="' + S.profile.weight + '"><span class="unit">кг</span><button class="btn small" data-act="w-add">Записать вес</button></div>' +
@@ -890,7 +1117,7 @@
     const e = sleepEntry(date);
     return NF.reminderEvents({
       date: date,
-      meals: plan.meals.map((m) => ({ type: m.type, time: m.time, eaten: m.eaten, title: m.recipeId && recipeById(m.recipeId) ? recipeById(m.recipeId).name : 'Тарелка из твоих продуктов' })),
+      meals: plan.meals.map((m) => ({ type: m.type, label: mealLabel(m), time: m.time, eaten: m.eaten, title: m.recipeId && recipeById(m.recipeId) ? recipeById(m.recipeId).name : 'Тарелка из твоих продуктов' })),
       bed: S.sleep.bed, wake: e ? e.wake : S.sleep.wake,
       trainTime: isTrainDay(date) && !S.workouts.some((w) => w.date === date) ? S.train.time : null,
       lead: S.reminders.lead, opts: S.reminders,
@@ -913,13 +1140,13 @@
         const date = addDays(todayStr(), d);
         const evs = d === 0 ? todaysEvents(date) : NF.reminderEvents({
           date: date,
-          meals: scheduleFor(date).meals.map((m) => ({ type: m.type, time: m.time, eaten: false, title: 'Блюдо и граммовки — в NovaFit' })),
+          meals: scheduleFor(date).meals.map((m) => ({ type: m.type, label: m.label, time: m.time, eaten: false, title: 'Блюдо и граммовки — в NovaFit' })),
           bed: S.sleep.bed, wake: S.sleep.wake, trainTime: isTrainDay(date) ? S.train.time : null,
           lead: S.reminders.lead, opts: S.reminders, measureDue: !lastM || NF.daysBetween(lastM, date) >= 14,
         });
         evs.forEach((e, i) => {
           const at = new Date(date + 'T' + e.at + ':00').getTime();
-          if (at > nowMs + 30000) list.push({ id: 1000 + d * 20 + i, at: at, title: e.title, body: e.body });
+          if (at > nowMs + 30000) list.push({ id: 1000 + d * 20 + i, at: at, date: date, time: e.at, title: e.title, body: e.body });
         });
       }
     }
@@ -986,7 +1213,7 @@
     const ics = NF.buildICS({
       start: todayStr(), lead: S.reminders.lead || 10, opts: S.reminders, wake: S.sleep.wake, bed: S.sleep.bed,
       trainDays: S.train.days, trainTime: S.train.time,
-      schedRest: NF.mealSchedule(S.sleep.wake, S.sleep.bed, null), schedTrain: NF.mealSchedule(S.sleep.wake, S.sleep.bed, S.train.time),
+      schedRest: NF.mealSchedule(S.sleep.wake, S.sleep.bed, null, S.lowAppetite ? 'six' : 'four'), schedTrain: NF.mealSchedule(S.sleep.wake, S.sleep.bed, S.train.time, S.lowAppetite ? 'six' : 'four'),
       stamp: new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z',
     });
     if (NA) {
@@ -1125,6 +1352,212 @@
     if (!S.draft) return null;
     const w = currentProgram().find((p) => p.key === S.draft.key);
     return w ? w.items.find((i) => i.id === exId) : null;
+  }
+
+  // ───────────────── сканер штрихкодов ─────────────────
+  let scanCam = null;
+  const BARCODE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" class="ico"><path d="M3 6v12M6 6v12M9.5 6v12M12 6v12M15.5 6v12M18 6v12M21 6v12"/></svg>';
+
+  function scanButton(mode) {
+    return '<button class="btn small ghost scan-btn" data-act="scan-open" data-mode="' + mode + '" aria-label="Сканировать штрихкод">' + BARCODE_ICON + '<span>Штрихкод</span></button>';
+  }
+
+  function openScanner(mode) {
+    ui.scan = { mode: mode, phase: 'camera', code: '', prod: null };
+    let el = document.getElementById('scanner');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'scanner'; el.className = 'scanner';
+      el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'Сканер штрихкода');
+      document.body.appendChild(el);
+    }
+    el.innerHTML = '<div class="scan-sheet">' +
+      '<div class="scan-top"><b>' + (mode === 'extra' ? 'Что съел — по штрихкоду' : 'Продукт по штрихкоду') + '</b><button class="icon-btn" data-act="scan-close" aria-label="Закрыть">×</button></div>' +
+      '<div class="scan-view" id="scan-view"><video id="scan-video" playsinline muted></video><div class="scan-frame" aria-hidden="true"><span class="scan-line"></span></div></div>' +
+      '<p class="scan-msg" id="scan-msg" role="status">Включаю камеру… Наведи её на штрихкод на упаковке.</p>' +
+      '<div class="add-row scan-manual"><input id="scan-code" class="input" inputmode="numeric" pattern="[0-9]*" maxlength="14" autocomplete="off" placeholder="Или введи цифры под штрихкодом" aria-label="Цифры штрихкода"><button class="btn small" data-act="scan-find">Найти</button></div>' +
+      '<div id="scan-result" class="scan-result"></div>' +
+      '<p class="scan-credit small muted">Данные о товарах — из открытой базы Open Food Facts (лицензия ODbL). Работает в любой стране, но не все товары там есть: тогда введи КБЖУ с упаковки, и NovaFit запомнит товар.</p>' +
+      '</div>';
+    el.hidden = false;
+    requestAnimationFrame(() => el.classList.add('show'));
+    startScanCamera();
+  }
+
+  function setScanMsg(t) { const m = document.getElementById('scan-msg'); if (m) m.textContent = t; }
+
+  async function startScanCamera() {
+    if (window.__NF_EMBED) {
+      // в превью-ссылке камера и запросы в интернет запрещены
+      const view = document.getElementById('scan-view');
+      if (view) view.hidden = true;
+      const manual = document.querySelector('.scan-manual');
+      if (manual) manual.hidden = true;
+      setScanMsg('В этом превью камера и поиск по базе товаров недоступны — сканер работает в установленном приложении. Здесь можно добавить товар вручную, по КБЖУ с упаковки.');
+      ui.scan.code = 'manual' + Date.now();
+      ui.scan.phase = 'manual';
+      renderScanResult();
+      return;
+    }
+    const video = document.getElementById('scan-video');
+    try {
+      scanCam = await NF.Scanner.startCamera(video, (code) => {
+        scanCam = null;
+        if (!ui.scan || ui.scan.manual) return; // уже вводят цифры вручную
+        vibrate([60]); onScanCode(code);
+      });
+      // закрыли сканер или начали вводить цифры, пока включалась камера
+      if (!ui.scan || ui.scan.manual) { stopScanCamera(); return; }
+      setScanMsg('Наведи камеру на штрихкод. Держи телефон ровно, в 10–20 см от упаковки.');
+    } catch (e) {
+      const view = document.getElementById('scan-view');
+      if (view) view.hidden = true;
+      setScanMsg(e.message === 'denied' ? 'Нет доступа к камере. Разреши камеру для NovaFit в настройках или введи цифры штрихкода вручную.'
+        : e.message === 'nodecoder' ? 'Не получилось включить распознавание. Введи цифры штрихкода вручную.'
+          : 'Камера недоступна. Введи цифры штрихкода вручную — они напечатаны под полосками.');
+    }
+  }
+
+  function stopScanCamera() { if (scanCam) { try { scanCam.stop(); } catch (e) { /* ignore */ } scanCam = null; } }
+
+  function closeScanner() {
+    stopScanCamera();
+    ui.scan = null;
+    const el = document.getElementById('scanner');
+    if (el) { el.classList.remove('show'); setTimeout(() => { if (!ui.scan) { el.hidden = true; el.innerHTML = ''; } }, 260); }
+  }
+
+  async function onScanCode(code) {
+    code = String(code || '').replace(/\D/g, '');
+    if (!ui.scan) return;
+    if (!NF.Scanner.validCode(code)) { setScanMsg('Такого штрихкода не бывает — проверь цифры.'); return; }
+    stopScanCamera();
+    const view = document.getElementById('scan-view');
+    if (view) view.hidden = true;
+    const input = document.getElementById('scan-code');
+    if (input) input.value = code;
+    ui.scan.code = code;
+    const F = fm();
+    const known = S.barcodes[code];
+    if (known && F[known]) { ui.scan.phase = 'known'; ui.scan.foodId = known; setScanMsg('Этот товар уже знаком.'); renderScanResult(); return; }
+    ui.scan.phase = 'loading';
+    setScanMsg('Штрихкод ' + code + '. Ищу товар в мировой базе…');
+    renderScanResult();
+    const res = await NF.Scanner.lookup(code);
+    if (!ui.scan || ui.scan.code !== code) return; // закрыли или отсканировали другое
+    if (res.status === 'ok') {
+      const prod = NF.Scanner.parseProduct(res.raw, code, F);
+      ui.scan.prod = prod;
+      ui.scan.phase = prod.hasMacros ? 'found' : 'manual';
+      ui.scan.reason = prod.hasMacros ? null : 'nomacros';
+      ui.scan.choice = prod.base ? 'base' : 'custom';
+      setScanMsg(prod.hasMacros ? 'Нашёл.' : 'Товар есть в базе, но без КБЖУ.');
+    } else {
+      ui.scan.phase = 'manual'; ui.scan.reason = res.status; ui.scan.prod = null;
+      setScanMsg(res.status === 'notfound' ? 'Этого товара нет в базе Open Food Facts.' : res.status === 'offline' ? 'Нет интернета: в базе не поискать.' : 'Не получилось связаться с базой товаров.');
+    }
+    renderScanResult();
+  }
+
+  function scanQtyField(defG) {
+    const extra = ui.scan.mode === 'extra';
+    return '<label>' + (extra ? 'Сколько съел, г или мл' : 'Сколько дома, г или мл') +
+      '<input id="scan-qty" class="input" type="number" inputmode="decimal" min="1" value="' + (defG ? r0(defG) : '') + '" placeholder="' + (extra ? '100' : '500') + '"></label>';
+  }
+
+  function scanExpField(suggestDays) {
+    if (ui.scan.mode === 'extra') return '';
+    const v = suggestDays ? addDays(todayStr(), suggestDays) : '';
+    return '<label>Годен до (необязательно)<input id="scan-exp" class="input" type="date" value="' + v + '"></label>';
+  }
+
+  function scanStockToggle(foodId) {
+    if (ui.scan.mode !== 'extra' || !foodId || !(S.inventory[foodId] > 0)) return '';
+    return '<label class="check small"><input type="checkbox" id="scan-from-stock" checked> списать из запасов</label>';
+  }
+
+  function renderScanResult() {
+    const box = document.getElementById('scan-result');
+    const sc = ui.scan;
+    if (!box || !sc) return;
+    const F = fm();
+    let html = '';
+    if (sc.phase === 'loading') {
+      html = '<p class="scan-loading">Ищу…</p>';
+    } else if (sc.phase === 'known') {
+      const f = F[sc.foodId];
+      html = '<div class="scan-card"><p class="scan-name">' + esc(f.name) + '</p>' + macroLine({ kcal: f.kcal, p: f.p, f: f.f, c: f.c }) + ' <span class="small muted">на 100 г</span>' +
+        '<div class="grid2">' + scanQtyField(sc.mode === 'extra' ? 100 : null) + scanExpField(NF.SHELF[f.id] || null) + '</div>' + scanStockToggle(f.id) +
+        '<button class="btn wide" data-act="scan-save">' + (sc.mode === 'extra' ? 'Записать, что съел' : 'Добавить в запасы') + '</button></div>';
+    } else if (sc.phase === 'found') {
+      const p = sc.prod;
+      const base = p.base ? F[p.base] : null;
+      const fullName = p.name + (p.brand && p.name.indexOf(p.brand) < 0 ? ' · ' + p.brand : '');
+      html = '<div class="scan-card"><p class="scan-name">' + esc(p.name || 'Без названия') + (p.brand ? ' <span class="muted">· ' + esc(p.brand) + '</span>' : '') + '</p>' +
+        macroLine({ kcal: p.kcal, p: p.p, f: p.f, c: p.c }) + ' <span class="small muted">на 100 г</span>' +
+        (p.noplan ? '<p class="hint">Это сладкое или снек: запишется в «съел» и в калькулятор, но в автоматическое меню не попадёт.</p>' : '') +
+        (base ? '<div class="scan-choice"><label class="check"><input type="radio" name="scan-choice" value="base"' + (sc.choice === 'base' ? ' checked' : '') + '> Как «' + esc(base.name) + '» — будет участвовать в рецептах</label>' +
+          '<label class="check"><input type="radio" name="scan-choice" value="custom"' + (sc.choice === 'custom' ? ' checked' : '') + '> Как отдельный продукт</label></div>' : '') +
+        '<label>Название<input id="scan-name" class="input" value="' + esc(fullName) + '"></label>' +
+        '<div class="grid2">' + scanQtyField(sc.mode === 'extra' ? 100 : p.qty) + scanExpField(base ? (NF.SHELF[base.id] || null) : p.shelf) + '</div>' + scanStockToggle(base ? base.id : 'b' + p.code) +
+        '<button class="btn wide" data-act="scan-save">' + (sc.mode === 'extra' ? 'Записать, что съел' : 'Добавить в запасы') + '</button></div>';
+    } else if (sc.phase === 'manual') {
+      const p = sc.prod;
+      html = '<div class="scan-card"><p class="small">Введи данные с упаковки (на 100 г) — я запомню товар по штрихкоду, и в следующий раз он найдётся даже без интернета.</p>' +
+        '<label>Название<input id="scan-name" class="input" value="' + esc(p && p.name ? p.name : '') + '" placeholder="Например: Йогурт питьевой"></label>' +
+        '<div class="grid4"><label>ккал<input id="scan-kcal" class="input" type="number" inputmode="decimal"></label><label>Б<input id="scan-p" class="input" type="number" inputmode="decimal"></label><label>Ж<input id="scan-f" class="input" type="number" inputmode="decimal"></label><label>У<input id="scan-c" class="input" type="number" inputmode="decimal"></label></div>' +
+        '<label>Категория<select id="scan-cat" class="input">' + Object.keys(NF.CAT_LABEL).map((k) => '<option value="' + k + '">' + NF.CAT_LABEL[k] + '</option>').join('') + '</select></label>' +
+        '<div class="grid2">' + scanQtyField(sc.mode === 'extra' ? 100 : null) + scanExpField(null) + '</div>' +
+        '<button class="btn wide" data-act="scan-save">' + (sc.mode === 'extra' ? 'Записать, что съел' : 'Добавить в запасы') + '</button></div>';
+    }
+    box.innerHTML = html;
+  }
+
+  /** Сохранить отсканированный товар как свой продукт (id по штрихкоду — без дублей). */
+  function upsertScanned(prod, name) {
+    const food = NF.Scanner.customFromScan(prod, name);
+    const i = S.customFoods.findIndex((f) => f.id === food.id);
+    if (i >= 0) S.customFoods[i] = food; else S.customFoods.push(food);
+    return food.id;
+  }
+
+  function saveScan() {
+    const sc = ui.scan;
+    if (!sc) return;
+    const g = num('scan-qty');
+    if (!(g > 0 && g <= 20000)) { toast('Укажи количество в граммах'); return; }
+    let foodId = null;
+    if (sc.phase === 'known') foodId = sc.foodId;
+    else if (sc.phase === 'found') {
+      const ch = document.querySelector('input[name="scan-choice"]:checked');
+      if (ch && ch.value === 'base' && sc.prod.base) foodId = sc.prod.base;
+      else foodId = upsertScanned(sc.prod, val('scan-name').trim() || sc.prod.name);
+    } else if (sc.phase === 'manual') {
+      const kcal = num('scan-kcal'), p = num('scan-p'), f = num('scan-f'), c = num('scan-c');
+      const name = val('scan-name').trim();
+      if (!name || !(kcal >= 0) || !(p >= 0) || !(f >= 0) || !(c >= 0)) { toast('Заполни название и КБЖУ на 100 г'); return; }
+      if (Math.abs(p * 4 + f * 9 + c * 4 - kcal) > Math.max(40, kcal * 0.25)) { toast('КБЖУ не сходятся с калориями. Проверь цифры на упаковке.'); return; }
+      foodId = upsertScanned({ code: sc.code, name: name, brand: '', kcal: kcal, p: p, f: f, c: c, cat: val('scan-cat') || 'carb', noplan: false }, name);
+    } else return;
+    if (NF.Scanner.validCode(sc.code)) S.barcodes[sc.code] = foodId;
+    const F = fm();
+    const food = F[foodId];
+    const date = todayStr();
+    if (sc.mode === 'extra') {
+      const fromStock = !!(document.getElementById('scan-from-stock') || {}).checked;
+      const now = new Date();
+      (S.extras[date] = S.extras[date] || []).push({ id: foodId, g: Math.round(g), t: NF.fromMin(now.getHours() * 60 + now.getMinutes()), stock: fromStock });
+      if (fromStock) changeInventory(foodId, -g);
+      rebuildPlan(date);
+      save(); closeScanner(); ui.extraOpen = false; render();
+      toast(shortName(food) + ': +' + r0(food.kcal * g / 100) + ' ккал. План пересчитан', 3500);
+    } else {
+      setExpiryOnAdd(foodId, val('scan-exp'));
+      changeInventory(foodId, g);
+      S.demoInventory = false;
+      save(); closeScanner(); render();
+      toast(food.name + ': +' + r0(g) + ' г в запасах', 3500);
+    }
   }
 
   // ───────────────── рендер ─────────────────
@@ -1316,10 +1749,50 @@
     'calc-meal'(el) { ui.calcMeal = el.dataset.t; render(); },
     'calc-toggle'(el) { const id = el.dataset.id; const i = ui.calcSel.indexOf(id); if (i >= 0) ui.calcSel.splice(i, 1); else ui.calcSel.push(id); render(); },
     'rec-filter'(el) { ui.recFilter = el.dataset.f; render(); },
+    'scan-open'(el) { openScanner(el.dataset.mode || 'stock'); },
+    'scan-close'() { closeScanner(); },
+    'scan-find'() { const c = val('scan-code').replace(/\D/g, ''); if (!c) { toast('Введи цифры штрихкода'); return; } onScanCode(c); },
+    'scan-save'() { saveScan(); },
+    'rec-time'(el) { ui.recTime = +el.dataset.t; render(); },
+    'rec-nocook'() { ui.recNoCook = !ui.recNoCook; render(); },
+    'rec-pin'(el) {
+      const date = todayStr(); const plan = getPlan(date); const i = +el.dataset.i;
+      const inv = usableInventory();
+      plan.meals.forEach((m, j) => { if (j !== i && !m.eaten) m.items.forEach((it) => { if (inv[it.id] != null) inv[it.id] = Math.max(0, inv[it.id] - it.g); }); });
+      const meal = NF.pinRecipe(plan, i, el.dataset.id, targets(), scheduleFor(date), inv, fm(), planOpts(date));
+      if (!meal) return;
+      plan.meals[i] = meal; ui.justSwapped = i; save(); render();
+      toast('«' + recipeById(el.dataset.id).name + '» — ' + mealLabel(meal).toLowerCase() + ' в ' + meal.time + '. План — во вкладке «Сегодня»', 4000);
+    },
+    'rec-shop'(el) {
+      const r = recipeById(el.dataset.id); const F = fm();
+      const fit = recipeFit(r, F, usableInventory());
+      if (!fit || !fit.missing.length) return;
+      S.shopExtra = S.shopExtra || {};
+      fit.missing.forEach((it) => { S.shopExtra[it.id] = (S.shopExtra[it.id] || 0) + Math.ceil(it.g / 10) * 10; });
+      save(); render();
+      toast('В покупки: ' + fit.missing.map((it) => shortName(F[it.id])).join(', '));
+    },
+    'shop-copy'() {
+      const F = fm();
+      const text = 'Покупки NovaFit:\n' + shopList().map((it) => '— ' + F[it.id].name + (F[it.id].en ? ' (' + F[it.id].en + ')' : '') + ': ' + qtyLabel(F[it.id], it.g)).join('\n');
+      const done = () => toast('Список скопирован');
+      if (NA) { let ok = false; try { ok = NA.copy(text); } catch (e) { ok = false; } if (ok) { done(); return; } }
+      try { navigator.clipboard.writeText(text).then(done, () => toast('Не получилось скопировать')); } catch (e) { toast('Не получилось скопировать'); }
+    },
+    'shop-clear-extra'() { S.shopExtra = {}; save(); render(); },
+    'water-toggle'() { ui.waterOpen = !ui.waterOpen; render(); },
+    'tz-ok'() { S.tzNotice = null; save(); render(); },
+    'open-appetite'() {
+      S.tab = 'profile'; save(); render();
+      const el = document.getElementById('appetite');
+      if (el) { el.scrollIntoView({ block: 'start' }); const d = document.getElementById('appetite-tips'); if (d) d.open = true; }
+    },
+
     'shop-days'(el) { ui.shopDays = +el.dataset.d; ui.shopChecked = {}; render(); },
     'shop-apply'() {
       const ids = Object.keys(ui.shopChecked); if (!ids.length) { toast('Отметь, что купил'); return; }
-      ids.forEach((id) => changeInventory(id, ui.shopChecked[id]));
+      ids.forEach((id) => { changeInventory(id, ui.shopChecked[id]); if (S.shopExtra) delete S.shopExtra[id]; });
       S.demoInventory = false; ui.shopChecked = {}; save(); render(); toast('Добавлено в запасы: ' + ids.length);
     },
     day(el) {
@@ -1423,6 +1896,22 @@
     toast('Выделил данные: скопируй их вручную');
   }
 
+  // начал вводить цифры штрихкода вручную — камеру выключаем, чтобы она не перебила ввод
+  document.addEventListener('focusin', (e) => {
+    if (e.target && e.target.id === 'scan-code' && ui.scan) {
+      ui.scan.manual = true;
+      stopScanCamera();
+      const view = document.getElementById('scan-view');
+      if (view) view.hidden = true;
+      setScanMsg('Введи цифры под штрихкодом и нажми «Найти».');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target && e.target.id === 'scan-code') { e.preventDefault(); ACTIONS['scan-find'](); }
+    if (e.key === 'Escape' && ui.scan) closeScanner();
+  });
+
   document.addEventListener('click', (e) => {
     const el = e.target.closest('[data-act]');
     if (!el) return;
@@ -1432,6 +1921,12 @@
 
   document.addEventListener('input', (e) => {
     const el = e.target;
+    if (el.id === 'rec-search') {
+      ui.recQuery = el.value;
+      const box = document.getElementById('rec-results');
+      if (box) box.innerHTML = recipeResults();
+      return;
+    }
     if (el.id === 'extra-search') {
       ui.extraSearch = el.value; ui.extraPick = null;
       const box = document.getElementById('extra-results');
@@ -1472,6 +1967,12 @@
       const box = el.closest('.set'); if (box) box.classList.toggle('done', v > 0);
     }
     else if (b === 'auto-rest') { S.autoRest = el.checked; save(); }
+    else if (b === 'low-appetite') {
+      S.lowAppetite = el.checked;
+      if (S.profile) rebuildForMode();
+      save(); render();
+      toast(S.lowAppetite ? 'Режим «Нет аппетита»: 6 приёмов поменьше, план пересобран' : 'Обычный режим: 4 приёма пищи');
+    }
     else if (b === 'rem-enabled') {
       const on = el.checked;
       ui.remOpen = true;
@@ -1510,7 +2011,9 @@
   });
 
   // ───────────────── старт ─────────────────
-  if (S.profile) { runAdaptation(); save(); }
+  checkTimezone();
+  if (S.profile) runAdaptation();
+  save();
   render();
   if (S.timer) runTimer();
   document.addEventListener('visibilitychange', () => {
@@ -1528,6 +2031,7 @@
 
   // Android: кнопка «Назад» и возврат в приложение
   window.__nfBack = () => {
+    if (ui.scan) { closeScanner(); return true; }
     if (S.timer || S.tab === 'today') return false;
     S.tab = 'today'; save(); render(); window.scrollTo({ top: 0, behavior: 'instant' });
     return true;

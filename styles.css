@@ -40,6 +40,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; } /* атрибут hidden всегда сильнее display у компонентов */
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--ink);
@@ -429,6 +430,72 @@ body:has(.timer.show) .toast { bottom: calc(var(--nav-h) + env(safe-area-inset-b
   .stats { grid-template-columns: 1fr 1fr; }
   .timer-btn { min-width: 36px; padding: 0 6px; }
 }
+
+/* ── «Что приготовить» ── */
+.rec-title { margin: 4px 0 -4px; }
+.rec-head { gap: 10px; }
+.rec-summary { margin: 2px 0 0; font-size: 15px; }
+.rec-summary b { color: var(--accent); font-size: 17px; }
+.rec-h { margin-top: 8px; }
+.rec-group { border-top: 1px solid var(--line); padding-top: 10px; }
+.rec-group > summary { cursor: pointer; font-weight: 600; font-size: 16px; padding: 4px 0 10px; list-style: none; display: flex; justify-content: space-between; }
+.rec-group > summary::-webkit-details-marker { display: none; }
+.rec-group > summary::after { content: "+"; color: var(--muted); transition: transform 0.3s var(--ease-out); }
+.rec-group[open] > summary::after { transform: rotate(45deg); }
+.recipe summary .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.tag { display: inline-block; font-style: normal; font-size: 11px; font-weight: 500; color: var(--muted); background: var(--surface-2); border-radius: 6px; padding: 1px 7px; white-space: nowrap; vertical-align: middle; }
+.sub-line { font-size: 12px; color: var(--info); }
+.sub-tag { font-style: normal; font-size: 11px; color: var(--info); background: var(--info-bg); border-radius: 6px; padding: 1px 6px; white-space: nowrap; }
+.rec-actions, .rec-web { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rec-actions { padding-top: 4px; border-top: 1px dashed var(--line); }
+.link-out { text-decoration: none; color: var(--accent); font-weight: 500; }
+.link-out::after { content: " ↗"; font-size: 11px; }
+.web-card p { margin: 0; }
+.pick.center { justify-content: center; }
+
+/* ── покупки: английские названия ── */
+.shop-name { display: flex; flex-direction: column; min-width: 0; }
+.shop-name .en { font-size: 12px; color: var(--muted); }
+
+/* ── вода, часовой пояс, режим аппетита ── */
+.water p { margin: 0; }
+.water b { color: var(--accent); font-size: 18px; }
+.note.tz { flex-direction: column; align-items: flex-start; }
+.note.tz details { width: 100%; }
+.note.tz summary { cursor: pointer; color: var(--accent); }
+.appetite .grow { flex: 1; min-width: 0; }
+.appetite p { margin: 2px 0 0; }
+.appetite details summary { cursor: pointer; color: var(--accent); }
+
+/* ── сканер штрихкодов ── */
+.search-row { display: flex; gap: 8px; align-items: stretch; }
+.search-row .input { flex: 1; }
+.scan-btn { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; min-height: 44px; }
+.ico { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.scanner { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; background: rgba(8, 12, 10, 0.55); opacity: 0; transition: opacity 0.25s ease; }
+.scanner.show { opacity: 1; }
+.scan-sheet {
+  width: 100%; max-width: 560px; max-height: 100%; overflow-y: auto; background: var(--bg); border-radius: 20px 20px 0 0;
+  padding: 14px max(16px, env(safe-area-inset-left, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 10px; transform: translateY(24px); transition: transform 0.35s var(--ease-out);
+}
+.scanner.show .scan-sheet { transform: none; }
+.scan-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.scan-view { position: relative; width: 100%; aspect-ratio: 4 / 3; max-width: 100%; border-radius: 14px; overflow: hidden; background: #000; }
+.scan-view video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.scan-frame { position: absolute; left: 10%; right: 10%; top: 28%; bottom: 28%; border: 2px solid rgba(255, 255, 255, 0.85); border-radius: 12px; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.35); }
+.scan-line { position: absolute; left: 6px; right: 6px; top: 50%; height: 2px; background: var(--kcal); box-shadow: 0 0 8px var(--kcal); animation: scanline 1.8s ease-in-out infinite; }
+@keyframes scanline { 0%, 100% { transform: translateY(-36px); } 50% { transform: translateY(36px); } }
+.scan-msg { margin: 0; font-size: 14px; }
+.scan-manual { padding: 0; }
+.scan-manual .input { flex: 1; }
+.scan-result:empty { display: none; }
+.scan-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.scan-card p { margin: 0; }
+.scan-name { font-weight: 600; font-size: 16px; }
+.scan-choice { display: flex; flex-direction: column; gap: 6px; }
+.scan-loading { margin: 0; color: var(--muted); animation: fade 1s ease-in-out infinite alternate; }
+.scan-credit { margin: 0; }
 
 /* ───────────────── движение ───────────────── */
 /* кнопки и интерактивные элементы: мягкий отклик на нажатие */

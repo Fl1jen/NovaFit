@@ -49,6 +49,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
   check(list.length >= 20, 'мало напоминаний на неделю: ' + list.length);
   check(new Set(list.map((x) => x.id)).size === list.length, 'id напоминаний повторяются');
   check(list.every((x) => x.at > Date.now()), 'напоминания в прошлом');
+  check(list.every((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.date) && /^\d{2}:\d{2}$/.test(x.time)), 'у напоминаний нет местных даты и времени (нужны для перелётов)');
   check(await p.isVisible('[data-act=alarm-settings]'), 'нет кнопки точных будильников');
   await p.click('[data-act=alarm-settings]');
   await p.click('[data-act=ics]');

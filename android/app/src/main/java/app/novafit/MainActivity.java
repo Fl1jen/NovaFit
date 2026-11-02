@@ -8,6 +8,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
+import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -27,6 +28,8 @@ public class MainActivity extends Activity {
     static final String HOST = "appassets.androidplatform.net";
     static final String START = "https://" + HOST + "/assets/www/index.html";
     static final int REQ_NOTIF = 41;
+    static final int REQ_CAM = 42;
+    private PermissionRequest pendingCam;
 
     WebView web;
     private WebViewAssetLoader loader;
@@ -66,7 +69,24 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
-        web.setWebChromeClient(new WebChromeClient());
+        web.setWebChromeClient(new WebChromeClient() {
+            /** Сканер штрихкодов просит камеру: даём её только своей странице и только с разрешения Android. */
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                runOnUiThread(() -> {
+                    boolean wantsCam = false;
+                    for (String r : request.getResources()) if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(r)) wantsCam = true;
+                    if (!wantsCam || request.getOrigin() == null || !HOST.equals(request.getOrigin().getHost())) { request.deny(); return; }
+                    if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                    } else {
+                        if (pendingCam != null) pendingCam.deny();
+                        pendingCam = request;
+                        requestPermissions(new String[]{Manifest.permission.CAMERA}, REQ_CAM);
+                    }
+                });
+            }
+        });
         web.addJavascriptInterface(new Bridge(this), "NovaAndroid");
 
         if (state != null) web.restoreState(state);
@@ -115,6 +135,12 @@ public class MainActivity extends Activity {
     public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
         super.onRequestPermissionsResult(code, perms, results);
         if (code == REQ_NOTIF) reportPermission();
+        if (code == REQ_CAM && pendingCam != null) {
+            boolean ok = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
+            if (ok) pendingCam.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+            else pendingCam.deny();
+            pendingCam = null;
+        }
     }
 
     void reportPermission() {
