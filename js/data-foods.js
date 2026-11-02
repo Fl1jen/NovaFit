@@ -73,6 +73,16 @@
     };
   });
 
+  /* Срок хранения после покупки, дней (в холодильнике; для сырого мяса/рыбы —
+   * охлаждённое, не замороженное). null — хранится долго (крупы, консервы,
+   * заморозка, масло). Значение подставляется по умолчанию, его можно поменять. */
+  NF.SHELF = {
+    chicken_breast: 2, chicken_thigh: 2, turkey: 2, beef: 3, minced_beef: 1, pork: 3, fish_white: 2, salmon: 2,
+    eggs: 21, cottage5: 5, cottage9: 5, milk: 5, kefir: 7, yogurt: 10, cheese: 21, smetana: 7,
+    bread: 5, lavash: 5, potato: 30, banana: 5, apple: 14, avocado: 4,
+    tomato: 5, cucumber: 7, cabbage: 14, carrot: 21, onion: 30, mushrooms: 4,
+  };
+
   NF.CAT_LABEL = {
     protein: 'Белковое', carb: 'Углеводы', fat: 'Жиры и орехи',
     veg: 'Овощи', fruit: 'Фрукты', dairy: 'Молочное',

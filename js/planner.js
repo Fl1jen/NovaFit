@@ -197,10 +197,12 @@
   }
 
   /** «Тарелка» из того, что лежит дома, если ни один рецепт не собирается. */
-  function plateFromStock(type, target, inv, fm, rng) {
+  function plateFromStock(type, target, inv, fm, rng, urgency) {
+    urgency = urgency || {};
     const avail = Object.keys(inv).filter(function (id) { return fm[id] && inv[id] >= 20; }).map(function (id) { return fm[id]; });
     if (!avail.length) return null;
-    function byStock(a, b) { return (inv[b.id] || 0) * (1 + rng() * 0.3) - (inv[a.id] || 0) * (1 + rng() * 0.3); }
+    function weight(f) { return (inv[f.id] || 0) * (1 + rng() * 0.3) * (1 + (urgency[f.id] || 0) * 4); }
+    function byStock(a, b) { return weight(b) - weight(a); }
     function pick(pred) { return avail.filter(pred).sort(byStock)[0]; }
     const light = type === 'b' || type === 's';
     const chosen = [];
@@ -217,12 +219,17 @@
     if (!chosen.length) return null;
     const vars = chosen.map(function (f) {
       const hi = Math.min(f.maxMeal, inv[f.id] || 0);
-      const lo = f.cat === 'veg' ? Math.min(hi, 100) : 0;
+      // в тарелке всегда есть нормальная порция белка и гарнира/овощей
+      let lo = 0;
+      if (f === prot) lo = Math.min(hi, light ? 40 : 80);
+      else if (f.cat === 'veg') lo = Math.min(hi, 100);
       return { food: f, lo: lo, hi: hi, x0: hi / 2 };
     });
     const x = solve(vars, target);
     const items = [];
-    vars.forEach(function (v, i) { const gr = Math.min(roundFood(v.food, x[i]), v.hi); if (gr > 0) items.push({ id: v.food.id, g: gr }); });
+    // крошечные порции («3 г курицы», «1 г масла») не предлагаем
+    vars.forEach(function (v, i) { const gr = Math.min(roundFood(v.food, x[i]), v.hi); if (gr >= (v.food.cat === 'fat' ? 5 : 15)) items.push({ id: v.food.id, g: gr }); });
+    if (!items.length) return null;
     const m = macrosOf(items, fm);
     return { recipeId: null, items: items, missing: [], skipped: [], macros: m, err: fitError(m, target) };
   }
@@ -268,13 +275,15 @@
       const missShare = missKcal / Math.max(1, res.macros.kcal);
       // «доедаем остатки»: бонус за долю ингредиентов, которые уже есть
       const usedHome = res.items.filter(function (it) { return (inv[it.id] || 0) > 0; }).length / Math.max(1, res.items.length);
-      res.score = res.err + res.missing.length * 0.35 + missShare * 1.5 - usedHome * 0.25 + (avoid[r.id] || 0) + rng() * 0.12;
+      // срочность: блюдо с продуктом, который скоро испортится, поднимается в выборе
+      const urg = opts.urgency ? res.items.reduce(function (mx, it) { return Math.max(mx, (opts.urgency[it.id] || 0) * ((inv[it.id] || 0) > 0 ? 1 : 0)); }, 0) : 0;
+      res.score = res.err + res.missing.length * 0.35 + missShare * 1.5 - usedHome * 0.25 - urg * 0.9 + (avoid[r.id] || 0) + rng() * 0.12;
       return res;
     });
     cands.sort(function (a, b) { return a.score - b.score; });
     let best = cands[0];
     if (best && best.missing.length && !opts.allowMissing) {
-      const plate = plateFromStock(type, target, inv, fm, rng);
+      const plate = plateFromStock(type, target, inv, fm, rng, opts.urgency);
       if (plate && (plate.err < 0.3 || plate.err < best.err + 0.1)) best = plate;
     }
     return topUp(best, type, target, inv, fm);
@@ -299,33 +308,79 @@
     items.forEach(function (it) { if (inv[it.id] != null) inv[it.id] = Math.max(0, inv[it.id] - it.g); });
   }
 
+  function mealFromRes(type, time, res, light) {
+    return {
+      type: type, time: time, recipeId: res ? res.recipeId : null, items: res ? res.items : [],
+      missing: res ? res.missing : [], skipped: res ? res.skipped : [], extra: res ? res.extra || null : null,
+      light: !!light, eaten: false,
+    };
+  }
+
   /**
-   * План дня. inv изменяется (резервирует продукты) — передавай копию.
-   * recent — {recipeId: штраф} за повтор блюд прошлых дней.
+   * Общий раскладчик: распределяет ОСТАТОК дневной нормы по несъеденным
+   * приёмам. Каждый следующий приём получает долю от того, что осталось,
+   * поэтому недобор/перебор одного блюда (или еда вне плана) компенсируется.
+   * inv изменяется (резервирует продукты) — передавай копию.
+   * opt: { strict, urgency: {id: 0..1}, extraMacros: {kcal,p,f,c}, keep: [meal|null] }
    */
-  function planDay(date, daily, schedule, inv, fm, recent, seed, strict) {
+  function planMeals(date, daily, schedule, inv, fm, recent, seed, opt) {
+    opt = opt || {};
     const rng = mulberry32(hashStr(date + ':' + (seed || 0)));
     const avoid = Object.assign({}, recent || {});
-    // Цель каждого приёма = доля от ОСТАВШЕГОСЯ на день, чтобы недобор/перебор
-    // одного блюда компенсировался следующими.
-    const left = { kcal: daily.kcal, protein: daily.protein, fat: daily.fat, carbs: daily.carbs };
-    let shareLeft = schedule.meals.reduce(function (s, m) { return s + m.share; }, 0);
-    const meals = schedule.meals.map(function (slot) {
-      const k = Math.min(1, slot.share / shareLeft);
-      const t = { kcal: Math.max(150, left.kcal * k), p: Math.max(10, left.protein * k), f: Math.max(3, left.fat * k), c: Math.max(10, left.carbs * k) };
+    const keep = opt.keep || [];
+    const ex = opt.extraMacros || { kcal: 0, p: 0, f: 0, c: 0 };
+    const left = { kcal: daily.kcal - ex.kcal, protein: daily.protein - ex.p, fat: daily.fat - ex.f, carbs: daily.carbs - ex.c };
+    keep.forEach(function (m) {
+      if (!m) return;
+      const mm = macrosOf(m.items, fm);
+      left.kcal -= mm.kcal; left.protein -= mm.p; left.fat -= mm.f; left.carbs -= mm.c;
+      if (m.recipeId) avoid[m.recipeId] = (avoid[m.recipeId] || 0) + 1.5;
+    });
+    let shareLeft = schedule.meals.reduce(function (s, m, i) { return s + (keep[i] ? 0 : m.share); }, 0);
+    const meals = schedule.meals.map(function (slot, i) {
+      if (keep[i]) return keep[i];
+      const k = Math.min(1, slot.share / Math.max(0.01, shareLeft));
+      const base = targetFor(daily, slot.share);
+      // норма на день уже почти закрыта — даём лёгкий приём, но не пропуск
+      const light = left.kcal * k < base.kcal * 0.5;
+      // Нижние границы по макросам: если еда вне плана «съела» почти все жиры,
+      // цель 2–3 г жира на приём сделала бы любой нормальный рецепт «ошибкой».
+      // Небольшой перебор одного макроса за день безопасен, развал меню — нет.
+      const t = light
+        ? { kcal: Math.max(150, left.kcal * k), p: Math.max(10, base.p * 0.5, Math.min(base.p, left.protein * k)), f: Math.max(3, base.f * 0.3, Math.min(base.f, left.fat * k)), c: Math.max(15, Math.min(base.c, left.carbs * k)) }
+        : { kcal: Math.min(base.kcal * 1.6, left.kcal * k), p: Math.max(base.p * 0.7, Math.min(base.p * 1.6, left.protein * k)), f: Math.max(base.f * 0.5, Math.min(base.f * 1.6, left.fat * k)), c: Math.max(base.c * 0.5, Math.min(base.c * 1.6, left.carbs * k)) };
       shareLeft -= slot.share;
-      const res = pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid, strict: strict });
+      const res = pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid, strict: opt.strict, urgency: opt.urgency });
       if (res && res.recipeId) avoid[res.recipeId] = (avoid[res.recipeId] || 0) + 1.5;
       if (res) {
         subtract(inv, res.items);
         left.kcal -= res.macros.kcal; left.protein -= res.macros.p; left.fat -= res.macros.f; left.carbs -= res.macros.c;
       }
-      return { type: slot.type, time: slot.time, recipeId: res ? res.recipeId : null, items: res ? res.items : [], missing: res ? res.missing : [], skipped: res ? res.skipped : [], extra: res ? res.extra || null : null, eaten: false };
+      return mealFromRes(slot.type, slot.time, res, light);
     });
     return { date: date, meals: meals, seed: seed || 0 };
   }
 
-  function replanMeal(plan, idx, daily, schedule, inv, fm, recent, seed) {
+  /** План дня с нуля. */
+  function planDay(date, daily, schedule, inv, fm, recent, seed, strict, opt) {
+    return planMeals(date, daily, schedule, inv, fm, recent, seed, Object.assign({}, opt || {}, { strict: strict }));
+  }
+
+  /**
+   * Пересобрать несъеденные приёмы с учётом съеденного и еды вне плана.
+   * Съеденные приёмы сохраняются как есть.
+   */
+  function planRest(plan, daily, schedule, inv, fm, recent, seed, opt) {
+    const keep = plan.meals.map(function (m) { return m.eaten ? m : null; });
+    const res = planMeals(plan.date, daily, schedule, inv, fm, recent, seed, Object.assign({}, opt || {}, { keep: keep }));
+    // время приёмов берём из текущего расписания, у съеденных — фактическое
+    res.meals.forEach(function (m, i) { if (!m.eaten && schedule.meals[i]) m.time = schedule.meals[i].time; });
+    return res;
+  }
+
+  function replanMeal(plan, idx, daily, schedule, inv, fm, recent, seed, opt) {
+    opt = opt || {};
+    const ex = opt.extraMacros || { kcal: 0, p: 0, f: 0, c: 0 };
     const rng = mulberry32(hashStr(plan.date + ':' + idx + ':' + seed));
     const avoid = Object.assign({}, recent || {});
     plan.meals.forEach(function (m, i) { if (i !== idx && m.recipeId) avoid[m.recipeId] = (avoid[m.recipeId] || 0) + 1.5; });
@@ -335,11 +390,13 @@
     // цель = остаток дня после остальных приёмов (в разумных пределах от доли)
     const base = targetFor(daily, slot.share);
     const others = macrosOf([].concat.apply([], plan.meals.filter(function (_, i) { return i !== idx; }).map(function (m) { return m.items; })), fm);
-    const rest = { kcal: daily.kcal - others.kcal, p: daily.protein - others.p, f: daily.fat - others.f, c: daily.carbs - others.c };
+    const rest = { kcal: daily.kcal - others.kcal - ex.kcal, p: daily.protein - others.p - ex.p, f: daily.fat - others.f - ex.f, c: daily.carbs - others.c - ex.c };
     const t = {};
-    ['kcal', 'p', 'f', 'c'].forEach(function (k) { t[k] = Math.min(base[k] * 1.5, Math.max(base[k] * 0.6, rest[k])); });
-    const res = pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid });
-    return { type: slot.type, time: cur.time, recipeId: res ? res.recipeId : null, items: res ? res.items : [], missing: res ? res.missing : [], skipped: res ? res.skipped : [], extra: res ? res.extra || null : null, eaten: false };
+    const light = rest.kcal < base.kcal * 0.5;
+    ['kcal', 'p', 'f', 'c'].forEach(function (k) { t[k] = Math.min(base[k] * 1.5, Math.max(light ? (k === 'kcal' ? 0 : base[k] * 0.3) : base[k] * 0.6, rest[k])); });
+    t.kcal = Math.max(150, t.kcal); t.p = Math.max(10, t.p); t.f = Math.max(3, t.f); t.c = Math.max(15, t.c);
+    const res = pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid, urgency: opt.urgency });
+    return mealFromRes(slot.type, cur.time, res, light);
   }
 
   /** Список покупок: прогоняем план на N дней по виртуальному складу. */
@@ -392,6 +449,7 @@
   NF.fitRecipe = fitRecipe;
   NF.pickMeal = pickMeal;
   NF.planDay = planDay;
+  NF.planRest = planRest;
   NF.replanMeal = replanMeal;
   NF.shoppingList = shoppingList;
   NF.portionCalc = portionCalc;

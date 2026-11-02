@@ -1,6 +1,6 @@
 // Быстрые проверки ядра: node tests/run.js
 const assert = require('assert');
-['data-foods', 'data-recipes', 'data-exercises', 'nutrition', 'planner', 'workout'].forEach((f) => require('../js/' + f + '.js'));
+['data-foods', 'data-recipes', 'data-exercises', 'nutrition', 'planner', 'workout', 'insights'].forEach((f) => require('../js/' + f + '.js'));
 const NF = globalThis.NF;
 let n = 0;
 function t(name, fn) { fn(); n++; console.log('✓', name); }
@@ -117,6 +117,91 @@ t('демо-запасы: день добирает ≥ 92% ккал и ≥ 85% 
     assert(m.kcal >= T2.kcal * 0.92, 'ккал ' + m.kcal);
     assert(m.c >= T2.carbs * 0.85, 'углеводы ' + m.c);
     assert(m.p >= T2.protein * 0.9 && m.p / 60 <= 2.5, 'белок ' + m.p);
+  }
+});
+
+// ── еда вне плана, сроки, отчёт, замеры, напоминания ──
+const fullInv = () => { const inv = {}; NF.FOODS.forEach((f) => (inv[f.id] = 5000)); return inv; };
+const sch = NF.mealSchedule('07:30', '23:30');
+t('еда вне плана: остальные приёмы уменьшаются, день ≈ норма', () => {
+  const plan = NF.planDay('2026-11-02', T, sch, fullInv(), fm, {}, 0);
+  plan.meals[0].eaten = true;
+  const extra = [{ id: 'peanuts', g: 100 }, { id: 'banana', g: 240 }]; // ~780 ккал перекусов
+  const ex = NF.macrosOf(extra, fm);
+  const rest = NF.planRest(plan, T, sch, fullInv(), fm, {}, 0, { extraMacros: ex });
+  assert.strictEqual(rest.meals[0], plan.meals[0], 'съеденный приём сохранён');
+  const total = NF.macrosOf(rest.meals.flatMap((m) => m.items).concat(extra), fm);
+  console.log('   с перекусом вне плана:', Math.round(total.kcal), '/', T.kcal);
+  assert(Math.abs(total.kcal - T.kcal) / T.kcal < 0.1);
+});
+t('еда вне плана закрыла норму → лёгкие приёмы, не голодовка', () => {
+  const plan = NF.planDay('2026-11-02', T, sch, fullInv(), fm, {}, 0);
+  const ex = { kcal: T.kcal - 200, p: T.protein - 20, f: T.fat - 5, c: T.carbs - 30 };
+  const rest = NF.planRest(plan, T, sch, fullInv(), fm, {}, 0, { extraMacros: ex });
+  rest.meals.forEach((m) => { assert(m.light); const k = NF.macrosOf(m.items, fm).kcal; assert(k >= 100 && k < 450, k); });
+});
+t('скоро испортится → попадает в план', () => {
+  const inv = { buckwheat: 900, rice: 900, chicken_breast: 600, fish_white: 400, potato: 1000, eggs: 550, milk: 1000, oats: 500, banana: 600, sunflower_oil: 500, olive_oil: 300, cucumber: 300 };
+  let hits = 0;
+  for (let seed = 0; seed < 6; seed++) {
+    const plan = NF.planDay('2026-11-1' + seed, T, sch, Object.assign({}, inv), fm, {}, seed, false, { urgency: { fish_white: 1 } });
+    if (plan.meals.some((m) => m.items.some((i) => i.id === 'fish_white'))) hits++;
+  }
+  assert(hits >= 5, 'рыба в плане ' + hits + '/6');
+});
+t('сроки хранения есть для скоропортящегося', () => { assert.equal(NF.SHELF.minced_beef, 1); assert(!NF.SHELF.rice); });
+t('недельный отчёт: дни, вес, совет', () => {
+  const plans = {}; const extras = {}; const weights = [];
+  const start = '2026-10-26';
+  for (let i = 0; i < 7; i++) {
+    const d = NF.addDays(start, i);
+    const p = NF.planDay(d, T, sch, fullInv(), fm, {}, i); p.kcal = T.kcal;
+    p.meals.forEach((m, j) => { m.eaten = i < 3 || j < 2; }); // 3 полных дня, 4 неполных
+    plans[d] = p;
+  }
+  [['2026-10-20', 62], ['2026-10-23', 62.1], ['2026-10-27', 62.1], ['2026-10-30', 62.2]].forEach(([date, kg]) => weights.push({ date, kg }));
+  const r = NF.weekReport({ start, today: '2026-11-02', plans, extras, weights, sleepLog: [{ date: '2026-10-27', bed: '01:00', wake: '07:00' }], workouts: [{ date: '2026-10-26' }], trainDays: [1, 3, 5], profile: p, targets: T, fm, measures: [] });
+  assert.equal(r.loggedDays, 7); assert.equal(r.okDays, 3);
+  assert(Math.abs(r.weightDelta - 0.1) < 0.01, r.weightDelta);
+  assert.equal(r.workoutsPlanned, 3); assert.equal(r.workoutsDone, 1);
+  assert(/добирать калории/.test(r.advice[0].text), r.advice[0].text);
+  assert(r.advice.some((a) => /Сон/.test(a.text))); assert(r.advice.some((a) => /Тренировок 1 из 3/.test(a.text)));
+});
+t('weekStart → понедельник', () => { assert.equal(NF.weekStart('2026-11-01'), '2026-10-26'); assert.equal(NF.weekStart('2026-11-02'), '2026-11-02'); });
+t('замеры: талия растёт быстрее веса → предупреждение', () => {
+  const w = [{ date: '2026-10-01', kg: 62 }, { date: '2026-10-29', kg: 64 }];
+  const bad = NF.measureInsight([{ date: '2026-10-01', waist: 74, arm: 30 }, { date: '2026-10-29', waist: 78, arm: 30.3 }], w);
+  assert.equal(bad.verdict.level, 'warn');
+  const good = NF.measureInsight([{ date: '2026-10-01', waist: 74, arm: 30 }, { date: '2026-10-29', waist: 74.8, arm: 31 }], w);
+  assert.equal(good.verdict.level, 'ok');
+});
+t('напоминания на день', () => {
+  const ev = NF.reminderEvents({ date: '2026-11-02', meals: [{ type: 'b', time: '08:10', eaten: true }, { type: 'l', time: '13:20', eaten: false, title: 'Плов' }], bed: '23:30', wake: '07:30', trainTime: '18:00', lead: 10, opts: { meals: true, sleep: true, train: true, weigh: true, measure: true }, measureDue: false });
+  assert.deepEqual(ev.map((e) => e.key + '@' + e.at), ['weigh@07:40', 'meal-l@13:10', 'train@17:00', 'sleep@23:00']);
+});
+t('календарь .ics валиден', () => {
+  const ics = NF.buildICS({ start: '2026-11-02', lead: 10, opts: { meals: true, sleep: true, train: true, weigh: true, measure: true }, wake: '07:30', bed: '23:30', trainDays: [1, 3, 5], trainTime: '18:00', schedRest: NF.mealSchedule('07:30', '23:30'), schedTrain: NF.mealSchedule('07:30', '23:30', '18:00'), stamp: '20261102T000000Z' });
+  assert(ics.startsWith('BEGIN:VCALENDAR\r\n') && ics.endsWith('END:VCALENDAR\r\n'));
+  const ev = ics.split('BEGIN:VEVENT').length - 1;
+  assert.equal(ev, 4 + 1 + 1 + 1 + 1 + 1, 'событий ' + ev); // 3 общих приёма + перекус×2, тренировка, отбой, вес, замеры
+  ics.split('\r\n').forEach((l) => assert(Buffer.byteLength(l) <= 75, l));
+  assert(/RRULE:FREQ=WEEKLY;BYDAY=MO,WE,FR/.test(ics)); assert(/TRIGGER:-PT10M/.test(ics));
+  assert(/RRULE:FREQ=WEEKLY;INTERVAL=2;BYDAY=SU/.test(ics));
+});
+t('жирный перекус вне плана не разваливает меню (нет «3 г курицы»)', () => {
+  const inv = { buckwheat: 900, rice: 800, oats: 500, eggs: 550, milk: 1000, chicken_breast: 900, cottage5: 400, banana: 600, peanut_butter: 300, sunflower_oil: 500, frozen_veg: 400, cucumber: 300, bread: 450, cheese: 200 };
+  const T2 = NF.calcTargets({ sex: 'm', age: 20, height: 178, weight: 60, target: 68, activity: 1.375, pace: 'normal' }, 0);
+  const sch2 = NF.mealSchedule('07:30', '23:30', '18:00');
+  const urgency = { chicken_breast: 1, cottage5: 0.6, bread: 0.6 };
+  for (const snack of [[{ id: 'peanuts', g: 80 }], [{ id: 'peanut_butter', g: 60 }, { id: 'bread', g: 60 }], [{ id: 'cheese', g: 100 }]]) {
+    const plan = NF.planDay('2026-11-02', T2, sch2, Object.assign({}, inv), fm, {}, 0, false, { urgency });
+    plan.meals[0].eaten = true;
+    const r = NF.planRest(plan, T2, sch2, Object.assign({}, inv), fm, {}, 0, { urgency, extraMacros: NF.macrosOf(snack, fm) });
+    r.meals.forEach((m) => {
+      m.items.forEach((it) => assert(it.g >= (fm[it.id].cat === 'fat' ? 5 : 15), m.type + ': ' + it.id + ' ' + it.g + ' г'));
+      const mm = NF.macrosOf(m.items, fm);
+      if (m.type === 'l' || m.type === 'd') assert(mm.p >= 15, m.type + ': белка ' + Math.round(mm.p));
+    });
   }
 });
 console.log('\n' + n + ' проверок пройдено');

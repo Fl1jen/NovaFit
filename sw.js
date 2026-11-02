@@ -1,8 +1,8 @@
 /* NovaFit service worker: офлайн-режим. При изменении файлов увеличь VERSION. */
-const VERSION = 'novafit-v2';
+const VERSION = 'novafit-v3';
 const FILES = [
   './', 'index.html', 'styles.css', 'manifest.webmanifest', 'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png',
-  'js/data-foods.js', 'js/data-recipes.js', 'js/data-exercises.js', 'js/nutrition.js', 'js/planner.js', 'js/workout.js', 'js/app.js',
+  'js/data-foods.js', 'js/data-recipes.js', 'js/data-exercises.js', 'js/nutrition.js', 'js/planner.js', 'js/workout.js', 'js/insights.js', 'js/app.js',
 ];
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
@@ -22,4 +22,13 @@ self.addEventListener('fetch', (e) => {
       return res;
     }).catch(() => caches.match(e.request).then((r) => r || caches.match('index.html')))
   );
+});
+
+// нажатие на уведомление открывает приложение (или переключает на уже открытое)
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const c of list) { if ('focus' in c) return c.focus(); }
+    return self.clients.openWindow ? self.clients.openWindow('./') : null;
+  }));
 });
