@@ -7,6 +7,8 @@
     "test": "node tests/run.js",
     "e2e": "node tests/e2e.js",
     "build": "node tools/build-single.js",
+    "android": "node tools/build-android.js && cd android && gradle assembleRelease && cp app/build/outputs/apk/release/app-release.apk ../dist/NovaFit.apk",
+    "e2e:android": "node tools/build-android.js && node tests/e2e-android.js",
     "start": "npx --yes serve -l 8080 ."
   }
 }

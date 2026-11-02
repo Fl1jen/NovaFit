@@ -2656,7 +2656,11 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   }
 
   // ── напоминания ──
+  // В Android-приложении (APK) системные функции даёт мост window.NovaAndroid.
+  const NA = window.NovaAndroid || null;
+
   function notifState() {
+    if (NA) { try { return NA.notifState(); } catch (e) { return 'unsupported'; } }
     if (!('Notification' in window)) return 'unsupported';
     return Notification.permission; // default | granted | denied
   }
@@ -2669,16 +2673,25 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     const nowM = new Date().getHours() * 60 + new Date().getMinutes();
     const opt = (k, label) => '<label class="check"><input type="checkbox" data-bind="rem" data-k="' + k + '" id="rem-' + k + '"' + (R[k] ? ' checked' : '') + '> ' + label + '</label>';
     let html = '<details class="card" id="reminders"' + (ui.remOpen ? ' open' : '') + '><summary><span class="h3">Напоминания</span><span class="muted small">' + (R.enabled ? 'включены' : 'выключены') + '</span></summary>';
-    html += '<p class="small">Самый надёжный способ — <b>добавить напоминания в календарь телефона</b>. Они сработают, даже если NovaFit закрыт.</p>' +
+    if (NA) {
+      html += '<div class="split"><span class="h3">Уведомления</span>' +
+        '<label class="switch"><input type="checkbox" id="rem-enabled" data-bind="rem-enabled"' + (R.enabled ? ' checked' : '') + '><span class="switch-ui" aria-hidden="true"></span><span class="sr">Включить</span></label></div>' +
+        '<p class="hint">Приходят, даже когда NovaFit закрыт, и после перезагрузки телефона. Напоминания ставятся на 7 дней вперёд и обновляются при каждом открытии приложения.</p>';
+      if (st === 'denied') html += '<p class="note note-warn">Уведомления для NovaFit выключены. Включи: Настройки → Приложения → NovaFit → Уведомления.</p>';
+      let exact = true; try { exact = NA.exactAlarms(); } catch (e) { exact = true; }
+      if (R.enabled && !exact) html += '<div class="note note-info"><span>Сейчас напоминания могут приходить с опозданием на несколько минут. Разреши «Будильники и напоминания», чтобы они приходили минута в минуту.</span><button class="btn small" data-act="alarm-settings">Разрешить</button></div>';
+    }
+    html += '<p class="small">' + (NA ? 'Можно также добавить события в календарь телефона.' : 'Самый надёжный способ — <b>добавить напоминания в календарь телефона</b>. Они сработают, даже если NovaFit закрыт.') + '</p>' +
       (window.__NF_EMBED
         ? '<p class="note note-info">В этом превью скачивание файлов недоступно. Кнопка «Добавить в календарь» работает в установленном приложении (ссылка из GitHub Pages, «На экран Домой»).</p>'
         : '<button class="btn wide" data-act="ics">Добавить в календарь телефона</button>' +
           '<p class="hint">Скачается файл <code>novafit.ics</code>. Открой его: iPhone предложит «Добавить все», на Android откроется Google Календарь. Если поменяешь режим сна или дни тренировок, скачай файл заново.</p>');
-    html += '<hr class="sep"><div class="split"><span class="h3">Уведомления в приложении</span>' +
+    if (!NA) html += '<hr class="sep"><div class="split"><span class="h3">Уведомления в приложении</span>' +
       '<label class="switch"><input type="checkbox" id="rem-enabled" data-bind="rem-enabled"' + (R.enabled ? ' checked' : '') + '><span class="switch-ui" aria-hidden="true"></span><span class="sr">Включить</span></label></div>';
-    if (st === 'unsupported') html += '<p class="note note-info">Здесь системные уведомления недоступны. Пока приложение открыто, напоминания будут всплывать внутри него. Для фоновых используй календарь.</p>';
+    if (NA) { /* состояние показано выше */ }
+    else if (st === 'unsupported') html += '<p class="note note-info">Здесь системные уведомления недоступны. Пока приложение открыто, напоминания будут всплывать внутри него. Для фоновых используй календарь.</p>';
     else if (st === 'denied') html += '<p class="note note-warn">Уведомления запрещены в настройках браузера. Разреши их для NovaFit в настройках телефона или используй календарь.</p>';
-    html += '<p class="hint">Работают, пока NovaFit открыт или свёрнут недавно. Телефон может «усыпить» приложение в фоне, поэтому для гарантии используй календарь.</p>';
+    if (!NA) html += '<p class="hint">Работают, пока NovaFit открыт или свёрнут недавно. Телефон может «усыпить» приложение в фоне, поэтому для гарантии используй календарь.</p>';
     html += '<div class="checks">' + opt('meals', 'Приёмы пищи') + opt('train', 'Тренировка (за час)') + opt('sleep', 'Отбой (за 30 мин)') + opt('weigh', 'Взвешивание (пн, чт)') + opt('measure', 'Замеры (раз в 2 нед.)') + '</div>' +
       '<label>За сколько минут до еды<select id="rem-lead" class="input" data-bind="rem-lead">' + [0, 5, 10, 15, 30].map((v) => '<option value="' + v + '"' + (R.lead === v ? ' selected' : '') + '>' + (v ? v + ' мин' : 'в момент приёма') + '</option>').join('') + '</select></label>';
     if (R.enabled) {
@@ -2746,8 +2759,40 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     });
   }
 
+  /**
+   * Android: отдаём системе будильники на 7 дней вперёд — напоминания придут,
+   * даже если приложение закрыто. На сегодня — по фактическому плану,
+   * на следующие дни — по обычному режиму сна и тренировок.
+   */
+  let lastNativeSchedule = '';
+  function scheduleNative() {
+    const list = [];
+    if (S.reminders.enabled && S.profile) {
+      const nowMs = Date.now();
+      const lastM = S.measures.length ? S.measures[S.measures.length - 1].date : null;
+      for (let d = 0; d < 7; d++) {
+        const date = addDays(todayStr(), d);
+        const evs = d === 0 ? todaysEvents(date) : NF.reminderEvents({
+          date: date,
+          meals: scheduleFor(date).meals.map((m) => ({ type: m.type, time: m.time, eaten: false, title: 'Блюдо и граммовки — в NovaFit' })),
+          bed: S.sleep.bed, wake: S.sleep.wake, trainTime: isTrainDay(date) ? S.train.time : null,
+          lead: S.reminders.lead, opts: S.reminders, measureDue: !lastM || NF.daysBetween(lastM, date) >= 14,
+        });
+        evs.forEach((e, i) => {
+          const at = new Date(date + 'T' + e.at + ':00').getTime();
+          if (at > nowMs + 30000) list.push({ id: 1000 + d * 20 + i, at: at, title: e.title, body: e.body });
+        });
+      }
+    }
+    const json = JSON.stringify(list);
+    if (json === lastNativeSchedule) return;
+    lastNativeSchedule = json;
+    try { NA.schedule(json); } catch (e) { /* ignore */ }
+  }
+
   function scheduleReminders() {
     remTimers.forEach(clearTimeout); remTimers = [];
+    if (NA) { scheduleNative(); return; }
     if (!S.reminders.enabled || !S.profile) return;
     const date = todayStr();
     const now = new Date();
@@ -2774,6 +2819,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
   /** Видно приложение — плашка внутри; свёрнуто — системное уведомление. */
   function notify(title, body, tag, force) {
     if (!document.hidden && !force) { toast(title + '. ' + body, 6000); return; }
+    if (NA) { try { NA.notifyNow(title, body); } catch (e) { toast(title + '. ' + body, 6000); } return; }
     if (notifState() !== 'granted') { toast(title + '. ' + body, 6000); return; }
     const opts = { body: body, tag: tag, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', vibrate: [120, 60, 120], renotify: true };
     const fallback = () => { try { new Notification(title, opts); } catch (err) { toast(title + '. ' + body, 6000); } };
@@ -2786,6 +2832,14 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
 
   function askPermission() {
     if (notifState() !== 'default') return Promise.resolve(notifState());
+    if (NA) {
+      return new Promise((resolve) => {
+        const done = (st) => { window.__nfPerm = null; resolve(st); };
+        window.__nfPerm = done;
+        try { NA.requestNotifications(); } catch (e) { done('denied'); }
+        setTimeout(() => { if (window.__nfPerm === done) done(notifState()); }, 30000);
+      });
+    }
     try { return Promise.resolve(Notification.requestPermission()).catch(() => 'denied'); } catch (e) { return Promise.resolve('denied'); }
   }
 
@@ -2796,6 +2850,12 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       schedRest: NF.mealSchedule(S.sleep.wake, S.sleep.bed, null), schedTrain: NF.mealSchedule(S.sleep.wake, S.sleep.bed, S.train.time),
       stamp: new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z',
     });
+    if (NA) {
+      let ok = false;
+      try { ok = NA.openCalendar(ics); } catch (e) { ok = false; }
+      toast(ok ? 'Выбери календарь, чтобы добавить события' : 'Не нашлось календаря, который открывает файлы', 5000);
+      return;
+    }
     const iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     try {
       if (iOS) {
@@ -2837,9 +2897,13 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       }
     } catch (e) { /* звук необязателен */ }
   }
-  function vibrate(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) { /* ignore */ } }
+  function vibrate(p) {
+    try { if (NA) NA.vibrate(p.join(',')); else if (navigator.vibrate) navigator.vibrate(p); } catch (e) { /* ignore */ }
+  }
 
+  let awakeState = null;
   function keepAwake(on) {
+    if (NA) { if (awakeState !== on) { awakeState = on; try { NA.keepAwake(on); } catch (e) { /* ignore */ } } return; }
     try {
       if (on && !wakeLock && navigator.wakeLock && !document.hidden) {
         navigator.wakeLock.request('screen').then((l) => { wakeLock = l; l.addEventListener('release', () => { wakeLock = null; }); }, () => {});
@@ -2854,8 +2918,21 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     runTimer();
   }
 
+  /** Android: дублируем таймер системным будильником — сигнал придёт и из свёрнутого приложения. */
+  function syncNativeTimer() {
+    if (!NA) return;
+    try {
+      const t = S.timer;
+      if (!t) { NA.cancelTimer(); return; }
+      const title = t.kind === 'work' ? 'Подход закончен' : 'Отдых окончен';
+      const body = t.kind === 'work' ? t.label : 'Следующий подход: ' + t.label.replace(/^Отдых · /, '');
+      NA.timer(t.endAt + 1500, title, body); // +1,5 с: если приложение открыто, оно успеет само
+    } catch (e) { /* ignore */ }
+  }
+
   function runTimer() {
     clearInterval(timerTick);
+    syncNativeTimer();
     const el = document.getElementById('timer');
     if (!S.timer) { el.classList.remove('show'); setTimeout(() => { if (!S.timer) el.hidden = true; }, 300); return; }
     el.hidden = false;
@@ -3122,7 +3199,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       if (!S.timer) return;
       S.timer.endAt += +el.dataset.d * 1000; S.timer.total = Math.max(1, S.timer.total + +el.dataset.d);
       if (S.timer.endAt <= Date.now()) S.timer.endAt = Date.now() + 1000;
-      save();
+      save(); syncNativeTimer();
     },
     'timer-stop'() {
       const t = S.timer; S.timer = null; save(); runTimer();
@@ -3147,6 +3224,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
       toast('Замеры сохранены. Следующие через 2 недели');
     },
     ics() { downloadICS(); },
+    'alarm-settings'() { try { NA.openAlarmSettings(); } catch (e) { /* ignore */ } },
     'rem-test'() { askPermission().then(() => { notify('Проверка NovaFit', 'Так будут выглядеть напоминания', 'nf-test', true); render(); }); },
     'w-finish'() {
       const program = currentProgram(); const w = program.find((p) => p.key === S.draft.key);
@@ -3181,6 +3259,7 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     export() {
       const text = JSON.stringify(S);
       const done = () => toast('Данные скопированы');
+      if (NA) { let ok = false; try { ok = NA.copy(text); } catch (e) { ok = false; } if (ok) done(); else fallbackCopy(text); return; }
       try {
         navigator.clipboard.writeText(text).then(done, () => { fallbackCopy(text); });
       } catch (e) { fallbackCopy(text); }
@@ -3308,7 +3387,19 @@ details.card[open] > summary::after { content: "+"; transform: rotate(45deg); }
     if (!document.hidden && S.tab === 'today' && !(a && a.matches && a.matches('input, select, textarea'))) render();
   }, 5 * 60000);
 
-  if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.__NF_EMBED) {
+  // Android: кнопка «Назад» и возврат в приложение
+  window.__nfBack = () => {
+    if (S.timer || S.tab === 'today') return false;
+    S.tab = 'today'; save(); render(); window.scrollTo({ top: 0, behavior: 'instant' });
+    return true;
+  };
+  window.__nfResume = () => {
+    if (S.timer) runTimer();
+    const a = document.activeElement;
+    if (!(a && a.matches && a.matches('input, select, textarea'))) render(); else scheduleReminders();
+  };
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.__NF_EMBED && !NA) {
     try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) { /* ignore */ }
   }
 })();
