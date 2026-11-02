@@ -1,0 +1,12 @@
+{
+  "name": "novafit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PWA для безопасного набора массы: КБЖУ, меню из своих продуктов, сон, тренировки под инвентарь",
+  "scripts": {
+    "test": "node tests/run.js",
+    "e2e": "node tests/e2e.js",
+    "build": "node tools/build-single.js",
+    "start": "npx --yes serve -l 8080 ."
+  }
+}

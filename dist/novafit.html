@@ -1,0 +1,2141 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NovaFit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Набор массы: норма КБЖУ, меню из твоих продуктов, сон и тренировки под инвентарь">
+<meta name="theme-color" content="#F2F4F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#101614" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NovaFit">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* NovaFit — «кухня и железо»: спокойная зелень тарелки, янтарь калорий.
+   Layout: одна колонка до 560px, нижняя навигация, карточки только для того, с чем работают руками. */
+:root {
+  --bg: #F2F4F1;
+  --surface: #FFFFFF;
+  --surface-2: #E6ECE8;
+  --ink: #14201B;
+  --muted: #5B6A63;
+  --line: #D3DCD7;
+  --accent: #1E6B57;
+  --accent-ink: #FFFFFF;
+  --kcal: #C2651B;
+  --mp: #1E6B57;
+  --mf: #B88A12;
+  --mc: #4467A0;
+  --warn-bg: #FBF0DC; --warn: #7D5200;
+  --danger-bg: #FBE3E0; --danger: #A3261A;
+  --ok-bg: #E1F1E8; --ok: #1B6340;
+  --info-bg: #E5ECF4; --info: #2C4A73;
+  --font-display: "Unbounded", "Golos Text", system-ui, sans-serif;
+  --font-body: "Golos Text", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r: 14px;
+  --nav-h: 64px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #101614; --surface: #18201D; --surface-2: #222C28; --ink: #E6EEEA; --muted: #93A39B; --line: #2D3934;
+    --accent: #5CC4A2; --accent-ink: #0B1712; --kcal: #F0A35E; --mp: #5CC4A2; --mf: #E2C15A; --mc: #8FB0E0;
+    --warn-bg: #3A2E14; --warn: #F2C774; --danger-bg: #3D1C18; --danger: #F29A8E; --ok-bg: #17322A; --ok: #7FD6AE; --info-bg: #1A2638; --info: #A9C4EA;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #101614; --surface: #18201D; --surface-2: #222C28; --ink: #E6EEEA; --muted: #93A39B; --line: #2D3934;
+  --accent: #5CC4A2; --accent-ink: #0B1712; --kcal: #F0A35E; --mp: #5CC4A2; --mf: #E2C15A; --mc: #8FB0E0;
+  --warn-bg: #3A2E14; --warn: #F2C774; --danger-bg: #3D1C18; --danger: #F29A8E; --ok-bg: #17322A; --ok: #7FD6AE; --info-bg: #1A2638; --info: #A9C4EA;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.5 var(--font-body);
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 24px);
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 13px; }
+
+/* ── шапка ── */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+.topbar-in, .view {
+  max-width: 560px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.topbar-in { display: flex; align-items: baseline; gap: 10px; padding-block: 12px; }
+.logo { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+.logo span { color: var(--accent); }
+.topbar-sub { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.view { display: flex; flex-direction: column; gap: 16px; padding-block: 16px; }
+.view > * { min-width: 0; }
+
+/* ── типографика ── */
+.h1 { font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: -0.02em; margin: 4px 0 0; text-wrap: balance; }
+.h2 { font-family: var(--font-display); font-weight: 500; font-size: 18px; margin: 8px 0 0; }
+.h3 { font-weight: 600; font-size: 16px; margin: 0; }
+.display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.03em; }
+h1.display { font-size: 28px; line-height: 1.15; margin: 0; text-wrap: balance; }
+.eyebrow { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.hint { margin: 0; font-size: 13px; color: var(--muted); }
+.prose p { margin: 0 0 10px; max-width: 65ch; }
+
+/* ── карточки и заметки ── */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+details.card > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+details.card > summary::-webkit-details-marker { display: none; }
+details.card > summary::after { content: "+"; color: var(--muted); font-weight: 600; margin-left: auto; }
+details.card[open] > summary::after { content: "–"; }
+.note { border-radius: 10px; padding: 10px 12px; font-size: 14px; display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin: 0; }
+.note-info { background: var(--info-bg); color: var(--info); }
+.note-warn { background: var(--warn-bg); color: var(--warn); }
+.note-danger { background: var(--danger-bg); color: var(--danger); }
+.note-ok { background: var(--ok-bg); color: var(--ok); }
+.note-action { background: var(--surface-2); }
+.empty { text-align: center; padding: 24px 8px; }
+.empty p { margin: 0 0 6px; }
+
+/* ── кнопки и поля ── */
+.btn { background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px; padding: 11px 16px; font-weight: 600; min-height: 44px; }
+.btn.small { padding: 7px 12px; min-height: 36px; font-size: 14px; }
+.btn.wide { width: 100%; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn.danger { background: var(--danger); color: var(--surface); }
+.btn:active { transform: translateY(1px); }
+.link { background: none; border: 0; padding: 4px 0; color: var(--accent); text-align: left; font-weight: 500; }
+.danger-text { color: var(--danger); }
+.icon-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: transparent; font-size: 20px; line-height: 1; color: var(--muted); }
+.input { width: 100%; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 44px; }
+textarea.input { resize: vertical; font-size: 12px; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); min-width: 0; }
+label.check { flex-direction: row; align-items: center; gap: 8px; font-size: 14px; color: var(--ink); }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+.label { font-size: 13px; color: var(--muted); }
+.grid2, .grid3, .grid4 { display: grid; gap: 10px; }
+.grid2 { grid-template-columns: 1fr 1fr; }
+.grid3 { grid-template-columns: repeat(3, 1fr); }
+.grid4 { grid-template-columns: repeat(4, 1fr); }
+.form { gap: 12px; }
+.row-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.row-btns .wide { flex: 1; }
+.num-in { width: 92px; flex: none; text-align: right; }
+.unit { color: var(--muted); font-size: 13px; }
+.add-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 6px 0 4px; }
+.add-row select.input { width: auto; flex: 1; }
+
+/* ── сегменты, пилюли ── */
+.seg { display: flex; background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; overflow-x: auto; }
+.seg-btn { flex: 1; border: 0; background: transparent; padding: 8px 10px; border-radius: 9px; font-weight: 500; white-space: nowrap; color: var(--muted); min-height: 38px; }
+.seg-btn.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
+.seg.small .seg-btn { font-size: 13px; }
+.pick { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.pill.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.badge { background: var(--kcal); color: var(--surface); font-size: 12px; font-weight: 600; border-radius: 999px; padding: 3px 10px; }
+
+/* ── «Сегодня» ── */
+.hero { display: flex; flex-direction: column; gap: 12px; }
+.hero-row { display: flex; gap: 16px; align-items: center; }
+.ring-wrap { position: relative; width: 128px; height: 128px; flex: none; }
+.ring { width: 100%; height: 100%; }
+.ring-bg { fill: none; stroke: var(--surface-2); stroke-width: 12; }
+.ring-fg { fill: none; stroke: var(--kcal); stroke-width: 12; stroke-linecap: round; transition: stroke-dasharray 0.6s ease; }
+.ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-num { font-family: var(--font-display); font-weight: 700; font-size: 26px; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.ring-sub { font-size: 12px; color: var(--muted); }
+.hero-bars { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.bar-top { display: flex; justify-content: space-between; font-size: 13px; gap: 6px; }
+.bar-track { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.bar-track.thin { height: 6px; }
+.bar-fill { height: 100%; border-radius: inherit; background: var(--accent); transition: width 0.6s ease; }
+.bar.p .bar-fill { background: var(--mp); }
+.bar.f .bar-fill { background: var(--mf); }
+.bar.c .bar-fill { background: var(--mc); }
+.goal { display: flex; flex-direction: column; gap: 6px; }
+.goal-top { display: flex; justify-content: space-between; gap: 8px; font-weight: 600; flex-wrap: wrap; }
+.goal-top .muted { font-weight: 400; font-size: 13px; }
+.goal-fill { background: var(--kcal); }
+.onboard p { margin: 0; max-width: 60ch; }
+
+.chips-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.chip-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 2px; text-align: left; min-width: 0; }
+.chip-k { font-size: 12px; color: var(--muted); }
+.chip-v { font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+
+.timeline { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+.meal { display: grid; grid-template-columns: 64px 1fr; gap: 12px; position: relative; padding-bottom: 18px; }
+.meal::before { content: ""; position: absolute; left: 27px; top: 30px; bottom: 0; width: 2px; background: var(--line); }
+.meal:last-child::before { display: none; }
+.meal-time { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.meal-time .num { font-family: var(--font-display); font-weight: 500; font-size: 15px; background: var(--bg); position: relative; }
+.meal-type { font-size: 12px; color: var(--muted); }
+.meal-body { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.meal-body h3 { margin: 0; font-size: 16px; font-weight: 600; text-wrap: balance; }
+.meal.eaten .meal-body { opacity: 0.62; }
+.meal.eaten .meal-time .num { color: var(--accent); }
+.meal-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.macros { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.macros b { color: var(--kcal); font-weight: 700; }
+.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.items li { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--line); padding-bottom: 3px; }
+.items li:last-child { border-bottom: 0; }
+.items li > span:first-child { min-width: 0; }
+.items .num { white-space: nowrap; color: var(--muted); }
+.items.big { font-size: 16px; }
+.items.big .num { color: var(--ink); font-weight: 600; }
+.items li.lack > span:first-child { color: var(--danger); }
+.tag-miss { font-style: normal; font-size: 11px; background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 1px 6px; }
+.steps summary, .recipe summary { cursor: pointer; font-size: 14px; color: var(--accent); }
+.steps ol, .steps-list { margin: 6px 0 0; padding-left: 20px; font-size: 14px; display: flex; flex-direction: column; gap: 4px; }
+
+/* ── запасы ── */
+.results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.result { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-align: left; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.stock { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.stock li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.stock li:last-child { border-bottom: 0; }
+.stock-name { display: flex; flex-direction: column; min-width: 0; }
+.stock-ctrl { display: flex; align-items: center; gap: 6px; flex: none; }
+.stock-ctrl .num-in { width: 82px; min-height: 38px; padding: 6px 8px; }
+.custom { display: flex; flex-direction: column; gap: 8px; }
+
+/* ── рецепты ── */
+.recipes { display: flex; flex-direction: column; gap: 8px; }
+.recipe { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.recipe summary { list-style: none; display: flex; flex-direction: column; gap: 3px; color: var(--ink); }
+.recipe summary::-webkit-details-marker { display: none; }
+.recipe-name { font-weight: 600; font-size: 15px; }
+.recipe[open] .items { margin-top: 8px; }
+.status { align-self: flex-start; font-size: 11px; font-weight: 600; border-radius: 6px; padding: 2px 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.status.ok { background: var(--ok-bg); color: var(--ok); }
+.status.near { background: var(--warn-bg); color: var(--warn); }
+.status.no { background: var(--surface-2); color: var(--muted); }
+
+/* ── покупки ── */
+.shop { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.shop li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.shop li:last-child { border-bottom: 0; }
+.shop .num { color: var(--muted); white-space: nowrap; font-size: 14px; }
+
+/* ── тренировки ── */
+.checks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.days { display: flex; gap: 6px; flex-wrap: wrap; }
+.day { flex: 1; min-width: 40px; min-height: 40px; border: 1px solid var(--line); background: transparent; border-radius: 10px; font-weight: 600; font-size: 14px; }
+.day.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.prog-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.prog-pill { flex: 1 0 104px; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 1px; background: var(--surface); }
+.prog-pill.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.workout { display: flex; flex-direction: column; gap: 10px; }
+.workout-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.workout-head .h2 { margin: 0; }
+.ex { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.ex-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.ex-head > div:first-child { min-width: 0; }
+.ex h3 { margin: 2px 0; font-size: 16px; font-weight: 600; text-wrap: balance; }
+.ex p { margin: 0; }
+.ex-rx { display: flex; flex-direction: column; align-items: flex-end; text-align: right; flex: none; max-width: 42%; }
+.ex-rx b { font-family: var(--font-display); font-weight: 500; font-size: 17px; white-space: nowrap; }
+.ex details summary { cursor: pointer; color: var(--accent); }
+.tempo { font-size: 13px; color: var(--kcal); }
+.prog { font-size: 13px; border-left: 3px solid var(--line); padding-left: 8px; color: var(--muted); }
+.prog-up { border-color: var(--kcal); color: var(--ink); }
+.prog-keep { border-color: var(--accent); }
+.prog-hold { border-color: var(--danger); }
+.sets { display: flex; gap: 8px; flex-wrap: wrap; }
+.set { flex-direction: row; align-items: center; gap: 6px; }
+.set .num-in { width: 64px; text-align: center; }
+.dots { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.history { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.history li { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+
+/* ── сон ── */
+.split { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.sleep-chart { position: relative; height: 150px; display: flex; gap: 6px; align-items: flex-end; padding-top: 6px; margin-left: 30px; }
+.sbar { flex: 1; height: calc(100% - 18px); display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; position: relative; }
+.sbar-fill { width: 100%; max-width: 34px; border-radius: 6px 6px 2px 2px; min-height: 3px; }
+.sbar-fill.ok { background: var(--accent); }
+.sbar-fill.low { background: var(--kcal); }
+.sbar-fill.none { background: var(--surface-2); }
+.sbar span { position: absolute; bottom: -20px; }
+.sleep-chart { margin-bottom: 18px; }
+.guide { position: absolute; left: -30px; right: 0; border-top: 1px dashed var(--line); height: 0; }
+.guide span { position: absolute; left: 0; top: -9px; font-size: 11px; color: var(--muted); }
+.sched { list-style: none; margin: 0; padding: 0; }
+.sched li { display: grid; grid-template-columns: 56px 1fr auto; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.sched li:last-child { border-bottom: 0; }
+.sched .num { font-weight: 600; }
+.q .day { flex: 0 0 44px; }
+
+/* ── профиль ── */
+.targets { gap: 12px; }
+.big-kcal { font-size: 16px; color: var(--muted); }
+.big-kcal .display { font-size: 44px; color: var(--kcal); }
+.tgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 10px; }
+.tgrid div { display: flex; flex-direction: column; min-width: 0; }
+.tgrid b { font-size: 17px; }
+.tgrid span { font-size: 12px; color: var(--muted); }
+.calc-line { margin: 0; }
+.chart-wrap { overflow-x: auto; }
+.chart { width: 100%; max-width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .axis { fill: var(--muted); font-size: 10px; font-family: var(--font-body); }
+.chart .axis.accent { fill: var(--kcal); }
+.chart .target { stroke: var(--kcal); stroke-dasharray: 4 4; stroke-width: 1.5; }
+.chart .line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
+.chart .area { fill: var(--accent); opacity: 0.12; }
+.chart .dot { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+
+/* ── навигация ── */
+.nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; justify-content: center; gap: 0;
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px));
+}
+.nav-btn { flex: 1; max-width: 112px; height: var(--nav-h); border: 0; background: transparent; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--muted); font-size: 11px; font-weight: 500; }
+.nav-btn svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.nav-btn.on { color: var(--accent); }
+.nav-btn.on svg { stroke-width: 2.2; }
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 30;
+  bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 12px);
+  background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px;
+  max-width: calc(100% - 32px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 380px) {
+  .grid3 { grid-template-columns: 1fr 1fr; }
+  .grid4 { grid-template-columns: 1fr 1fr; }
+  .hero-row { gap: 12px; }
+  .ring-wrap { width: 112px; height: 112px; }
+  .tgrid { grid-template-columns: 1fr 1fr; }
+  .checks { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-in">
+    <span class="logo">Nova<span>Fit</span></span>
+    <span class="topbar-sub">набор массы</span>
+  </div>
+</header>
+<main id="view" class="view" tabindex="-1"></main>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<nav class="nav" aria-label="Разделы">
+  <button class="nav-btn" data-act="tab" data-tab="today">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/></svg><span>Сегодня</span></button>
+  <button class="nav-btn" data-act="tab" data-tab="food">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11h17a8.5 8.5 0 0 1-17 0Z"/><path d="M8 7.5c0-1.5 1-1.5 1-3M12 7.5c0-1.5 1-1.5 1-3M16 7.5c0-1.5 1-1.5 1-3"/></svg><span>Питание</span></button>
+  <button class="nav-btn" data-act="tab" data-tab="train">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="8" width="4" height="8" rx="1"/><rect x="17.5" y="8" width="4" height="8" rx="1"/><path d="M6.5 12h11"/></svg><span>Трен.</span></button>
+  <button class="nav-btn" data-act="tab" data-tab="sleep">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10Z"/></svg><span>Сон</span></button>
+  <button class="nav-btn" data-act="tab" data-tab="profile">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg><span>Профиль</span></button>
+</nav>
+<script>window.__NF_EMBED = true;</script>
+<script>
+/* NovaFit — база продуктов.
+ * Значения на 100 г (для жидкостей — на 100 мл), усреднены по таблицам
+ * Скурихина/Тутельяна и USDA FoodData Central.
+ * Крупы, макароны и бобовые — в СУХОМ виде (так их удобно взвешивать из пачки).
+ * cat: protein | carb | fat | veg | fruit | dairy
+ * unit/perUnit — если продукт удобнее считать штуками (яйцо ≈ 55 г).
+ * maxMeal — разумный максимум на один приём пищи, чтобы алгоритм не предлагал
+ * «съешь 600 г арахисовой пасты».
+ */
+(function (g) {
+  const NF = (g.NF = g.NF || {});
+
+  //   id                 название                                 ккал   Б     Ж     У     кат      max   ед.   г/ед
+  const rows = [
+    ['oats',            'Овсяные хлопья (сухие)',                   366, 12.0,  6.2, 62.0, 'carb',   120],
+    ['buckwheat',       'Гречка (сухая)',                           343, 12.6,  3.3, 62.1, 'carb',   120],
+    ['rice',            'Рис белый (сухой)',                        344,  6.7,  0.7, 78.9, 'carb',   130],
+    ['pasta',           'Макароны из твёрдых сортов (сухие)',       350, 12.0,  1.5, 71.0, 'carb',   130],
+    ['bulgur',          'Булгур (сухой)',                           342, 12.3,  1.3, 75.9, 'carb',   120],
+    ['potato',          'Картофель',                                 77,  2.0,  0.4, 16.3, 'carb',   400],
+    ['bread',           'Хлеб цельнозерновой',                      247, 13.0,  3.4, 41.0, 'carb',   120, 'ломтик', 30],
+    ['lavash',          'Лаваш тонкий',                             277,  9.0,  1.2, 56.0, 'carb',   100, 'лист', 90],
+    ['chicken_breast',  'Куриная грудка (сырая)',                   113, 23.6,  1.9,  0.4, 'protein',250],
+    ['chicken_thigh',   'Куриное бедро без кожи (сырое)',           121, 19.7,  4.1,  0.0, 'protein',250],
+    ['turkey',          'Филе индейки (сырое)',                     112, 23.5,  1.5,  0.0, 'protein',250],
+    ['beef',            'Говядина постная (сырая)',                 187, 18.9, 12.4,  0.0, 'protein',220],
+    ['minced_beef',     'Фарш говяжий 15% (сырой)',                 215, 17.2, 15.0,  0.0, 'protein',200],
+    ['pork',            'Свиная вырезка (сырая)',                   120, 21.0,  3.5,  0.0, 'protein',220],
+    ['fish_white',      'Минтай / хек (сырой)',                      72, 15.9,  0.9,  0.0, 'protein',300],
+    ['salmon',          'Горбуша / лосось (сырой)',                 140, 20.5,  6.5,  0.0, 'protein',220],
+    ['tuna_can',        'Тунец консерв. в собств. соку',            96, 21.0,  1.0,  0.0, 'protein',185, 'банка', 140],
+    ['eggs',            'Яйцо куриное',                             157, 12.7, 11.5,  0.7, 'protein',220, 'шт', 55],
+    ['cottage5',        'Творог 5%',                                121, 17.2,  5.0,  1.8, 'dairy',  300],
+    ['cottage9',        'Творог 9%',                                159, 16.7,  9.0,  2.0, 'dairy',  300],
+    ['milk',            'Молоко 2,5%',                               52,  2.8,  2.5,  4.7, 'dairy',  500],
+    ['kefir',           'Кефир 2,5%',                                53,  2.9,  2.5,  4.0, 'dairy',  500],
+    ['yogurt',          'Йогурт греческий 2%',                       73, 10.0,  1.9,  3.9, 'dairy',  300],
+    ['cheese',          'Сыр твёрдый',                              356, 24.0, 28.0,  0.5, 'dairy',   60],
+    ['smetana',         'Сметана 15%',                              158,  2.6, 15.0,  3.0, 'dairy',   60],
+    ['protein_powder',  'Протеин сывороточный',                     380, 75.0,  6.0,  8.0, 'protein', 40, 'мерная ложка', 30],
+    ['peanut_butter',   'Арахисовая паста',                         588, 25.0, 50.0, 20.0, 'fat',     40],
+    ['peanuts',         'Арахис',                                   567, 26.0, 49.0, 16.0, 'fat',     50],
+    ['walnuts',         'Грецкие орехи',                            654, 15.0, 65.0, 14.0, 'fat',     40],
+    ['almonds',         'Миндаль',                                  579, 21.0, 50.0, 22.0, 'fat',     40],
+    ['olive_oil',       'Масло оливковое',                          884,  0.0,100.0,  0.0, 'fat',     20],
+    ['sunflower_oil',   'Масло подсолнечное',                       899,  0.0, 99.9,  0.0, 'fat',     20],
+    ['butter',          'Масло сливочное 82%',                      748,  0.5, 82.5,  0.8, 'fat',     20],
+    ['avocado',         'Авокадо',                                  160,  2.0, 14.7,  8.5, 'fat',    150, 'шт', 140],
+    ['banana',          'Банан',                                     89,  1.1,  0.3, 22.8, 'fruit',  300, 'шт', 120],
+    ['apple',           'Яблоко',                                    52,  0.3,  0.2, 13.8, 'fruit',  360, 'шт', 180],
+    ['raisins',         'Изюм',                                     299,  3.1,  0.5, 79.0, 'fruit',   50],
+    ['dried_apricots',  'Курага',                                   241,  3.4,  0.5, 62.6, 'fruit',   50],
+    ['honey',           'Мёд',                                      304,  0.3,  0.0, 82.0, 'carb',    30],
+    ['frozen_berries',  'Ягоды замороженные',                        45,  0.7,  0.3, 10.0, 'fruit',  200],
+    ['tomato',          'Помидор',                                   18,  0.9,  0.2,  3.9, 'veg',    300],
+    ['cucumber',        'Огурец',                                    15,  0.7,  0.1,  3.6, 'veg',    300],
+    ['cabbage',         'Капуста белокочанная',                      25,  1.3,  0.1,  5.8, 'veg',    300],
+    ['carrot',          'Морковь',                                   41,  0.9,  0.2,  9.6, 'veg',    200],
+    ['onion',           'Лук репчатый',                              40,  1.1,  0.1,  9.3, 'veg',    100],
+    ['broccoli',        'Брокколи (замороженная)',                   34,  2.8,  0.4,  6.6, 'veg',    300],
+    ['frozen_veg',      'Овощная смесь замороженная',                64,  3.0,  0.5, 12.0, 'veg',    300],
+    ['mushrooms',       'Шампиньоны',                                22,  3.1,  0.3,  3.3, 'veg',    300],
+    ['beans_can',       'Фасоль консервированная (без соуса)',      120,  8.0,  0.5, 21.0, 'carb',   250],
+    ['lentils',         'Чечевица (сухая)',                         352, 24.6,  1.1, 63.0, 'carb',   120],
+    ['chickpeas',       'Нут (сухой)',                              364, 19.3,  6.0, 60.7, 'carb',   120],
+    ['tomato_paste',    'Томатная паста',                            82,  4.3,  0.5, 18.9, 'veg',     50],
+  ];
+
+  NF.FOODS = rows.map(function (r) {
+    return {
+      id: r[0], name: r[1], kcal: r[2], p: r[3], f: r[4], c: r[5],
+      cat: r[6], maxMeal: r[7], unit: r[8] || null, perUnit: r[9] || null, custom: false,
+    };
+  });
+
+  NF.CAT_LABEL = {
+    protein: 'Белковое', carb: 'Углеводы', fat: 'Жиры и орехи',
+    veg: 'Овощи', fruit: 'Фрукты', dairy: 'Молочное',
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* NovaFit — рецепты.
+ * ing: [id продукта, базовые граммы, необязательный?]
+ * Граммовки базовые — алгоритм подгоняет их под твою норму на приём пищи
+ * (в пределах 0,6–2,2 от базы), сохраняя пропорции блюда.
+ * meals: b — завтрак, l — обед, s — перекус, d — ужин.
+ */
+(function (g) {
+  const NF = (g.NF = g.NF || {});
+
+  NF.RECIPES = [
+    { id: 'oat_pb', name: 'Овсянка на молоке с бананом и арахисовой пастой', meals: 'b', min: 10,
+      ing: [['oats', 80], ['milk', 250], ['banana', 120], ['peanut_butter', 20], ['honey', 10, 1]],
+      steps: ['Залей хлопья молоком, вари 5–7 минут на слабом огне, помешивая.', 'Сверху — нарезанный банан и арахисовая паста. Мёд по желанию.'] },
+    { id: 'omelet', name: 'Омлет с сыром и цельнозерновым хлебом', meals: 'bd', min: 12,
+      ing: [['eggs', 165], ['milk', 50], ['cheese', 30], ['bread', 60], ['butter', 5], ['tomato', 100, 1]],
+      steps: ['Взбей яйца с молоком и щепоткой соли.', 'Растопи масло, вылей смесь, накрой крышкой на 4–5 минут.', 'Посыпь тёртым сыром за минуту до готовности. Подавай с хлебом и помидором.'] },
+    { id: 'syrniki', name: 'Сырники на овсяной муке', meals: 'bs', min: 20,
+      ing: [['cottage5', 200], ['eggs', 55], ['oats', 40], ['sunflower_oil', 5], ['smetana', 30], ['raisins', 20, 1]],
+      steps: ['Измельчи хлопья в блендере в муку.', 'Смешай творог, яйцо, муку (и изюм), сформируй 5–6 сырников.', 'Обжарь на капле масла по 3 минуты с каждой стороны. Подавай со сметаной.'] },
+    { id: 'cottage_bowl', name: 'Творог с бананом и орехами', meals: 'bs', min: 3,
+      ing: [['cottage5', 200], ['banana', 120], ['walnuts', 20], ['honey', 10, 1], ['frozen_berries', 80, 1]],
+      steps: ['Выложи творог в миску, добавь нарезанный банан, орехи и ягоды.', 'Полей мёдом по вкусу.'] },
+    { id: 'gainer', name: 'Домашний гейнер-коктейль', meals: 's', min: 3,
+      ing: [['milk', 300], ['banana', 120], ['oats', 50], ['peanut_butter', 20], ['protein_powder', 30, 1]],
+      steps: ['Всё в блендер на 40–60 секунд.', 'Пей медленно, за 5–10 минут: так легче усваивается большая порция.'] },
+    { id: 'buck_chicken', name: 'Гречка с курицей и овощами', meals: 'ld', min: 25,
+      ing: [['buckwheat', 90], ['chicken_breast', 180], ['frozen_veg', 150], ['sunflower_oil', 10]],
+      steps: ['Свари гречку (1 часть крупы на 2 части воды, 15 минут).', 'Нарежь курицу кубиками, обжарь на масле 6–7 минут.', 'Добавь овощи, туши ещё 7 минут под крышкой. Смешай с гречкой.'] },
+    { id: 'rice_chicken', name: 'Рис с курицей и брокколи', meals: 'ld', min: 25,
+      ing: [['rice', 90], ['chicken_breast', 180], ['broccoli', 150], ['olive_oil', 10]],
+      steps: ['Отвари рис (1:2, 15–18 минут).', 'Обжарь курицу на масле до золотистой корочки.', 'Брокколи свари на пару или в кипятке 4 минуты.'] },
+    { id: 'navy_pasta', name: 'Макароны по-флотски', meals: 'ld', min: 25,
+      ing: [['pasta', 100], ['minced_beef', 150], ['onion', 50], ['sunflower_oil', 5], ['tomato_paste', 30, 1]],
+      steps: ['Отвари макароны.', 'Обжарь лук, добавь фарш, жарь 10 минут, разбивая комочки.', 'Добавь томатную пасту, смешай с макаронами.'] },
+    { id: 'plov', name: 'Плов с курицей', meals: 'ld', min: 40,
+      ing: [['rice', 90], ['chicken_thigh', 180], ['carrot', 80], ['onion', 50], ['sunflower_oil', 10]],
+      steps: ['Обжарь курицу кусочками, добавь лук и морковь соломкой.', 'Всыпь промытый рис, залей водой на 1,5 см выше.', 'Туши под крышкой на слабом огне 20–25 минут, не мешая.'] },
+    { id: 'fish_potato', name: 'Запечённая рыба с картофелем', meals: 'ld', min: 40,
+      ing: [['potato', 300], ['fish_white', 220], ['olive_oil', 10], ['smetana', 30, 1]],
+      steps: ['Нарежь картофель дольками, сбрызни маслом, запекай 20 минут при 200 °C.', 'Добавь рыбу (соль, перец, лимон), запекай ещё 15 минут.'] },
+    { id: 'salmon_rice', name: 'Лосось с рисом и огурцом', meals: 'ld', min: 25,
+      ing: [['rice', 80], ['salmon', 150], ['cucumber', 150], ['olive_oil', 5]],
+      steps: ['Отвари рис.', 'Запеки рыбу 15 минут при 200 °C или обжарь по 4 минуты с каждой стороны.', 'Подавай с нарезанным огурцом.'] },
+    { id: 'bulgur_turkey', name: 'Булгур с индейкой и овощами', meals: 'ld', min: 25,
+      ing: [['bulgur', 90], ['turkey', 180], ['frozen_veg', 150], ['olive_oil', 10]],
+      steps: ['Залей булгур кипятком 1:2 и оставь под крышкой на 15 минут.', 'Обжарь индейку, добавь овощи, туши 7 минут.', 'Смешай с булгуром.'] },
+    { id: 'lentil_beef', name: 'Чечевица с говядиной', meals: 'ld', min: 45,
+      ing: [['lentils', 80], ['beef', 120], ['carrot', 60], ['onion', 40], ['tomato_paste', 30], ['sunflower_oil', 10]],
+      steps: ['Обжарь говядину кусочками, добавь лук и морковь.', 'Всыпь промытую чечевицу, томатную пасту и 400 мл воды.', 'Туши 30 минут до мягкости.'] },
+    { id: 'cabbage_pork', name: 'Тушёная капуста со свининой и картофелем', meals: 'ld', min: 45,
+      ing: [['cabbage', 250], ['pork', 150], ['potato', 200], ['carrot', 50], ['sunflower_oil', 10]],
+      steps: ['Обжарь свинину кусочками.', 'Добавь нашинкованную капусту, морковь и картофель кубиками.', 'Влей 100 мл воды, туши под крышкой 30 минут.'] },
+    { id: 'tuna_pasta', name: 'Паста с тунцом и помидорами', meals: 'ld', min: 20,
+      ing: [['pasta', 100], ['tuna_can', 140], ['tomato', 150], ['olive_oil', 10], ['cheese', 20, 1]],
+      steps: ['Отвари пасту.', 'Обжарь нарезанные помидоры на масле 3 минуты, добавь тунец.', 'Смешай с пастой, сверху сыр.'] },
+    { id: 'shawarma', name: 'Домашняя шаурма с курицей', meals: 'lds', min: 20,
+      ing: [['lavash', 90], ['chicken_breast', 150], ['cabbage', 80], ['tomato', 80], ['cucumber', 60], ['smetana', 40]],
+      steps: ['Обжарь курицу полосками со специями.', 'Смажь лаваш сметаной, выложи курицу и овощи.', 'Сверни и подрумянь на сухой сковороде по минуте с каждой стороны.'] },
+    { id: 'egg_sandwich', name: 'Бутерброды с яйцом и сыром', meals: 'sb', min: 12,
+      ing: [['bread', 90], ['eggs', 110], ['cheese', 30], ['cucumber', 80]],
+      steps: ['Свари яйца вкрутую (9 минут).', 'Собери бутерброды: хлеб, сыр, яйцо, огурец.'] },
+    { id: 'kefir_snack', name: 'Кефир, банан и миндаль', meals: 's', min: 1,
+      ing: [['kefir', 400], ['banana', 120], ['almonds', 25]],
+      steps: ['Ничего готовить не нужно: стакан кефира, банан и горсть миндаля.'] },
+    { id: 'yogurt_bowl', name: 'Греческий йогурт с овсянкой и мёдом', meals: 'sb', min: 3,
+      ing: [['yogurt', 200], ['oats', 40], ['honey', 15], ['frozen_berries', 100, 1]],
+      steps: ['Смешай йогурт с хлопьями, оставь на 5 минут.', 'Добавь мёд и ягоды.'] },
+    { id: 'chickpea_curry', name: 'Нут с курицей в томатах', meals: 'ld', min: 30,
+      ing: [['chickpeas', 70], ['chicken_breast', 150], ['tomato', 150], ['onion', 50], ['olive_oil', 10]],
+      steps: ['Замочи нут на ночь и отвари 60 минут (или возьми варёный).', 'Обжарь лук и курицу, добавь помидоры и специи (карри, паприка).', 'Добавь нут, туши 10 минут.'] },
+    { id: 'chili', name: 'Чили с фасолью и рисом', meals: 'ld', min: 30,
+      ing: [['beans_can', 200], ['minced_beef', 130], ['tomato_paste', 40], ['onion', 50], ['rice', 60]],
+      steps: ['Отвари рис.', 'Обжарь лук и фарш, добавь томатную пасту, фасоль и 100 мл воды.', 'Туши 15 минут, подавай с рисом.'] },
+    { id: 'potato_eggs', name: 'Жареная картошка с яйцами', meals: 'ld', min: 25,
+      ing: [['potato', 300], ['eggs', 110], ['sunflower_oil', 12], ['cucumber', 100]],
+      steps: ['Обжарь картофель соломкой на масле 15 минут, помешивая.', 'Разбей сверху яйца, накрой крышкой на 3 минуты.', 'Подавай со свежим огурцом.'] },
+    { id: 'pb_toast', name: 'Тосты с арахисовой пастой, банан и молоко', meals: 'sb', min: 5,
+      ing: [['bread', 60], ['peanut_butter', 25], ['banana', 120], ['milk', 250]],
+      steps: ['Подсуши хлеб, намажь пастой, сверху кружочки банана.', 'Запивай стаканом молока.'] },
+    { id: 'rice_porridge', name: 'Рисовая каша на молоке', meals: 'b', min: 25,
+      ing: [['rice', 60], ['milk', 300], ['butter', 10], ['raisins', 25, 1]],
+      steps: ['Отвари рис в 150 мл воды 10 минут.', 'Влей молоко, вари ещё 10–15 минут, помешивая.', 'Добавь масло и изюм.'] },
+    { id: 'buck_milk', name: 'Гречка с молоком и мёдом', meals: 'b', min: 20,
+      ing: [['buckwheat', 70], ['milk', 250], ['butter', 10], ['honey', 10]],
+      steps: ['Свари гречку (1:2, 15 минут).', 'Залей горячим молоком, добавь масло и мёд.'] },
+    { id: 'thigh_potato', name: 'Курица с запечённым картофелем и салатом', meals: 'ld', min: 45,
+      ing: [['chicken_thigh', 200], ['potato', 300], ['tomato', 100], ['cucumber', 100], ['olive_oil', 10]],
+      steps: ['Замаринуй бёдра (соль, паприка, чеснок).', 'Запекай с дольками картофеля 35 минут при 200 °C.', 'Нарежь салат из помидора и огурца, заправь маслом.'] },
+    { id: 'mushroom_buck', name: 'Гречка с грибами и говядиной', meals: 'ld', min: 35,
+      ing: [['buckwheat', 80], ['beef', 130], ['mushrooms', 150], ['onion', 40], ['sunflower_oil', 10]],
+      steps: ['Свари гречку.', 'Обжарь говядину тонкими полосками 5 минут, добавь лук и грибы.', 'Туши 10 минут, смешай с гречкой.'] },
+  ];
+
+  NF.MEAL_LABEL = { b: 'Завтрак', l: 'Обед', s: 'Перекус', d: 'Ужин' };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* NovaFit — упражнения.
+ * slot — двигательный паттерн (по ним собирается тренировка).
+ * req  — нужный инвентарь: db (гантель), bar (турник), bench (скамья), band (резинка).
+ *        Стул/диван/пол считаются доступными всегда.
+ * kg   — диапазон веса гантели, при котором упражнение даёт нормальную нагрузку.
+ *        Если гантель легче — алгоритм поднимет повторения и замедлит темп,
+ *        если тяжелее верхней границы — упражнение не выбирается (небезопасно).
+ * reps — рабочий диапазон повторений (для kind:'time' — секунды).
+ * uni  — выполняется на каждую сторону отдельно.
+ */
+(function (g) {
+  const NF = (g.NF = g.NF || {});
+
+  NF.EXERCISES = [
+    // ── Ноги: присед ──
+    { id: 'goblet_squat', slot: 'squat', name: 'Гоблет-присед', req: ['db'], kg: [8, 32], reps: [8, 15], muscles: 'квадрицепсы, ягодицы',
+      tips: 'Гантель вертикально у груди, локти вниз. Садись между коленями, спина ровная, пятки не отрываются.', harder: 'Присед с паузой 2 секунды внизу' },
+    { id: 'bss', slot: 'squat', name: 'Болгарский сплит-присед с гантелью', req: ['db'], kg: [4, 24], reps: [8, 12], uni: true, muscles: 'квадрицепсы, ягодицы',
+      tips: 'Задняя нога на стуле или диване. Опускайся вертикально вниз, колено передней ноги смотрит по носку.', harder: 'Медленный спуск 3 секунды' },
+    { id: 'bw_squat', slot: 'squat', name: 'Присед с собственным весом с паузой', req: [], kind: 'bw', reps: [15, 25], muscles: 'квадрицепсы, ягодицы',
+      tips: 'Пауза 1–2 секунды в нижней точке. Колени по направлению носков.', harder: 'Болгарский сплит-присед' },
+    // ── Ноги: выпады ──
+    { id: 'reverse_lunge', slot: 'lunge', name: 'Обратные выпады с гантелью у груди', req: ['db'], kg: [4, 24], reps: [8, 12], uni: true, muscles: 'ягодицы, квадрицепсы',
+      tips: 'Шаг назад, колено почти касается пола. Корпус вертикально.', harder: 'Выпады с дефицитом (передняя нога на книге/ступеньке)' },
+    { id: 'step_up', slot: 'lunge', name: 'Зашагивания на стул с гантелью', req: ['db'], kg: [4, 20], reps: [8, 12], uni: true, muscles: 'ягодицы, квадрицепсы',
+      tips: 'Только устойчивый стул у стены. Толкайся ногой на стуле, не отталкивайся нижней.', harder: 'Медленный спуск 3 секунды' },
+    { id: 'bw_lunge', slot: 'lunge', name: 'Выпады назад без веса', req: [], kind: 'bw', reps: [12, 20], uni: true, muscles: 'ягодицы, квадрицепсы',
+      tips: 'Контролируй спуск, не бейся коленом об пол.', harder: 'Выпады с гантелью' },
+    // ── Задняя цепь ──
+    { id: 'rdl_2h', slot: 'hinge', name: 'Румынская тяга с гантелью двумя руками', req: ['db'], kg: [10, 40], reps: [10, 15], muscles: 'бицепс бедра, ягодицы, поясница',
+      tips: 'Колени чуть согнуты, таз уводи назад, спина прямая. Опускай гантель вдоль ног до середины голени.', harder: 'Румынская тяга на одной ноге' },
+    { id: 'sl_rdl', slot: 'hinge', name: 'Румынская тяга на одной ноге', req: ['db'], kg: [4, 24], reps: [8, 12], uni: true, muscles: 'бицепс бедра, ягодицы, баланс',
+      tips: 'Гантель в руке напротив опорной ноги. Свободной рукой можно держаться за стену.', harder: 'Пауза 2 секунды внизу' },
+    { id: 'hip_thrust', slot: 'glute', name: 'Ягодичный мост с гантелью (плечи на диване)', req: ['db'], kg: [6, 40], reps: [12, 20], muscles: 'ягодицы',
+      tips: 'Гантель на тазовых костях (подложи полотенце). Вверху сожми ягодицы на 1 секунду, подбородок к груди.', harder: 'Мост на одной ноге с гантелью' },
+    { id: 'sl_bridge', slot: 'glute', name: 'Ягодичный мост на одной ноге', req: [], kind: 'bw', reps: [12, 20], uni: true, muscles: 'ягодицы',
+      tips: 'Пятка ближе к тазу, толкайся пяткой.', harder: 'С гантелью на тазу' },
+    // ── Грудь: горизонтальный жим ──
+    { id: 'pushup', slot: 'hpush', name: 'Отжимания от пола', req: [], kind: 'bw', reps: [6, 20], muscles: 'грудь, трицепс, передняя дельта',
+      tips: 'Тело — прямая линия, локти под 45° к корпусу. Грудью почти до пола. Если не выходит 6 раз — от дивана.', harder: 'Отжимания с ногами на стуле' },
+    { id: 'pushup_feet', slot: 'hpush', name: 'Отжимания с ногами на стуле', req: [], kind: 'bw', reps: [6, 15], muscles: 'верх груди, плечи',
+      tips: 'Ноги на стуле, корпус не прогибается.', harder: 'Отжимания с паузой внизу 2 секунды' },
+    { id: 'floor_press', slot: 'hpush', name: 'Жим гантели одной рукой лёжа на полу', req: ['db'], kg: [6, 30], reps: [8, 12], uni: true, muscles: 'грудь, трицепс',
+      tips: 'Лёжа на спине, колени согнуты. Плечо касается пола — пауза — жми вверх. Свободной рукой упирайся в пол.', harder: 'Медленный спуск 3 секунды' },
+    { id: 'bench_press_1', slot: 'hpush', name: 'Жим гантели одной рукой на скамье', req: ['db', 'bench'], kg: [6, 36], reps: [8, 12], uni: true, muscles: 'грудь, трицепс',
+      tips: 'Держи корпус ровно, не давай ему поворачиваться за гантелью: это ещё и работа на пресс.', harder: 'Пауза внизу 1 секунда' },
+    // ── Плечи: вертикальный жим ──
+    { id: 'ohp_1', slot: 'vpush', name: 'Жим гантели одной рукой стоя', req: ['db'], kg: [4, 22], reps: [8, 12], uni: true, muscles: 'дельты, трицепс',
+      tips: 'Ягодицы и пресс напряжены, не прогибайся в пояснице. Локоть чуть впереди корпуса.', harder: 'Жим стоя на коленях (без помощи ног)' },
+    { id: 'pike_pushup', slot: 'vpush', name: 'Отжимания уголком (пайк)', req: [], kind: 'bw', reps: [6, 15], muscles: 'дельты, трицепс',
+      tips: 'Таз высоко, тело буквой Λ. Опускай голову к полу перед руками.', harder: 'Пайк с ногами на стуле' },
+    // ── Спина: горизонтальная тяга ──
+    { id: 'row_1', slot: 'hpull', name: 'Тяга гантели одной рукой в наклоне', req: ['db'], kg: [6, 40], reps: [10, 12], uni: true, muscles: 'широчайшие, ромбовидные, бицепс',
+      tips: 'Колено и рука на стуле/диване, спина параллельно полу. Тяни локтем к тазу, вверху пауза.', harder: 'Пауза 2 секунды вверху' },
+    { id: 'band_row', slot: 'hpull', name: 'Тяга резинки к поясу сидя', req: ['band'], kind: 'bw', reps: [12, 20], muscles: 'спина',
+      tips: 'Резинка за стопами, тяни локти назад, своди лопатки.', harder: 'Двойная резинка' },
+    { id: 'towel_row', slot: 'hpull', name: 'Тяга полотенца к дверной ручке', req: [], kind: 'bw', reps: [10, 20], muscles: 'спина, бицепс',
+      tips: 'Полотенце вокруг ручек ЗАКРЫТОЙ двери, стопы у двери, отклонись назад и подтягивайся. Проверь, что дверь не откроется на тебя.', harder: 'Ниже угол наклона' },
+    // ── Спина: вертикальная тяга ──
+    { id: 'pullup', slot: 'vpull', name: 'Подтягивания', req: ['bar'], kind: 'bw', reps: [3, 10], muscles: 'широчайшие, бицепс',
+      tips: 'Полный вис внизу, подбородок над перекладиной вверху. Без раскачки.', harder: 'Медленный спуск 3–4 секунды' },
+    { id: 'pullup_neg', slot: 'vpull', name: 'Негативные подтягивания', req: ['bar'], kind: 'bw', reps: [3, 6], muscles: 'широчайшие, бицепс',
+      tips: 'Запрыгни со стула в верхнюю точку и опускайся 4–5 секунд.', harder: 'Обычные подтягивания' },
+    { id: 'pullover', slot: 'vpull', name: 'Пуловер с гантелью лёжа на полу', req: ['db'], kg: [4, 20], reps: [10, 15], muscles: 'широчайшие, грудь',
+      tips: 'Гантель двумя руками над грудью, руки чуть согнуты. Опускай за голову до пола, возвращай силой спины.', harder: 'Медленный спуск 3 секунды' },
+    // ── Изоляция ──
+    { id: 'lateral_1', slot: 'side', name: 'Махи гантелью в сторону одной рукой', req: ['db'], kg: [2, 12], reps: [12, 20], uni: true, muscles: 'средняя дельта',
+      tips: 'Держись за стену, чуть наклонись от неё. Поднимай до уровня плеча, без рывков.', harder: 'Пауза 1 секунда вверху' },
+    { id: 'band_lateral', slot: 'side', name: 'Разведения с резинкой в стороны', req: ['band'], kind: 'bw', reps: [15, 25], muscles: 'средняя дельта',
+      tips: 'Встань на резинку, поднимай руки до уровня плеч.', harder: 'Короче хват' },
+    { id: 'curl_1', slot: 'bi', name: 'Сгибания гантели на бицепс (с супинацией)', req: ['db'], kg: [4, 16], reps: [10, 15], uni: true, muscles: 'бицепс',
+      tips: 'Локоть прижат к корпусу, разворачивай ладонь вверх при подъёме. Опускай медленно.', harder: 'Молотковые сгибания + медленный негатив' },
+    { id: 'oh_ext', slot: 'tri', name: 'Разгибания гантели из-за головы двумя руками', req: ['db'], kg: [4, 20], reps: [10, 15], muscles: 'трицепс',
+      tips: 'Сидя на стуле, локти смотрят вверх и не расходятся. Опускай гантель за голову.', harder: 'Медленный спуск 3 секунды' },
+    { id: 'chair_dips', slot: 'tri', name: 'Обратные отжимания от стула', req: [], kind: 'bw', reps: [10, 20], muscles: 'трицепс',
+      tips: 'Руки на краю устойчивого стула, плечи не поднимай к ушам. Опускайся до 90° в локте, не глубже.', harder: 'Ноги прямые / на втором стуле' },
+    { id: 'calf_1', slot: 'calves', name: 'Подъёмы на носок одной ногой с гантелью', req: ['db'], kg: [4, 30], reps: [12, 20], uni: true, muscles: 'икры',
+      tips: 'Стоя на ступеньке, пятка опускается ниже носка. Вверху пауза 1 секунда.', harder: 'Пауза 2 секунды в растяжении' },
+    { id: 'calf_bw', slot: 'calves', name: 'Подъёмы на носки на ступеньке', req: [], kind: 'bw', reps: [15, 25], muscles: 'икры',
+      tips: 'Полная амплитуда, без пружинистых отскоков.', harder: 'На одной ноге' },
+    // ── Кор ──
+    { id: 'plank', slot: 'core', name: 'Планка', req: [], kind: 'time', reps: [30, 60], muscles: 'пресс, кор',
+      tips: 'Локти под плечами, ягодицы напряжены, таз не проваливается.', harder: 'Планка с подъёмом руки' },
+    { id: 'dead_bug', slot: 'core', name: 'Мёртвый жук', req: [], kind: 'bw', reps: [8, 12], uni: true, muscles: 'пресс',
+      tips: 'Поясница прижата к полу всё время. Разгибай противоположные руку и ногу медленно.', harder: 'С гантелью в руках' },
+    { id: 'suitcase', slot: 'core', name: 'Прогулка с гантелью в одной руке', req: ['db'], kg: [8, 40], kind: 'time', reps: [30, 45], uni: true, muscles: 'косые мышцы, хват',
+      tips: 'Иди ровно, корпус не наклоняется к гантели.', harder: 'Дольше по времени' },
+    { id: 'knee_raise', slot: 'core', name: 'Подъём коленей в висе', req: ['bar'], kind: 'bw', reps: [8, 15], muscles: 'пресс',
+      tips: 'Без раскачки, подкручивай таз вверх.', harder: 'Прямые ноги' },
+  ];
+
+  NF.SLOT_LABEL = {
+    squat: 'Ноги — присед', lunge: 'Ноги — выпады', hinge: 'Задняя поверхность', glute: 'Ягодицы',
+    hpush: 'Грудь', vpush: 'Плечи — жим', hpull: 'Спина — тяга', vpull: 'Спина — вертикаль',
+    side: 'Средняя дельта', bi: 'Бицепс', tri: 'Трицепс', calves: 'Икры', core: 'Кор',
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* NovaFit — расчёт нормы для безопасного набора веса.
+ *
+ * На чём основано (см. вкладку «Профиль → Откуда цифры»):
+ *  • Базовый обмен — формула Миффлина — Сан Жеора (1990), самая точная из
+ *    простых формул для здоровых взрослых.
+ *  • Профицит: +250…+500 ккал к расходу, темп набора 0,25–0,5 % массы тела
+ *    в неделю (Iraki et al., 2019, J Funct Morphol Kinesiol; ISSN). Быстрее —
+ *    растёт в основном жир, а не мышцы. Профицит больше 500 ккал не даём.
+ *  • Белок: 1,6–2,2 г/кг (метаанализ Morton et al., 2018, BJSM; ISSN Position
+ *    Stand, Jäger 2017). Выше 2,2 г/кг пользы для мышц нет — потолок жёсткий.
+ *  • Жиры: 25–30 % калорий, но не меньше 0,8 г/кг (гормональное здоровье).
+ *  • Углеводы — всё остальное (топливо для тренировок).
+ *  • Вода ≈ 35 мл/кг + 0,5 л в день тренировки (EFSA).
+ *  • Клетчатка 14 г на 1000 ккал (IOM).
+ */
+(function (g) {
+  const NF = (g.NF = g.NF || {});
+
+  const ACTIVITY = [
+    { v: 1.2, label: 'Сидячая работа, почти без движения' },
+    { v: 1.375, label: 'Лёгкая активность: тренировки 1–3 раза в неделю' },
+    { v: 1.55, label: 'Средняя: тренировки 3–5 раз или работа на ногах' },
+    { v: 1.725, label: 'Высокая: физический труд + тренировки' },
+  ];
+
+  const PACE = {
+    slow: { rate: 0.0025, label: 'Плавно — 0,25 % веса в неделю (минимум жира)' },
+    normal: { rate: 0.005, label: 'Стандарт — 0,5 % веса в неделю' },
+  };
+
+  const LIMITS = {
+    surplusMin: 200, surplusMax: 500,          // ккал/день сверх расхода
+    weeklyMin: 0.15, weeklyMax: 0.5,           // кг/неделю
+    proteinMin: 1.6, proteinMax: 2.2,          // г/кг
+    fatMinPerKg: 0.8, fatShareMax: 0.35,
+    adjustStep: 100, adjustMax: 300,           // адаптация по весам
+  };
+
+  function bmi(weight, heightCm) {
+    const h = heightCm / 100;
+    return weight / (h * h);
+  }
+
+  function validateProfile(p) {
+    const errors = [];
+    if (!(p.age >= 12 && p.age <= 90)) errors.push('Возраст: от 12 до 90 лет.');
+    if (!(p.height >= 120 && p.height <= 230)) errors.push('Рост: от 120 до 230 см.');
+    if (!(p.weight >= 30 && p.weight <= 250)) errors.push('Вес: от 30 до 250 кг.');
+    if (!(p.target > p.weight)) errors.push('Цель должна быть больше текущего веса: приложение рассчитано на набор массы.');
+    if (p.target - p.weight > 40) errors.push('Разница больше 40 кг. Поставь промежуточную цель, например +5–10 кг.');
+    return errors;
+  }
+
+  /** Главный расчёт. adjust — поправка ккал от адаптации по весу. */
+  function calcTargets(p, adjust) {
+    adjust = adjust || 0;
+    const warnings = [];
+    const isMale = p.sex !== 'f';
+    const bmr = 10 * p.weight + 6.25 * p.height - 5 * p.age + (isMale ? 5 : -161);
+    const tdee = bmr * (p.activity || 1.375);
+    const curBmi = bmi(p.weight, p.height);
+    const targetBmi = bmi(p.target, p.height);
+
+    let paceKey = PACE[p.pace] ? p.pace : 'normal';
+    let surplusMax = LIMITS.surplusMax;
+
+    if (p.age < 18) {
+      paceKey = 'slow';
+      warnings.push({ level: 'warn', text: 'До 18 лет организм ещё растёт: используем плавный темп. Перед стартом покажи план педиатру или спортивному врачу. Не используй спортпит, кроме обычного протеина.' });
+    }
+    if (curBmi < 16) {
+      surplusMax = 300;
+      warnings.push({ level: 'danger', text: 'ИМТ ' + curBmi.toFixed(1) + ': это выраженный дефицит массы тела. Сначала обратись к врачу: при резком увеличении питания возможен рефидинг-синдром. Профицит ограничен 300 ккал.' });
+    } else if (curBmi < 18.5) {
+      warnings.push({ level: 'info', text: 'ИМТ ' + curBmi.toFixed(1) + ': недовес. Набор оправдан. Если вес падает без причины, проверься у врача (щитовидная железа, ЖКТ).' });
+    } else if (curBmi >= 25) {
+      warnings.push({ level: 'warn', text: 'ИМТ ' + curBmi.toFixed(1) + ': избыточная масса. Набор на профиците добавит в основном жир. Подумай о рекомпозиции: питание на уровне расхода плюс силовые.' });
+    }
+    if (targetBmi > 27) {
+      warnings.push({ level: 'warn', text: 'Цель даст ИМТ ' + targetBmi.toFixed(1) + '. Для большинства людей без многолетнего стажа это будет лишний жир. Лучше поставить промежуточную цель.' });
+    }
+
+    let weekly = p.weight * PACE[paceKey].rate;
+    weekly = Math.min(LIMITS.weeklyMax, Math.max(LIMITS.weeklyMin, weekly));
+    // 1 кг смешанной ткани (мышцы + немного жира) ≈ 5500–7700 ккал; берём ~7000.
+    let surplus = (weekly * 7000) / 7;
+    surplus = Math.min(surplusMax, Math.max(LIMITS.surplusMin, surplus));
+
+    const adj = Math.max(-LIMITS.adjustMax, Math.min(LIMITS.adjustMax, adjust));
+    // Итог никогда не превышает расход + 500 + адаптация, и не ниже расхода + 100.
+    let kcal = tdee + surplus + adj;
+    kcal = Math.max(tdee + 100, Math.min(tdee + LIMITS.surplusMax + LIMITS.adjustMax, kcal));
+    kcal = Math.round(kcal / 10) * 10;
+
+    // При ИМТ > 27 белок считаем от «целевой» массы (ИМТ 25), чтобы не завышать.
+    const refWeight = curBmi > 27 ? 25 * Math.pow(p.height / 100, 2) : p.weight;
+    const protPerKg = p.age < 18 ? 1.6 : 1.8;
+    let protein = Math.round(refWeight * Math.min(LIMITS.proteinMax, Math.max(LIMITS.proteinMin, protPerKg)));
+
+    let fat = Math.max(LIMITS.fatMinPerKg * p.weight, (kcal * 0.27) / 9);
+    fat = Math.min(fat, (kcal * LIMITS.fatShareMax) / 9);
+    fat = Math.round(fat);
+
+    let carbs = Math.round((kcal - protein * 4 - fat * 9) / 4);
+    if (carbs < 2 * p.weight) {
+      // Теоретически недостижимо при профиците, но страхуемся.
+      carbs = Math.round(2 * p.weight);
+    }
+
+    const gain = p.target - p.weight;
+    const weeks = Math.ceil(gain / weekly);
+
+    return {
+      bmr: Math.round(bmr), tdee: Math.round(tdee), surplus: Math.round(surplus), adjust: adj,
+      kcal, protein, fat, carbs,
+      proteinPerKg: +(protein / p.weight).toFixed(2),
+      fiber: Math.round((kcal / 1000) * 14),
+      water: Math.round((p.weight * 35) / 50) * 50,
+      waterTrain: Math.round((p.weight * 35 + 500) / 50) * 50,
+      weekly: +weekly.toFixed(2), weeks, pace: paceKey,
+      bmi: +curBmi.toFixed(1), targetBmi: +targetBmi.toFixed(1),
+      warnings,
+    };
+  }
+
+  /** Скользящее среднее за 7 дней на дату (по имеющимся записям). */
+  function weeklyAverage(weights, endDate) {
+    const end = new Date(endDate + 'T12:00:00').getTime();
+    const start = end - 6.5 * 864e5;
+    const pts = weights.filter(function (w) {
+      const t = new Date(w.date + 'T12:00:00').getTime();
+      return t >= start && t <= end + 1;
+    });
+    if (pts.length < 2) return null;
+    return pts.reduce(function (s, w) { return s + w.kg; }, 0) / pts.length;
+  }
+
+  /**
+   * Адаптация раз в неделю: сравниваем средний вес последних 7 дней
+   * с предыдущими 7. Если прибавка меньше половины плана — +100 ккал,
+   * если больше полутора планов — −100 ккал. Суммарно не больше ±300.
+   */
+  function adaptCalories(weights, plannedWeekly, today, currentAdjust, lastAdjustDate) {
+    if (lastAdjustDate) {
+      const days = (new Date(today) - new Date(lastAdjustDate)) / 864e5;
+      if (days < 7) return { adjust: currentAdjust, changed: false, reason: null };
+    }
+    const prevEnd = new Date(new Date(today + 'T12:00:00').getTime() - 7 * 864e5).toISOString().slice(0, 10);
+    const cur = weeklyAverage(weights, today);
+    const prev = weeklyAverage(weights, prevEnd);
+    if (cur == null || prev == null) return { adjust: currentAdjust, changed: false, reason: 'Нужно хотя бы 2 взвешивания за каждую из двух последних недель.' };
+    const rate = cur - prev;
+    let next = currentAdjust;
+    let reason;
+    if (rate < plannedWeekly * 0.5) {
+      next = Math.min(LIMITS.adjustMax, currentAdjust + LIMITS.adjustStep);
+      reason = 'За неделю +' + rate.toFixed(2) + ' кг при плане +' + plannedWeekly + ' кг. Добавляю 100 ккал.';
+    } else if (rate > plannedWeekly * 1.5 && rate > 0.3) {
+      next = Math.max(-LIMITS.adjustMax, currentAdjust - LIMITS.adjustStep);
+      reason = 'За неделю +' + rate.toFixed(2) + ' кг: слишком быстро, растёт жир. Убираю 100 ккал.';
+    } else {
+      reason = 'Темп в норме (' + (rate >= 0 ? '+' : '') + rate.toFixed(2) + ' кг/нед). Калории без изменений.';
+    }
+    return { adjust: next, changed: next !== currentAdjust, reason: reason, rate: rate };
+  }
+
+  NF.ACTIVITY = ACTIVITY;
+  NF.PACE = PACE;
+  NF.LIMITS = LIMITS;
+  NF.bmi = bmi;
+  NF.validateProfile = validateProfile;
+  NF.calcTargets = calcTargets;
+  NF.weeklyAverage = weeklyAverage;
+  NF.adaptCalories = adaptCalories;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* NovaFit — планировщик питания.
+ *  • расписание приёмов пищи по сну;
+ *  • подбор граммовок под норму БЖУ (решатель с ограничениями);
+ *  • выбор рецептов из того, что есть дома, с приоритетом «доесть остатки»;
+ *  • список покупок по нехватке на ближайшие дни.
+ */
+(function (g) {
+  const NF = (g.NF = g.NF || {});
+
+  const MEAL_SHARE = { b: 0.25, l: 0.30, s: 0.15, d: 0.30 };
+  const MEAL_ORDER = ['b', 'l', 's', 'd'];
+
+  // ───────── время ─────────
+  function toMin(hhmm) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm || '');
+    if (!m) return null;
+    return (+m[1] % 24) * 60 + (+m[2] % 60);
+  }
+  function fromMin(n) {
+    n = ((Math.round(n) % 1440) + 1440) % 1440;
+    const h = Math.floor(n / 60), m = n % 60;
+    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+  }
+  function sleepMinutes(bed, wake) {
+    const b = toMin(bed), w = toMin(wake);
+    if (b == null || w == null) return null;
+    return (w - b + 1440) % 1440 || 1440;
+  }
+  function roundTo5(n) { return Math.round(n / 5) * 5; }
+
+  /**
+   * Расписание: завтрак через ~40 мин после подъёма, ужин за 3 часа до сна
+   * (поздняя еда ухудшает сон), обед и перекус между ними. Если задано время
+   * тренировки — перекус ставим за 1,5 ч до неё.
+   */
+  function mealSchedule(wake, bed, trainTime) {
+    const W = toMin(wake) != null ? toMin(wake) : 450;
+    let B = toMin(bed) != null ? toMin(bed) : 1410;
+    if (B <= W) B += 1440;
+    const b = W + 40;
+    let d = B - 180;
+    if (d - b < 6 * 60) d = Math.min(B - 90, b + 6 * 60); // короткий день — ужин не раньше чем через 6 ч после завтрака
+    let l = b + (d - b) * 0.42;
+    let s = b + (d - b) * 0.72;
+    let note = null;
+    let T = toMin(trainTime);
+    if (T != null) {
+      if (T < W) T += 1440;
+      if (T > W && T < B) {
+        const pre = T - 90;
+        if (pre > l + 120 && pre < d - 45) { s = pre; note = 'Перекус за 1,5 ч до тренировки, ужин после неё.'; }
+        else if (T < l) note = 'Тренировка утром: завтрак лёгкий, полноценный обед сразу после.';
+        else note = 'Постарайся поесть в течение 1–2 часов после тренировки.';
+      }
+    }
+    l = roundTo5(l); s = roundTo5(s);
+    return {
+      meals: [
+        { type: 'b', time: fromMin(roundTo5(b)), share: MEAL_SHARE.b },
+        { type: 'l', time: fromMin(l), share: MEAL_SHARE.l },
+        { type: 's', time: fromMin(s), share: MEAL_SHARE.s },
+        { type: 'd', time: fromMin(roundTo5(d)), share: MEAL_SHARE.d },
+      ],
+      note: note,
+    };
+  }
+
+  // ───────── продукты ─────────
+  function allFoods(custom) { return NF.FOODS.concat(custom || []); }
+  function foodMap(custom) {
+    const m = {};
+    allFoods(custom).forEach(function (f) { m[f.id] = f; });
+    return m;
+  }
+
+  function roundFood(food, grams) {
+    if (grams <= 0) return 0;
+    if (food.perUnit && (food.unit === 'шт' || food.unit === 'ломтик' || food.unit === 'лист' || food.unit === 'банка')) {
+      // половинки допускаем для хлеба/лаваша/банок, яйца — только целые
+      const step = food.unit === 'шт' ? 1 : 0.5;
+      const units = Math.max(step, Math.round(grams / food.perUnit / step) * step);
+      return Math.round(units * food.perUnit);
+    }
+    if (grams < 30) return Math.max(1, Math.round(grams));
+    return roundTo5(grams);
+  }
+
+  function macrosOf(items, fm) {
+    const t = { kcal: 0, p: 0, f: 0, c: 0 };
+    items.forEach(function (it) {
+      const f = fm[it.id];
+      if (!f) return;
+      const k = it.g / 100;
+      t.kcal += f.kcal * k; t.p += f.p * k; t.f += f.f * k; t.c += f.c * k;
+    });
+    return t;
+  }
+
+  /**
+   * Решатель порций: минимизирует взвешенную относительную ошибку по
+   * ккал/Б/Ж/У с границами lo ≤ x ≤ hi (координатный спуск, задача выпуклая).
+   * vars: [{food, lo, hi, x0, reg}]
+   */
+  function solve(vars, target) {
+    const keys = ['kcal', 'p', 'f', 'c'];
+    const W = { kcal: 2.0, p: 1.5, f: 0.8, c: 0.8 };
+    const T = {};
+    keys.forEach(function (k) { T[k] = Math.max(1, target[k]); });
+    const x = vars.map(function (v) { return Math.min(v.hi, Math.max(v.lo, v.x0 != null ? v.x0 : (v.lo + v.hi) / 2)); });
+    const A = vars.map(function (v) { return { kcal: v.food.kcal / 100, p: v.food.p / 100, f: v.food.f / 100, c: v.food.c / 100 }; });
+    const sum = {};
+    function recompute() {
+      keys.forEach(function (k) { sum[k] = 0; });
+      x.forEach(function (xi, i) { keys.forEach(function (k) { sum[k] += A[i][k] * xi; }); });
+    }
+    recompute();
+    for (let iter = 0; iter < 300; iter++) {
+      let moved = 0;
+      for (let i = 0; i < x.length; i++) {
+        const v = vars[i];
+        let grad = 0, hess = 0;
+        keys.forEach(function (k) {
+          const w = W[k] / (T[k] * T[k]);
+          grad += 2 * w * A[i][k] * (sum[k] - T[k]);
+          hess += 2 * w * A[i][k] * A[i][k];
+        });
+        if (v.reg && v.x0) {
+          const r = v.reg / (v.x0 * v.x0);
+          grad += 2 * r * (x[i] - v.x0);
+          hess += 2 * r;
+        }
+        if (hess <= 0) continue;
+        const nx = Math.min(v.hi, Math.max(v.lo, x[i] - grad / hess));
+        const d = nx - x[i];
+        if (d !== 0) {
+          keys.forEach(function (k) { sum[k] += A[i][k] * d; });
+          x[i] = nx;
+          moved += Math.abs(d);
+        }
+      }
+      if (moved < 0.05) break;
+    }
+    return x;
+  }
+
+  function fitError(m, target) {
+    function rel(a, b) { return b > 0 ? (a - b) / b : 0; }
+    return 2 * Math.pow(rel(m.kcal, target.kcal), 2) + 1.5 * Math.pow(rel(m.p, target.p), 2) +
+      0.8 * Math.pow(rel(m.f, target.f), 2) + 0.8 * Math.pow(rel(m.c, target.c), 2);
+  }
+
+  // ───────── рецепт под цель ─────────
+  /**
+   * inv — {id: граммы}. mode 'stock' — граммовки не больше запаса,
+   * нехватка уходит в missing.
+   */
+  // Мелкие добавки: если их нет дома, блюдо можно приготовить и без них.
+  const MINOR = { sunflower_oil: 1, olive_oil: 1, butter: 1, honey: 1, tomato_paste: 1, smetana: 1, onion: 1, raisins: 1 };
+
+  function fitRecipe(recipe, target, inv, fm, strict) {
+    const ings = [];
+    const skipped = [];
+    recipe.ing.forEach(function (row) {
+      const f = fm[row[0]];
+      if (!f) return;
+      const opt = !!row[2];
+      const have = inv[row[0]] || 0;
+      if (opt && have < row[1] * 0.6) return; // необязательное — только если есть
+      if (!strict && MINOR[row[0]] && have < row[1] * 0.6) { skipped.push(row[0]); return; }
+      ings.push({ food: f, base: row[1], opt: opt, have: have });
+    });
+    const baseItems = ings.map(function (i) { return { id: i.food.id, g: i.base }; });
+    const baseM = macrosOf(baseItems, fm);
+    const s = Math.min(2.2, Math.max(0.6, target.kcal / Math.max(1, baseM.kcal)));
+
+    const vars = ings.map(function (i) {
+      let lo, hi;
+      if (i.food.cat === 'veg') { lo = i.base * 0.5; hi = i.base * 1.6; }
+      else { lo = i.base * 0.6; hi = i.base * 2.2; }
+      hi = Math.min(hi, Math.max(i.food.maxMeal, i.base));
+      if (i.food.id === 'eggs') hi = Math.min(hi, 220); // до 4 яиц за приём
+      lo = Math.min(lo, hi);
+      return { food: i.food, lo: lo, hi: hi, x0: Math.min(hi, Math.max(lo, i.base * s)), reg: 0.15 };
+    });
+    const x = solve(vars, target);
+    const items = [];
+    const missing = [];
+    vars.forEach(function (v, i) {
+      const gr = roundFood(v.food, x[i]);
+      if (gr <= 0) return;
+      items.push({ id: v.food.id, g: gr });
+      const have = inv[v.food.id] || 0;
+      if (have < gr) missing.push({ id: v.food.id, g: gr - have });
+    });
+    const m = macrosOf(items, fm);
+    return { recipeId: recipe.id, items: items, missing: missing, skipped: skipped, macros: m, err: fitError(m, target) };
+  }
+
+  /** «Тарелка» из того, что лежит дома, если ни один рецепт не собирается. */
+  function plateFromStock(type, target, inv, fm, rng) {
+    const avail = Object.keys(inv).filter(function (id) { return fm[id] && inv[id] >= 20; }).map(function (id) { return fm[id]; });
+    if (!avail.length) return null;
+    function byStock(a, b) { return (inv[b.id] || 0) * (1 + rng() * 0.3) - (inv[a.id] || 0) * (1 + rng() * 0.3); }
+    function pick(pred) { return avail.filter(pred).sort(byStock)[0]; }
+    const light = type === 'b' || type === 's';
+    const chosen = [];
+    const prot = pick(function (f) { return f.p * 4 / Math.max(1, f.kcal) > 0.35 && (light || f.cat === 'protein' || f.cat === 'dairy'); });
+    if (prot) chosen.push(prot);
+    const carb = pick(function (f) { return (f.cat === 'carb' || (light && f.cat === 'fruit')) && chosen.indexOf(f) < 0; });
+    if (carb) chosen.push(carb);
+    const fat = pick(function (f) { return f.cat === 'fat' && chosen.indexOf(f) < 0; });
+    if (fat) chosen.push(fat);
+    if (!light) {
+      const veg = pick(function (f) { return f.cat === 'veg' && f.id !== 'tomato_paste' && chosen.indexOf(f) < 0; });
+      if (veg) chosen.push(veg);
+    }
+    if (!chosen.length) return null;
+    const vars = chosen.map(function (f) {
+      const hi = Math.min(f.maxMeal, inv[f.id] || 0);
+      const lo = f.cat === 'veg' ? Math.min(hi, 100) : 0;
+      return { food: f, lo: lo, hi: hi, x0: hi / 2 };
+    });
+    const x = solve(vars, target);
+    const items = [];
+    vars.forEach(function (v, i) { const gr = Math.min(roundFood(v.food, x[i]), v.hi); if (gr > 0) items.push({ id: v.food.id, g: gr }); });
+    const m = macrosOf(items, fm);
+    return { recipeId: null, items: items, missing: [], skipped: [], macros: m, err: fitError(m, target) };
+  }
+
+  /**
+   * Добавка к блюду: если после подгонки не хватает калорий (обычно углеводов),
+   * докладываем один продукт из запасов (хлеб, банан, крупа, орехи…).
+   */
+  function topUp(res, type, target, inv, fm) {
+    if (!res || res.macros.kcal >= target.kcal * 0.92) return res;
+    const have = {};
+    res.items.forEach(function (it) { have[it.id] = 1; });
+    const light = type === 'b' || type === 's';
+    const ok = light ? { carb: 1, fruit: 1, fat: 1, dairy: 1 } : { carb: 1, fruit: 1, fat: 1, veg: 0 };
+    let best = null;
+    Object.keys(inv).forEach(function (id) {
+      const f = fm[id];
+      if (!f || have[id] || !ok[f.cat] || inv[id] < 20 || f.kcal < 50) return;
+      if (f.id === 'sunflower_oil' || f.id === 'olive_oil') return; // масло ложкой не едят
+      if (!light && (f.id === 'oats' || f.id === 'honey')) return;
+      const deficit = target.kcal - res.macros.kcal;
+      let gr = Math.min(f.maxMeal, inv[id], (deficit / f.kcal) * 100);
+      gr = roundFood(f, gr);
+      if (gr > inv[id]) gr = roundFood(f, inv[id] * 0.9);
+      if (gr < 10) return;
+      const items = res.items.concat([{ id: id, g: gr }]);
+      const m = macrosOf(items, fm);
+      const e = fitError(m, target);
+      if (e < res.err - 0.005 && (!best || e < best.err)) best = { items: items, macros: m, err: e, extra: id };
+    });
+    if (!best) return res;
+    return Object.assign({}, res, best);
+  }
+
+  /** Выбор блюда на приём пищи. */
+  function pickMeal(type, target, inv, fm, opts) {
+    opts = opts || {};
+    const rng = opts.rng || Math.random;
+    const avoid = opts.avoid || {};
+    const cands = NF.RECIPES.filter(function (r) { return r.meals.indexOf(type) >= 0; }).map(function (r) {
+      const res = fitRecipe(r, target, inv, fm, opts.strict);
+      const missKcal = res.missing.reduce(function (s, it) { return s + (fm[it.id].kcal * it.g) / 100; }, 0);
+      const missShare = missKcal / Math.max(1, res.macros.kcal);
+      // «доедаем остатки»: бонус за долю ингредиентов, которые уже есть
+      const usedHome = res.items.filter(function (it) { return (inv[it.id] || 0) > 0; }).length / Math.max(1, res.items.length);
+      res.score = res.err + res.missing.length * 0.35 + missShare * 1.5 - usedHome * 0.25 + (avoid[r.id] || 0) + rng() * 0.12;
+      return res;
+    });
+    cands.sort(function (a, b) { return a.score - b.score; });
+    let best = cands[0];
+    if (best && best.missing.length && !opts.allowMissing) {
+      const plate = plateFromStock(type, target, inv, fm, rng);
+      if (plate && (plate.err < 0.3 || plate.err < best.err + 0.1)) best = plate;
+    }
+    return topUp(best, type, target, inv, fm);
+  }
+
+  // ───────── генератор ─────────
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0; seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+
+  function targetFor(daily, share) {
+    return { kcal: daily.kcal * share, p: daily.protein * share, f: daily.fat * share, c: daily.carbs * share };
+  }
+
+  function subtract(inv, items) {
+    items.forEach(function (it) { if (inv[it.id] != null) inv[it.id] = Math.max(0, inv[it.id] - it.g); });
+  }
+
+  /**
+   * План дня. inv изменяется (резервирует продукты) — передавай копию.
+   * recent — {recipeId: штраф} за повтор блюд прошлых дней.
+   */
+  function planDay(date, daily, schedule, inv, fm, recent, seed, strict) {
+    const rng = mulberry32(hashStr(date + ':' + (seed || 0)));
+    const avoid = Object.assign({}, recent || {});
+    // Цель каждого приёма = доля от ОСТАВШЕГОСЯ на день, чтобы недобор/перебор
+    // одного блюда компенсировался следующими.
+    const left = { kcal: daily.kcal, protein: daily.protein, fat: daily.fat, carbs: daily.carbs };
+    let shareLeft = schedule.meals.reduce(function (s, m) { return s + m.share; }, 0);
+    const meals = schedule.meals.map(function (slot) {
+      const k = Math.min(1, slot.share / shareLeft);
+      const t = { kcal: Math.max(150, left.kcal * k), p: Math.max(10, left.protein * k), f: Math.max(3, left.fat * k), c: Math.max(10, left.carbs * k) };
+      shareLeft -= slot.share;
+      const res = pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid, strict: strict });
+      if (res && res.recipeId) avoid[res.recipeId] = (avoid[res.recipeId] || 0) + 1.5;
+      if (res) {
+        subtract(inv, res.items);
+        left.kcal -= res.macros.kcal; left.protein -= res.macros.p; left.fat -= res.macros.f; left.carbs -= res.macros.c;
+      }
+      return { type: slot.type, time: slot.time, recipeId: res ? res.recipeId : null, items: res ? res.items : [], missing: res ? res.missing : [], skipped: res ? res.skipped : [], extra: res ? res.extra || null : null, eaten: false };
+    });
+    return { date: date, meals: meals, seed: seed || 0 };
+  }
+
+  function replanMeal(plan, idx, daily, schedule, inv, fm, recent, seed) {
+    const rng = mulberry32(hashStr(plan.date + ':' + idx + ':' + seed));
+    const avoid = Object.assign({}, recent || {});
+    plan.meals.forEach(function (m, i) { if (i !== idx && m.recipeId) avoid[m.recipeId] = (avoid[m.recipeId] || 0) + 1.5; });
+    const cur = plan.meals[idx];
+    if (cur.recipeId) avoid[cur.recipeId] = (avoid[cur.recipeId] || 0) + 3;
+    const slot = schedule.meals[idx];
+    // цель = остаток дня после остальных приёмов (в разумных пределах от доли)
+    const base = targetFor(daily, slot.share);
+    const others = macrosOf([].concat.apply([], plan.meals.filter(function (_, i) { return i !== idx; }).map(function (m) { return m.items; })), fm);
+    const rest = { kcal: daily.kcal - others.kcal, p: daily.protein - others.p, f: daily.fat - others.f, c: daily.carbs - others.c };
+    const t = {};
+    ['kcal', 'p', 'f', 'c'].forEach(function (k) { t[k] = Math.min(base[k] * 1.5, Math.max(base[k] * 0.6, rest[k])); });
+    const res = pickMeal(slot.type, t, inv, fm, { rng: rng, avoid: avoid });
+    return { type: slot.type, time: cur.time, recipeId: res ? res.recipeId : null, items: res ? res.items : [], missing: res ? res.missing : [], skipped: res ? res.skipped : [], extra: res ? res.extra || null : null, eaten: false };
+  }
+
+  /** Список покупок: прогоняем план на N дней по виртуальному складу. */
+  function shoppingList(startDate, days, daily, schedule, inventory, fm, recent) {
+    const inv = Object.assign({}, inventory);
+    const need = {};
+    const rec = Object.assign({}, recent || {});
+    for (let d = 0; d < days; d++) {
+      const date = new Date(new Date(startDate + 'T12:00:00').getTime() + d * 864e5).toISOString().slice(0, 10);
+      const plan = planDay(date, daily, schedule, inv, fm, rec, 0, true);
+      plan.meals.forEach(function (m) {
+        m.missing.forEach(function (it) { need[it.id] = (need[it.id] || 0) + it.g; });
+        if (m.recipeId) rec[m.recipeId] = (rec[m.recipeId] || 0) + 1;
+      });
+    }
+    return Object.keys(need).map(function (id) {
+      const f = fm[id];
+      // округляем до удобной упаковки
+      let gr = need[id];
+      if (f.perUnit) gr = Math.ceil(gr / f.perUnit) * f.perUnit;
+      else gr = gr < 100 ? Math.ceil(gr / 10) * 10 : Math.ceil(gr / 50) * 50;
+      return { id: id, g: gr };
+    }).sort(function (a, b) { return fm[a.id].cat < fm[b.id].cat ? -1 : fm[a.id].cat > fm[b.id].cat ? 1 : b.g - a.g; });
+  }
+
+  /** Калькулятор: сколько граммов выбранных продуктов съесть на приём. */
+  function portionCalc(ids, target, inv, fm, limitToStock) {
+    const vars = ids.map(function (id) {
+      const f = fm[id];
+      let hi = f.maxMeal;
+      if (limitToStock) hi = Math.min(hi, inv[id] || 0);
+      return { food: f, lo: 0, hi: hi, x0: hi / 3 };
+    }).filter(function (v) { return v.hi > 0; });
+    const x = solve(vars, target);
+    const items = vars.map(function (v, i) { return { id: v.food.id, g: Math.min(v.hi, roundFood(v.food, x[i])) }; }).filter(function (it) { return it.g > 0; });
+    return { items: items, macros: macrosOf(items, fm) };
+  }
+
+  NF.MEAL_SHARE = MEAL_SHARE;
+  NF.MEAL_ORDER = MEAL_ORDER;
+  NF.toMin = toMin;
+  NF.fromMin = fromMin;
+  NF.sleepMinutes = sleepMinutes;
+  NF.mealSchedule = mealSchedule;
+  NF.foodMap = foodMap;
+  NF.allFoods = allFoods;
+  NF.roundFood = roundFood;
+  NF.macrosOf = macrosOf;
+  NF.solve = solve;
+  NF.fitRecipe = fitRecipe;
+  NF.pickMeal = pickMeal;
+  NF.planDay = planDay;
+  NF.replanMeal = replanMeal;
+  NF.shoppingList = shoppingList;
+  NF.portionCalc = portionCalc;
+  NF.targetFor = targetFor;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* NovaFit — генератор программы тренировок под инвентарь.
+ * Принципы (ACSM Position Stand 2009 по прогрессии нагрузок; Schoenfeld 2017):
+ *  • 10+ рабочих подходов на мышцу в неделю для гипертрофии;
+ *  • каждая мышца 2 раза в неделю;
+ *  • двойная прогрессия: сначала повторения до верха диапазона, потом
+ *    усложнение. С одной гантелью без смены веса усложняем через
+ *    подходы, темп, паузы и более тяжёлые вариации (одна рука/нога).
+ */
+(function (g) {
+  const NF = (g.NF = g.NF || {});
+
+  const TEMPLATES = {
+    A: { title: 'Фулбоди A', slots: [['squat', 0], ['hpush', 0], ['hpull', 0], ['hinge', 0], ['side', 0], ['core', 0]] },
+    B: { title: 'Фулбоди B', slots: [['lunge', 0], ['vpush', 0], ['vpull', 0], ['glute', 0], ['bi', 0], ['tri', 0], ['core', 1]] },
+    C: { title: 'Фулбоди C', slots: [['squat', 1], ['hpush', 1], ['hpull', 0], ['hinge', 1], ['calves', 0], ['side', 0], ['core', 0]] },
+    U1: { title: 'Верх 1', slots: [['hpush', 0], ['hpull', 0], ['vpush', 0], ['vpull', 0], ['side', 0], ['bi', 0], ['tri', 0]] },
+    L1: { title: 'Низ 1', slots: [['squat', 0], ['hinge', 0], ['lunge', 0], ['glute', 0], ['calves', 0], ['core', 0]] },
+    U2: { title: 'Верх 2', slots: [['hpush', 1], ['hpull', 0], ['vpush', 1], ['vpull', 1], ['side', 0], ['bi', 0], ['tri', 1]] },
+    L2: { title: 'Низ 2', slots: [['squat', 1], ['hinge', 1], ['lunge', 1], ['glute', 1], ['calves', 0], ['core', 1]] },
+  };
+
+  const COMPOUND = { squat: 1, lunge: 1, hinge: 1, glute: 1, hpush: 1, vpush: 1, hpull: 1, vpull: 1 };
+
+  function hasEquip(ex, eq) {
+    return ex.req.every(function (r) {
+      if (r === 'db') return eq.db > 0;
+      return !!eq[r];
+    });
+  }
+
+  /** Насколько упражнение подходит под имеющуюся гантель (меньше — лучше). */
+  function suitability(ex, eq) {
+    if (!ex.kg) return ex.kind === 'bw' || ex.kind === 'time' ? 1.0 : 0.5; // свой вес — запасной вариант
+    const kg = eq.dbKg || 0;
+    if (kg > ex.kg[1] && !eq.adjustable) return Infinity; // слишком тяжело — небезопасно
+    if (kg >= ex.kg[0]) return 0;
+    return 0.3 + (ex.kg[0] - kg) / Math.max(1, ex.kg[0]); // легковато — подойдёт, но хуже
+  }
+
+  function candidates(slot, eq) {
+    return NF.EXERCISES.filter(function (ex) { return ex.slot === slot && hasEquip(ex, eq); })
+      .map(function (ex) { return { ex: ex, s: suitability(ex, eq) }; })
+      .filter(function (c) { return isFinite(c.s); })
+      .sort(function (a, b) { return a.s - b.s; });
+  }
+
+  /** Подбор подходов/повторений. Лёгкая гантель → больше повторений + медленный темп. */
+  function prescribe(ex, eq, level) {
+    const compound = !!COMPOUND[ex.slot];
+    let sets = level === 'intermediate' ? (compound ? 4 : 3) : 3;
+    let lo = ex.reps[0], hi = ex.reps[1];
+    let tempo = null;
+    if (ex.kg && !eq.adjustable && eq.dbKg < ex.kg[0]) {
+      lo = Math.min(lo + 5, 20); hi = Math.min(hi + 8, 25);
+      tempo = '3 секунды вниз, пауза 1 секунда: компенсируем лёгкую гантель';
+    }
+    const rest = ex.slot === 'core' ? 45 : compound ? 90 : 60;
+    return { sets: sets, lo: lo, hi: hi, tempo: tempo, rest: rest, unit: ex.kind === 'time' ? 'сек' : 'повт.' };
+  }
+
+  function splitFor(daysPerWeek) {
+    if (daysPerWeek >= 4) return ['U1', 'L1', 'U2', 'L2'];
+    if (daysPerWeek === 3) return ['A', 'B', 'C'];
+    return ['A', 'B'];
+  }
+
+  function buildWorkout(key, eq, level) {
+    const tpl = TEMPLATES[key];
+    const used = {};
+    const items = [];
+    tpl.slots.forEach(function (sv) {
+      const list = candidates(sv[0], eq).filter(function (c) { return !used[c.ex.id]; });
+      if (!list.length) return;
+      // вариант 1 = второе по пригодности упражнение (если не сильно хуже)
+      let c = list[0];
+      if (sv[1] === 1 && list[1] && list[1].s <= list[0].s + 1.1) c = list[1];
+      used[c.ex.id] = 1;
+      items.push(Object.assign({ id: c.ex.id, slot: sv[0] }, prescribe(c.ex, eq, level)));
+    });
+    return { key: key, title: tpl.title, items: items };
+  }
+
+  function buildProgram(eq, level, daysPerWeek) {
+    const keys = splitFor(daysPerWeek);
+    return keys.map(function (k) { return buildWorkout(k, eq, level); });
+  }
+
+  /** Рекомендация по прогрессии на основе последнего выполнения. */
+  function progression(item, history, eq) {
+    const ex = NF.EXERCISES.find(function (e) { return e.id === item.id; });
+    const last = [];
+    for (let i = history.length - 1; i >= 0 && last.length < 2; i--) {
+      const s = history[i].sets && history[i].sets[item.id];
+      if (s && s.length) last.push(s);
+    }
+    if (!last.length) return { status: 'new', text: 'Первый раз: подбери темп так, чтобы 1–2 повтора оставались в запасе.' };
+    const reps = last[0];
+    const allTop = reps.length >= item.sets && reps.every(function (r) { return r >= item.hi; });
+    const anyLow = reps.some(function (r) { return r < item.lo; });
+    if (allTop) {
+      let how;
+      if (eq.adjustable) how = 'добавь 1–2 кг';
+      else if (item.sets < 5 && ex.slot !== 'core') how = 'добавь подход (до 5) или переходи к усложнению: ' + ex.harder.toLowerCase();
+      else how = ex.harder;
+      return { status: 'up', text: 'Верх диапазона во всех подходах. Пора усложнять: ' + how + '.' };
+    }
+    if (anyLow && last[1] && last[1].some(function (r) { return r < item.lo; })) {
+      return { status: 'hold', text: 'Две тренировки ниже диапазона. Отдохни подольше между подходами, проверь сон и калории.' };
+    }
+    const sum = reps.reduce(function (a, b) { return a + b; }, 0);
+    return { status: 'keep', text: 'Прошлый раз: ' + reps.join(' / ') + ' (всего ' + sum + '). Цель: +1 повтор хотя бы в одном подходе.' };
+  }
+
+  const WARMUP = [
+    '3–5 минут: ходьба на месте, джампинг-джеки или скакалка',
+    'Вращения в плечах, тазе, коленях: по 10 в каждую сторону',
+    '10 приседаний без веса и 5–10 отжиманий от дивана',
+    'Первое упражнение: 1 разминочный подход на 50 % усилия',
+  ];
+  const COOLDOWN = [
+    'Растяжка груди в дверном проёме: 30 секунд',
+    'Растяжка квадрицепса и задней поверхности бедра: по 30 секунд',
+    'Медленное дыхание лёжа: 1 минута',
+  ];
+
+  NF.TEMPLATES = TEMPLATES;
+  NF.buildProgram = buildProgram;
+  NF.buildWorkout = buildWorkout;
+  NF.splitFor = splitFor;
+  NF.progression = progression;
+  NF.exerciseCandidates = candidates;
+  NF.WARMUP = WARMUP;
+  NF.COOLDOWN = COOLDOWN;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* NovaFit — интерфейс. Все данные хранятся только на телефоне (localStorage). */
+(function () {
+  'use strict';
+  const NF = window.NF;
+  const KEY = 'novafit.v1';
+  const LIQUID = { milk: 1, kefir: 1 };
+  const WEEK = [[1, 'Пн'], [2, 'Вт'], [3, 'Ср'], [4, 'Чт'], [5, 'Пт'], [6, 'Сб'], [0, 'Вс']];
+
+  // ───────────────── состояние ─────────────────
+  function todayStr(d) {
+    d = d || new Date();
+    const z = (n) => (n < 10 ? '0' : '') + n;
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+  }
+  function addDays(date, n) {
+    const d = new Date(date + 'T12:00:00');
+    d.setDate(d.getDate() + n);
+    return todayStr(d);
+  }
+
+  function defaults() {
+    return {
+      v: 1,
+      profile: null,
+      draftProfile: { sex: 'm', age: 20, height: 178, weight: 60, target: 68, activity: 1.375, pace: 'normal' },
+      startWeight: null,
+      calAdjust: 0, lastAdjust: null, adaptMsg: null,
+      weights: [],
+      inventory: { buckwheat: 900, rice: 800, oats: 500, eggs: 550, milk: 1000, chicken_breast: 900, cottage5: 400, banana: 600, peanut_butter: 300, sunflower_oil: 500, frozen_veg: 400, cucumber: 300, bread: 450, cheese: 200 },
+      demoInventory: true,
+      invVersion: 1,
+      customFoods: [],
+      plans: {},
+      sleep: { bed: '23:30', wake: '07:30', log: [] },
+      equip: { db: 1, dbKg: 10, adjustable: false, bar: false, bench: false, band: false },
+      level: 'beginner',
+      train: { days: [1, 3, 5], time: '18:00' },
+      workouts: [],
+      draft: null,
+      tab: 'today',
+    };
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) return Object.assign(defaults(), JSON.parse(raw));
+    } catch (e) { /* приватный режим и т. п. */ }
+    return defaults();
+  }
+  let S = load();
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* ignore */ } }
+
+  const ui = { foodSeg: 'stock', search: '', addFood: null, calcSel: [], calcMeal: 'l', calcStock: true, recFilter: 'all', shopDays: 3, shopChecked: {}, confirmReset: false, customOpen: false, importOpen: false, errors: [] };
+
+  // ───────────────── утилиты ─────────────────
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const r0 = (n) => Math.round(n);
+  const fm = () => NF.foodMap(S.customFoods);
+  const recipeById = (id) => NF.RECIPES.find((r) => r.id === id);
+  const exById = (id) => NF.EXERCISES.find((e) => e.id === id);
+  function fmtDate(date, opts) {
+    return new Intl.DateTimeFormat('ru-RU', opts || { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(date + 'T12:00:00'));
+  }
+  function fmtDur(min) { const h = Math.floor(min / 60), m = min % 60; return h + ' ч' + (m ? ' ' + m + ' мин' : ''); }
+  function qtyLabel(food, g) {
+    const u = LIQUID[food.id] ? 'мл' : 'г';
+    let s = r0(g) + ' ' + u;
+    if (food.perUnit && food.unit) {
+      const n = g / food.perUnit;
+      const nn = Math.abs(n - Math.round(n)) < 0.05 ? Math.round(n) : n.toFixed(1).replace('.', ',');
+      s += ' · ' + nn + ' ' + food.unit;
+    }
+    return s;
+  }
+  function plural(n, a, b, c) { n = Math.abs(n) % 100; const n1 = n % 10; if (n > 10 && n < 20) return c; if (n1 > 1 && n1 < 5) return b; if (n1 === 1) return a; return c; }
+
+  function targets() { return S.profile ? NF.calcTargets(S.profile, S.calAdjust) : null; }
+
+  function isTrainDay(date) { return S.train.days.indexOf(new Date(date + 'T12:00:00').getDay()) >= 0; }
+
+  function sleepEntry(date) { return S.sleep.log.find((e) => e.date === date); }
+
+  function scheduleFor(date) {
+    const e = sleepEntry(date);
+    const wake = e ? e.wake : S.sleep.wake;
+    return NF.mealSchedule(wake, S.sleep.bed, isTrainDay(date) ? S.train.time : null);
+  }
+
+  function recentPenalty(date) {
+    const pen = {};
+    [1, 2].forEach((back) => {
+      const p = S.plans[addDays(date, -back)];
+      if (p) p.meals.forEach((m) => { if (m.recipeId) pen[m.recipeId] = (pen[m.recipeId] || 0) + (back === 1 ? 1.2 : 0.6); });
+    });
+    return pen;
+  }
+
+  function buildPlan(date, seed) {
+    const T = targets();
+    const plan = NF.planDay(date, T, scheduleFor(date), Object.assign({}, S.inventory), fm(), recentPenalty(date), seed || 0);
+    plan.invVersion = S.invVersion;
+    plan.kcal = T.kcal;
+    return plan;
+  }
+
+  function getPlan(date) {
+    if (!S.plans[date]) {
+      S.plans[date] = buildPlan(date, 0);
+      // храним планы только за последние 21 день
+      Object.keys(S.plans).forEach((d) => { if (d < addDays(date, -21)) delete S.plans[d]; });
+      save();
+    }
+    return S.plans[date];
+  }
+
+  function rebuildPlan(date) {
+    const old = S.plans[date];
+    const fresh = buildPlan(date, ((old && old.seed) || 0) + 1);
+    if (old) {
+      old.meals.forEach((m, i) => { if (m.eaten && fresh.meals[i]) fresh.meals[i] = m; });
+    }
+    S.plans[date] = fresh;
+    save();
+  }
+
+  function eatenMacros(plan) {
+    const items = [];
+    plan.meals.forEach((m) => { if (m.eaten) items.push.apply(items, m.items); });
+    return NF.macrosOf(items, fm());
+  }
+
+  function changeInventory(id, delta) {
+    const cur = S.inventory[id] || 0;
+    const next = Math.max(0, cur + delta);
+    if (next <= 0) delete S.inventory[id]; else S.inventory[id] = next;
+    S.invVersion++;
+  }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.hidden = false;
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+
+  function runAdaptation() {
+    const T = targets();
+    if (!T) return;
+    const res = NF.adaptCalories(S.weights, T.weekly, todayStr(), S.calAdjust, S.lastAdjust);
+    if (res.rate != null) {
+      // проверка состоялась — следующая не раньше чем через 7 дней
+      S.adaptMsg = res.reason;
+      S.calAdjust = res.adjust;
+      S.lastAdjust = todayStr();
+    } else if (res.reason) {
+      S.adaptMsg = res.reason;
+    }
+  }
+
+  // ───────────────── компоненты ─────────────────
+  function macroLine(m, cls) {
+    return '<span class="macros ' + (cls || '') + '"><b>' + r0(m.kcal) + '</b> ккал · Б ' + r0(m.p) + ' · Ж ' + r0(m.f) + ' · У ' + r0(m.c) + '</span>';
+  }
+
+  function bar(label, val, max, unit, mod) {
+    const pct = Math.max(0, Math.min(100, (val / Math.max(1, max)) * 100));
+    return '<div class="bar ' + (mod || '') + '"><div class="bar-top"><span>' + label + '</span><span class="num">' + r0(val) + ' / ' + r0(max) + ' ' + unit + '</span></div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct.toFixed(1) + '%"></div></div></div>';
+  }
+
+  function ring(val, max) {
+    const pct = Math.max(0, Math.min(1, val / Math.max(1, max)));
+    const R = 52, C = 2 * Math.PI * R;
+    return '<svg class="ring" viewBox="0 0 128 128" aria-hidden="true"><circle cx="64" cy="64" r="' + R + '" class="ring-bg"/>' +
+      '<circle cx="64" cy="64" r="' + R + '" class="ring-fg" stroke-dasharray="' + (C * pct).toFixed(1) + ' ' + C.toFixed(1) + '" transform="rotate(-90 64 64)"/></svg>';
+  }
+
+  function warningsBlock(ws) {
+    if (!ws || !ws.length) return '';
+    return ws.map((w) => '<div class="note note-' + w.level + '">' + esc(w.text) + '</div>').join('');
+  }
+
+  // ───────────────── вкладка «Сегодня» ─────────────────
+  function renderToday() {
+    if (!S.profile) return renderOnboarding();
+    const date = todayStr();
+    const T = targets();
+    const plan = getPlan(date);
+    const eaten = eatenMacros(plan);
+    const F = fm();
+    const stale = plan.invVersion !== S.invVersion || Math.abs(plan.kcal - T.kcal) > T.kcal * 0.03;
+    const sl = sleepEntry(date);
+    const train = isTrainDay(date);
+    const program = currentProgram();
+    const next = program[S.workouts.length % program.length];
+    const doneToday = S.workouts.some((w) => w.date === date);
+    const sched = scheduleFor(date);
+    const lastW = S.weights.length ? S.weights[S.weights.length - 1].kg : S.profile.weight;
+    const start = S.startWeight || S.profile.weight;
+    const prog = Math.max(0, Math.min(1, (lastW - start) / Math.max(0.1, S.profile.target - start)));
+
+    let html = '<section class="hero">' +
+      '<p class="eyebrow">' + esc(fmtDate(date)) + '</p>' +
+      '<div class="hero-row">' +
+      '<div class="ring-wrap">' + ring(eaten.kcal, T.kcal) + '<div class="ring-label"><span class="ring-num">' + r0(eaten.kcal) + '</span><span class="ring-sub">из ' + T.kcal + ' ккал</span></div></div>' +
+      '<div class="hero-bars">' +
+      bar('Белки', eaten.p, T.protein, 'г', 'p') + bar('Жиры', eaten.f, T.fat, 'г', 'f') + bar('Углеводы', eaten.c, T.carbs, 'г', 'c') +
+      '</div></div>' +
+      '<div class="goal"><div class="goal-top"><span>' + lastW.toFixed(1).replace('.', ',') + ' кг</span><span class="muted">цель ' + S.profile.target + ' кг · ~' + T.weeks + ' ' + plural(T.weeks, 'неделя', 'недели', 'недель') + '</span></div>' +
+      '<div class="bar-track thin"><div class="bar-fill goal-fill" style="width:' + (prog * 100).toFixed(1) + '%"></div></div></div>' +
+      '</section>';
+
+    html += '<div class="chips-row">' +
+      '<button class="chip-card" data-act="tab" data-tab="sleep"><span class="chip-k">Сон</span><span class="chip-v">' + (sl ? fmtDur(NF.sleepMinutes(sl.bed, sl.wake)) : 'отметить') + '</span></button>' +
+      '<button class="chip-card" data-act="tab" data-tab="train"><span class="chip-k">' + (train ? 'Тренировка' : 'Отдых') + '</span><span class="chip-v">' + (train ? (doneToday ? 'выполнена ✓' : esc(next.title) + ' · ' + S.train.time) : 'восстановление') + '</span></button>' +
+      '<div class="chip-card"><span class="chip-k">Вода</span><span class="chip-v">' + ((train ? T.waterTrain : T.water) / 1000).toFixed(1).replace('.', ',') + ' л</span></div>' +
+      '</div>';
+
+    if (S.demoInventory) {
+      html += '<div class="note note-info">Запасы продуктов сейчас примерные, чтобы показать, как работает план. Замени их на свои во вкладке «Питание».</div>';
+    }
+    if (stale) {
+      html += '<div class="note note-action"><span>Запасы или норма изменились. Пересобрать несъеденные приёмы пищи?</span><button class="btn small" data-act="rebuild">Обновить план</button></div>';
+    }
+    if (sched.note) html += '<p class="hint">' + esc(sched.note) + '</p>';
+
+    html += '<h2 class="h2">План питания</h2><ol class="timeline">';
+    plan.meals.forEach((m, i) => {
+      const rec = m.recipeId ? recipeById(m.recipeId) : null;
+      const mm = NF.macrosOf(m.items, F);
+      const title = rec ? rec.name : 'Тарелка из твоих продуктов';
+      html += '<li class="meal' + (m.eaten ? ' eaten' : '') + '">' +
+        '<div class="meal-time"><span class="num">' + esc(m.time) + '</span><span class="meal-type">' + NF.MEAL_LABEL[m.type] + '</span></div>' +
+        '<div class="meal-body">' +
+        '<h3>' + esc(title) + '</h3>' + macroLine(mm) +
+        '<ul class="items">' + m.items.map((it) => {
+          const f = F[it.id]; if (!f) return '';
+          const miss = m.missing.find((x) => x.id === it.id);
+          return '<li><span>' + esc(f.name) + '</span><span class="num">' + qtyLabel(f, it.g) + (miss ? ' <em class="tag-miss">нет ' + r0(miss.g) + '</em>' : '') + '</span></li>';
+        }).join('') + '</ul>' +
+        (m.extra && F[m.extra] ? '<p class="hint">Добавка к блюду: ' + esc(F[m.extra].name.toLowerCase()) + ', чтобы добрать калории.</p>' : '') +
+        (m.skipped && m.skipped.length ? '<p class="hint">Можно без: ' + m.skipped.map((id) => esc(F[id] ? F[id].name.toLowerCase() : id)).join(', ') + ' (нет дома).</p>' : '') +
+        (rec ? '<details class="steps"><summary>Как готовить · ' + rec.min + ' мин</summary><ol>' + rec.steps.map((s) => '<li>' + esc(s) + '</li>').join('') + '</ol></details>' : '') +
+        '<div class="meal-actions">' +
+        (m.eaten ? '<button class="btn ghost small" data-act="uneat" data-i="' + i + '">Отменить</button>'
+          : '<button class="btn small" data-act="eat" data-i="' + i + '">Съел</button><button class="btn ghost small" data-act="swap" data-i="' + i + '">Другой вариант</button>') +
+        '</div></div></li>';
+    });
+    html += '</ol>';
+    html += '<p class="hint">Когда отмечаешь «Съел», продукты списываются из запасов, и следующие планы собираются из того, что осталось.</p>';
+    return html;
+  }
+
+  function renderOnboarding() {
+    return '<section class="hero onboard"><p class="eyebrow">Добро пожаловать</p>' +
+      '<h1 class="display">Набор массы без перегибов</h1>' +
+      '<p>Введи рост, вес и цель. NovaFit посчитает безопасную норму калорий и БЖУ, соберёт меню из твоих продуктов, распишет приёмы пищи по сну и составит тренировки под твой инвентарь.</p></section>' +
+      profileForm(true);
+  }
+
+  // ───────────────── вкладка «Питание» ─────────────────
+  function renderFood() {
+    const segs = [['stock', 'Запасы'], ['calc', 'Порция'], ['recipes', 'Рецепты'], ['shop', 'Покупки']];
+    let html = '<h1 class="h1">Питание</h1><div class="seg" role="tablist">' + segs.map((s) =>
+      '<button role="tab" aria-selected="' + (ui.foodSeg === s[0]) + '" class="seg-btn' + (ui.foodSeg === s[0] ? ' on' : '') + '" data-act="seg" data-seg="' + s[0] + '">' + s[1] + '</button>').join('') + '</div>';
+    if (ui.foodSeg === 'stock') html += renderStock();
+    if (ui.foodSeg === 'calc') html += renderCalc();
+    if (ui.foodSeg === 'recipes') html += renderRecipes();
+    if (ui.foodSeg === 'shop') html += renderShop();
+    return html;
+  }
+
+  function renderStock() {
+    const F = fm();
+    let html = '<div class="card"><label class="label" for="food-search">Добавить продукт</label>' +
+      '<input id="food-search" class="input" type="search" autocomplete="off" placeholder="Например: гречка, яйца, творог" value="' + esc(ui.search) + '">' +
+      '<div id="search-results">' + searchResults() + '</div>' +
+      '<button class="link" data-act="custom-toggle">' + (ui.customOpen ? 'Скрыть' : 'Нет в списке? Добавить свой продукт') + '</button>' +
+      (ui.customOpen ? customFoodForm() : '') + '</div>';
+
+    const ids = Object.keys(S.inventory).filter((id) => F[id]);
+    if (S.demoInventory) {
+      html += '<div class="note note-info"><span>Это пример запасов. Замени на то, что реально лежит дома.</span><button class="btn small ghost" data-act="clear-demo">Очистить пример</button></div>';
+    }
+    if (!ids.length) {
+      html += '<div class="empty"><p>Запасов пока нет.</p><p class="muted">Найди продукт выше и укажи, сколько его дома. План питания соберётся из того, что есть, а недостающее попадёт в список покупок.</p></div>';
+      return html;
+    }
+    const groups = {};
+    ids.forEach((id) => { const c = F[id].cat; (groups[c] = groups[c] || []).push(id); });
+    Object.keys(NF.CAT_LABEL).forEach((cat) => {
+      if (!groups[cat]) return;
+      html += '<h2 class="h3">' + NF.CAT_LABEL[cat] + '</h2><ul class="stock">';
+      groups[cat].sort((a, b) => F[a].name.localeCompare(F[b].name, 'ru')).forEach((id) => {
+        const f = F[id];
+        html += '<li><div class="stock-name"><span>' + esc(f.name) + '</span><span class="muted small">' + qtyLabel(f, S.inventory[id]) + '</span></div>' +
+          '<div class="stock-ctrl"><input class="input num-in" type="number" inputmode="numeric" min="0" step="10" id="inv-' + esc(id) + '" data-bind="inv" data-id="' + esc(id) + '" value="' + r0(S.inventory[id]) + '" aria-label="Количество, ' + (LIQUID[id] ? 'мл' : 'г') + '">' +
+          '<span class="unit">' + (LIQUID[id] ? 'мл' : 'г') + '</span>' +
+          '<button class="icon-btn" data-act="inv-del" data-id="' + esc(id) + '" aria-label="Удалить">×</button></div></li>';
+      });
+      html += '</ul>';
+    });
+    return html;
+  }
+
+  function searchResults() {
+    const q = ui.search.trim().toLowerCase();
+    if (!q) return '';
+    const list = NF.allFoods(S.customFoods).filter((f) => f.name.toLowerCase().indexOf(q) >= 0).slice(0, 8);
+    if (!list.length) return '<p class="muted small">Ничего не нашлось. Добавь продукт вручную ниже.</p>';
+    return '<ul class="results">' + list.map((f) => {
+      const open = ui.addFood === f.id;
+      return '<li><button class="result" data-act="pick-food" data-id="' + esc(f.id) + '"><span>' + esc(f.name) + '</span><span class="muted small">' + f.kcal + ' ккал · Б ' + f.p + ' Ж ' + f.f + ' У ' + f.c + '</span></button>' +
+        (open ? '<div class="add-row"><input id="add-qty" class="input num-in" type="number" inputmode="decimal" min="0" placeholder="' + (f.perUnit ? '1' : '500') + '">' +
+          '<select id="add-unit" class="input">' + (f.perUnit ? '<option value="unit">' + esc(f.unit) + '</option>' : '') + '<option value="g">' + (LIQUID[f.id] ? 'мл' : 'г') + '</option>' + (f.perUnit ? '' : '<option value="kg">' + (LIQUID[f.id] ? 'л' : 'кг') + '</option>') + '</select>' +
+          '<button class="btn small" data-act="add-food" data-id="' + esc(f.id) + '">Добавить</button></div>' : '') + '</li>';
+    }).join('') + '</ul>';
+  }
+
+  function customFoodForm() {
+    return '<div class="custom"><p class="muted small">Значения с упаковки, на 100 г.</p>' +
+      '<input id="cf-name" class="input" placeholder="Название">' +
+      '<div class="grid4"><label>ккал<input id="cf-kcal" class="input" type="number" inputmode="decimal"></label><label>Б<input id="cf-p" class="input" type="number" inputmode="decimal"></label><label>Ж<input id="cf-f" class="input" type="number" inputmode="decimal"></label><label>У<input id="cf-c" class="input" type="number" inputmode="decimal"></label></div>' +
+      '<div class="grid2"><label>Категория<select id="cf-cat" class="input">' + Object.keys(NF.CAT_LABEL).map((k) => '<option value="' + k + '">' + NF.CAT_LABEL[k] + '</option>').join('') + '</select></label>' +
+      '<label>Сколько дома, г<input id="cf-qty" class="input" type="number" inputmode="numeric"></label></div>' +
+      '<button class="btn" data-act="custom-add">Сохранить продукт</button></div>';
+  }
+
+  function renderCalc() {
+    const F = fm();
+    const T = targets();
+    if (!T) return '<div class="empty"><p>Сначала заполни профиль, чтобы знать твою норму.</p></div>';
+    const target = NF.targetFor(T, NF.MEAL_SHARE[ui.calcMeal]);
+    const pool = Object.keys(S.inventory).filter((id) => F[id]);
+    let html = '<div class="card"><p class="muted small">Выбери продукты, которые хочешь съесть сейчас. NovaFit посчитает граммы, чтобы закрыть норму на этот приём пищи.</p>' +
+      '<div class="seg small">' + NF.MEAL_ORDER.map((t) => '<button class="seg-btn' + (ui.calcMeal === t ? ' on' : '') + '" data-act="calc-meal" data-t="' + t + '">' + NF.MEAL_LABEL[t] + '</button>').join('') + '</div>' +
+      '<p class="small">Цель на ' + NF.MEAL_LABEL[ui.calcMeal].toLowerCase() + ': ' + macroLine(target) + '</p>' +
+      '<label class="check"><input type="checkbox" id="calc-stock" data-bind="calc-stock"' + (ui.calcStock ? ' checked' : '') + '> не больше, чем есть дома</label>';
+    if (!pool.length) html += '<p class="muted">Добавь продукты в запасы, и они появятся здесь.</p>';
+    html += '<div class="pick">' + pool.map((id) => '<button class="pill' + (ui.calcSel.indexOf(id) >= 0 ? ' on' : '') + '" data-act="calc-toggle" data-id="' + esc(id) + '">' + esc(F[id].name) + '</button>').join('') + '</div></div>';
+    const sel = ui.calcSel.filter((id) => F[id]);
+    if (sel.length) {
+      const res = NF.portionCalc(sel, target, S.inventory, F, ui.calcStock);
+      const d = res.macros.kcal - target.kcal;
+      html += '<div class="card result-card"><h2 class="h3">Сколько съесть</h2><ul class="items big">' +
+        res.items.map((it) => '<li><span>' + esc(F[it.id].name) + '</span><span class="num">' + qtyLabel(F[it.id], it.g) + '</span></li>').join('') + '</ul>' +
+        macroLine(res.macros) +
+        (Math.abs(d) > target.kcal * 0.12 ? '<p class="note note-warn">' + (d < 0 ? 'Этих продуктов не хватает до нормы на ' + r0(-d) + ' ккал. Добавь что-то калорийное: орехи, масло, хлеб, банан.' : 'Получается больше нормы. Убери самый калорийный продукт.') + '</p>' : '') +
+        (res.macros.p < target.p * 0.75 ? '<p class="note note-warn">Мало белка: добавь яйца, творог, мясо или рыбу.</p>' : '') +
+        '</div>';
+    }
+    return html;
+  }
+
+  function recipeStatus(r) {
+    const req = r.ing.filter((i) => !i[2]);
+    const missing = req.filter((i) => (S.inventory[i[0]] || 0) < i[1] * 0.6);
+    return missing;
+  }
+
+  function renderRecipes() {
+    const F = fm();
+    const filters = [['all', 'Все'], ['b', 'Завтрак'], ['l', 'Обед/ужин'], ['s', 'Перекус']];
+    let list = NF.RECIPES.filter((r) => ui.recFilter === 'all' || r.meals.indexOf(ui.recFilter) >= 0);
+    list = list.map((r) => ({ r: r, miss: recipeStatus(r) })).sort((a, b) => a.miss.length - b.miss.length);
+    let html = '<div class="seg small">' + filters.map((f) => '<button class="seg-btn' + (ui.recFilter === f[0] ? ' on' : '') + '" data-act="rec-filter" data-f="' + f[0] + '">' + f[1] + '</button>').join('') + '</div>';
+    html += '<p class="hint">Граммовки указаны базовые. В плане на день они пересчитываются под твою норму.</p><div class="recipes">';
+    list.forEach((x) => {
+      const r = x.r;
+      const baseItems = r.ing.filter((i) => !i[2]).map((i) => ({ id: i[0], g: i[1] }));
+      const m = NF.macrosOf(baseItems, F);
+      const ok = x.miss.length === 0;
+      html += '<details class="recipe"><summary><span class="status ' + (ok ? 'ok' : x.miss.length <= 2 ? 'near' : 'no') + '">' + (ok ? 'Можно готовить' : 'Не хватает: ' + x.miss.length) + '</span>' +
+        '<span class="recipe-name">' + esc(r.name) + '</span><span class="muted small">' + r.meals.split('').map((t) => NF.MEAL_LABEL[t]).join(', ') + ' · ' + r.min + ' мин · ' + r0(m.kcal) + ' ккал</span></summary>' +
+        '<ul class="items">' + r.ing.map((i) => {
+          const f = F[i[0]]; const have = (S.inventory[i[0]] || 0) >= i[1] * 0.6;
+          return '<li class="' + (have ? '' : 'lack') + '"><span>' + esc(f.name) + (i[2] ? ' <span class="muted">(по желанию)</span>' : '') + '</span><span class="num">' + qtyLabel(f, i[1]) + '</span></li>';
+        }).join('') + '</ul>' + macroLine(m) +
+        '<ol class="steps-list">' + r.steps.map((s) => '<li>' + esc(s) + '</li>').join('') + '</ol></details>';
+    });
+    return html + '</div>';
+  }
+
+  function renderShop() {
+    const T = targets();
+    if (!T) return '<div class="empty"><p>Сначала заполни профиль.</p></div>';
+    const F = fm();
+    const list = NF.shoppingList(todayStr(), ui.shopDays, T, scheduleFor(todayStr()), S.inventory, F, recentPenalty(todayStr()));
+    let html = '<div class="seg small">' + [3, 7].map((d) => '<button class="seg-btn' + (ui.shopDays === d ? ' on' : '') + '" data-act="shop-days" data-d="' + d + '">На ' + d + ' ' + plural(d, 'день', 'дня', 'дней') + '</button>').join('') + '</div>';
+    if (!list.length) return html + '<div class="empty"><p>Всё необходимое на ' + ui.shopDays + ' ' + plural(ui.shopDays, 'день', 'дня', 'дней') + ' уже есть дома.</p></div>';
+    html += '<p class="hint">Список собран по меню на ближайшие дни с учётом того, что уже лежит дома. Отметь купленное и нажми кнопку внизу: продукты добавятся в запасы.</p><ul class="shop">';
+    list.forEach((it) => {
+      const f = F[it.id];
+      const on = !!ui.shopChecked[it.id];
+      html += '<li><label class="check"><input type="checkbox" id="shop-' + esc(it.id) + '" data-bind="shop" data-id="' + esc(it.id) + '" data-g="' + it.g + '"' + (on ? ' checked' : '') + '><span>' + esc(f.name) + '</span></label><span class="num">' + qtyLabel(f, it.g) + '</span></li>';
+    });
+    html += '</ul><button class="btn wide" data-act="shop-apply">Добавить купленное в запасы</button>';
+    return html;
+  }
+
+  // ───────────────── вкладка «Тренировки» ─────────────────
+  function currentProgram() { return NF.buildProgram(S.equip, S.level, S.train.days.length || 3); }
+
+  function renderTrain() {
+    const program = currentProgram();
+    const idx = S.workouts.length % program.length;
+    const w = S.draft && program.find((p) => p.key === S.draft.key) || program[idx];
+    const eq = S.equip;
+    let html = '<h1 class="h1">Тренировки</h1>';
+
+    html += '<details class="card equip"' + (S.workouts.length ? '' : ' open') + '><summary><span class="h3">Инвентарь и расписание</span><span class="muted small">' +
+      (eq.db ? eq.db + ' ' + plural(eq.db, 'гантель', 'гантели', 'гантелей') + ' по ' + eq.dbKg + ' кг' : 'без гантелей') + ' · ' + S.train.days.length + ' ' + plural(S.train.days.length, 'тренировка', 'тренировки', 'тренировок') + '/нед</span></summary>' +
+      '<div class="grid2"><label>Гантелей<select id="eq-db" class="input" data-bind="eq-db"><option value="0"' + (eq.db === 0 ? ' selected' : '') + '>нет</option><option value="1"' + (eq.db === 1 ? ' selected' : '') + '>1</option><option value="2"' + (eq.db === 2 ? ' selected' : '') + '>2</option></select></label>' +
+      '<label>Вес гантели, кг<input id="eq-kg" class="input" type="number" inputmode="decimal" min="1" max="60" step="0.5" data-bind="eq-kg" value="' + eq.dbKg + '"></label></div>' +
+      '<div class="checks">' + [['adjustable', 'Гантель разборная'], ['bar', 'Турник'], ['bench', 'Скамья'], ['band', 'Резинка-эспандер']].map((x) =>
+        '<label class="check"><input type="checkbox" id="eq-' + x[0] + '" data-bind="eq-flag" data-k="' + x[0] + '"' + (eq[x[0]] ? ' checked' : '') + '> ' + x[1] + '</label>').join('') + '</div>' +
+      '<label class="label">Дни тренировок</label><div class="days">' + WEEK.map((d) => '<button class="day' + (S.train.days.indexOf(d[0]) >= 0 ? ' on' : '') + '" data-act="day" data-d="' + d[0] + '">' + d[1] + '</button>').join('') + '</div>' +
+      '<div class="grid2"><label>Время тренировки<input id="tr-time" class="input" type="time" data-bind="tr-time" value="' + esc(S.train.time) + '"></label>' +
+      '<label>Уровень<select id="tr-level" class="input" data-bind="level"><option value="beginner"' + (S.level === 'beginner' ? ' selected' : '') + '>Новичок (до 1 года)</option><option value="intermediate"' + (S.level === 'intermediate' ? ' selected' : '') + '>Средний</option></select></label></div>' +
+      '<p class="hint">' + (S.train.days.length >= 4 ? 'Сплит «верх/низ»: каждая мышца 2 раза в неделю.' : 'Фулбоди: всё тело за тренировку, между тренировками минимум день отдыха.') +
+      (S.train.days.length > 5 ? ' Больше 5 тренировок в неделю мешают восстановлению при наборе массы.' : '') + '</p></details>';
+
+    html += '<div class="prog-row">' + program.map((p, i) => '<div class="prog-pill' + (p.key === w.key ? ' on' : '') + '"><span class="small muted">' + (i === idx ? 'следующая' : 'день ' + (i + 1)) + '</span><b>' + esc(p.title) + '</b><span class="small muted">' + p.items.length + ' упр.</span></div>').join('') + '</div>';
+
+    const draft = S.draft && S.draft.key === w.key ? S.draft : null;
+    html += '<section class="workout"><div class="workout-head"><h2 class="h2">' + esc(w.title) + '</h2>' +
+      (draft ? '<span class="badge">идёт</span>' : '<button class="btn small" data-act="w-start" data-k="' + w.key + '">Начать</button>') + '</div>';
+    html += '<details class="card"><summary class="h3">Разминка · 7–10 мин</summary><ul class="dots">' + NF.WARMUP.map((s) => '<li>' + esc(s) + '</li>').join('') + '</ul></details>';
+    w.items.forEach((it) => {
+      const ex = exById(it.id);
+      const pr = NF.progression(it, S.workouts, eq);
+      html += '<article class="ex"><div class="ex-head"><div><p class="eyebrow">' + esc(NF.SLOT_LABEL[it.slot]) + '</p><h3>' + esc(ex.name) + '</h3><p class="muted small">' + esc(ex.muscles) + '</p></div>' +
+        '<div class="ex-rx"><b class="num">' + it.sets + ' × ' + it.lo + '–' + it.hi + '</b><span class="small muted">' + it.unit + (ex.uni ? ' на сторону' : '') + ' · отдых ' + it.rest + ' с</span></div></div>' +
+        (it.tempo ? '<p class="tempo">' + esc(it.tempo) + '</p>' : '') +
+        '<details><summary class="small">Техника</summary><p class="small">' + esc(ex.tips) + '</p></details>' +
+        '<p class="prog prog-' + pr.status + '">' + esc(pr.text) + '</p>';
+      if (draft) {
+        const vals = draft.sets[it.id] || [];
+        html += '<div class="sets">' + Array.from({ length: it.sets }, (_, si) => '<label class="set"><span class="small muted">' + (si + 1) + '</span><input class="input num-in" type="number" inputmode="numeric" min="0" max="200" id="set-' + it.id + '-' + si + '" data-bind="set" data-id="' + it.id + '" data-i="' + si + '" value="' + (vals[si] != null ? vals[si] : '') + '" placeholder="' + it.hi + '"></label>').join('') + '</div>';
+      }
+      html += '</article>';
+    });
+    html += '<details class="card"><summary class="h3">Заминка</summary><ul class="dots">' + NF.COOLDOWN.map((s) => '<li>' + esc(s) + '</li>').join('') + '</ul></details>';
+    if (draft) html += '<div class="row-btns"><button class="btn wide" data-act="w-finish">Завершить тренировку</button><button class="btn ghost" data-act="w-cancel">Отменить</button></div>';
+    html += '</section>';
+
+    if (S.workouts.length) {
+      html += '<h2 class="h3">История</h2><ul class="history">' + S.workouts.slice(-6).reverse().map((h) => {
+        const vol = Object.keys(h.sets).reduce((s, k) => s + h.sets[k].reduce((a, b) => a + (b || 0), 0), 0);
+        return '<li><span>' + esc(fmtDate(h.date, { day: 'numeric', month: 'short' })) + '</span><span>' + esc(h.title) + '</span><span class="num muted">' + vol + ' повт.</span></li>';
+      }).join('') + '</ul>';
+    }
+    html += '<p class="hint">Повторения записывай честно: прогрессия считается по ним. Подходы заканчивай с запасом 1–2 повтора, до отказа доводи только последний подход изолирующих упражнений.</p>';
+    return html;
+  }
+
+  // ───────────────── вкладка «Сон» ─────────────────
+  function renderSleep() {
+    const date = todayStr();
+    const e = sleepEntry(date);
+    const log = S.sleep.log.slice().sort((a, b) => (a.date < b.date ? -1 : 1));
+    const last7 = [];
+    for (let i = 6; i >= 0; i--) { const d = addDays(date, -i); last7.push({ date: d, e: log.find((x) => x.date === d) }); }
+    const durs = last7.filter((x) => x.e).map((x) => NF.sleepMinutes(x.e.bed, x.e.wake));
+    const avg = durs.length ? durs.reduce((a, b) => a + b, 0) / durs.length : null;
+    const teen = S.profile && S.profile.age < 18;
+    const need = teen ? [480, 600] : [420, 540];
+    const sched = scheduleFor(date);
+
+    let html = '<h1 class="h1">Сон</h1>';
+    html += '<div class="card"><h2 class="h3">Как спал сегодня ночью</h2>' +
+      '<div class="grid2"><label>Лёг<input id="sl-bed" class="input" type="time" value="' + esc(e ? e.bed : S.sleep.bed) + '"></label>' +
+      '<label>Проснулся<input id="sl-wake" class="input" type="time" value="' + esc(e ? e.wake : S.sleep.wake) + '"></label></div>' +
+      '<label class="label">Качество сна</label><div class="days q">' + [1, 2, 3, 4, 5].map((q) => '<button class="day' + ((e ? e.q : ui.sleepQ || 3) === q ? ' on' : '') + '" data-act="sleep-q" data-q="' + q + '">' + q + '</button>').join('') + '</div>' +
+      '<button class="btn wide" data-act="sleep-save">' + (e ? 'Обновить запись' : 'Сохранить') + '</button></div>';
+
+    const maxH = 11 * 60;
+    html += '<div class="card"><div class="split"><h2 class="h3">Последние 7 ночей</h2><span class="num">' + (avg ? 'в среднем ' + fmtDur(r0(avg)) : 'нет данных') + '</span></div>' +
+      '<div class="sleep-chart" role="img" aria-label="Длительность сна за 7 дней">' +
+      '<div class="guide" style="bottom:' + (need[0] / maxH * 100).toFixed(1) + '%"><span>' + need[0] / 60 + ' ч</span></div>' +
+      '<div class="guide" style="bottom:' + (need[1] / maxH * 100).toFixed(1) + '%"><span>' + need[1] / 60 + ' ч</span></div>' +
+      last7.map((x) => {
+        const m = x.e ? NF.sleepMinutes(x.e.bed, x.e.wake) : 0;
+        const cls = !x.e ? 'none' : m < need[0] ? 'low' : 'ok';
+        return '<div class="sbar"><div class="sbar-fill ' + cls + '" style="height:' + (Math.min(m, maxH) / maxH * 100).toFixed(1) + '%" title="' + (x.e ? fmtDur(m) : 'нет записи') + '"></div><span class="small muted">' + esc(fmtDate(x.date, { weekday: 'short' })) + '</span></div>';
+      }).join('') + '</div>';
+    if (avg != null && avg < need[0]) html += '<p class="note note-warn">Меньше ' + need[0] / 60 + ' часов сна снижает выработку тестостерона и гормона роста и мешает набирать именно мышцы, а не жир. Сдвинь отбой на 30 минут раньше.</p>';
+    else if (avg != null) html += '<p class="note note-ok">Сна достаточно для восстановления.</p>';
+    html += '</div>';
+
+    html += '<div class="card"><h2 class="h3">Обычный режим</h2><p class="muted small">По этому режиму строится расписание еды. Если отметил сон за сегодня, используется фактическое время подъёма.</p>' +
+      '<div class="grid2"><label>Отбой<input id="sl-def-bed" class="input" type="time" data-bind="sleep-def" data-k="bed" value="' + esc(S.sleep.bed) + '"></label>' +
+      '<label>Подъём<input id="sl-def-wake" class="input" type="time" data-bind="sleep-def" data-k="wake" value="' + esc(S.sleep.wake) + '"></label></div>' +
+      '<p class="muted small">Сон по режиму: ' + fmtDur(NF.sleepMinutes(S.sleep.bed, S.sleep.wake)) + (teen ? ' (в твоём возрасте нужно 8–10 ч)' : ' (взрослым нужно 7–9 ч)') + '</p>' +
+      '<h3 class="h3">Расписание еды на сегодня</h3><ul class="sched">' + sched.meals.map((m) => '<li><span class="num">' + m.time + '</span><span>' + NF.MEAL_LABEL[m.type] + '</span><span class="muted small">' + r0(m.share * 100) + ' % нормы</span></li>').join('') +
+      '<li><span class="num">' + esc(S.sleep.bed) + '</span><span>Отбой</span><span class="muted small">последняя еда за 3 ч</span></li></ul>' +
+      (sched.note ? '<p class="hint">' + esc(sched.note) + '</p>' : '') + '</div>';
+
+    html += '<details class="card"><summary class="h3">Как спать лучше для роста мышц</summary><ul class="dots">' +
+      '<li>Ложись и вставай в одно время, даже в выходные: разброс не больше часа.</li>' +
+      '<li>За 3 часа до сна — без тяжёлой еды. Если голодно, подойдёт творог или кефир: казеин медленно отдаёт белок ночью.</li>' +
+      '<li>Кофеин — не позже, чем за 8 часов до сна.</li>' +
+      '<li>Экран — за 30–60 минут до сна убрать или включить ночной режим.</li>' +
+      '<li>В спальне прохладно (18–20 °C) и темно.</li>' +
+      '<li>Тяжёлую тренировку заканчивай хотя бы за 2–3 часа до отбоя.</li></ul></details>';
+    if (log.length) {
+      html += '<h2 class="h3">Журнал</h2><ul class="history">' + log.slice(-10).reverse().map((x) => '<li><span>' + esc(fmtDate(x.date, { day: 'numeric', month: 'short' })) + '</span><span class="num">' + esc(x.bed) + ' → ' + esc(x.wake) + '</span><span class="num">' + fmtDur(NF.sleepMinutes(x.bed, x.wake)) + ' · ' + x.q + '/5</span></li>').join('') + '</ul>';
+    }
+    return html;
+  }
+
+  // ───────────────── вкладка «Профиль» ─────────────────
+  function profileForm(first) {
+    const p = S.profile || S.draftProfile;
+    const opt = (v, cur, label) => '<option value="' + v + '"' + (String(v) === String(cur) ? ' selected' : '') + '>' + label + '</option>';
+    return '<form class="card form" id="profile-form" novalidate>' +
+      (first ? '<p class="muted small">Поля заполнены примером. Замени на свои данные.</p>' : '') +
+      '<div class="grid2"><label>Пол<select id="pf-sex" class="input">' + opt('m', p.sex, 'Мужской') + opt('f', p.sex, 'Женский') + '</select></label>' +
+      '<label>Возраст<input id="pf-age" class="input" type="number" inputmode="numeric" min="12" max="90" value="' + p.age + '"></label></div>' +
+      '<div class="grid3"><label>Рост, см<input id="pf-height" class="input" type="number" inputmode="numeric" value="' + p.height + '"></label>' +
+      '<label>Вес, кг<input id="pf-weight" class="input" type="number" inputmode="decimal" step="0.1" value="' + p.weight + '"></label>' +
+      '<label>Цель, кг<input id="pf-target" class="input" type="number" inputmode="decimal" step="0.1" value="' + p.target + '"></label></div>' +
+      '<label>Активность<select id="pf-activity" class="input">' + NF.ACTIVITY.map((a) => opt(a.v, p.activity, a.label)).join('') + '</select></label>' +
+      '<label>Темп набора<select id="pf-pace" class="input">' + Object.keys(NF.PACE).map((k) => opt(k, p.pace, NF.PACE[k].label)).join('') + '</select></label>' +
+      (ui.errors.length ? '<div class="note note-danger">' + ui.errors.map(esc).join('<br>') + '</div>' : '') +
+      '<button class="btn wide" type="submit">' + (first ? 'Рассчитать мою программу' : 'Сохранить') + '</button></form>';
+  }
+
+  function weightChart() {
+    const pts = S.weights.slice(-60);
+    if (pts.length < 2) return '<p class="muted small">Взвешивайся 2–3 раза в неделю утром натощак. С двумя записями появится график.</p>';
+    const target = S.profile.target;
+    const vals = pts.map((p) => p.kg).concat([target]);
+    let lo = Math.floor(Math.min.apply(null, vals) - 0.5), hi = Math.ceil(Math.max.apply(null, vals) + 0.5);
+    const W = 320, H = 150, L = 34, R = 8, Tp = 10, B = 22;
+    const t0 = new Date(pts[0].date).getTime(), t1 = Math.max(t0 + 864e5, new Date(pts[pts.length - 1].date).getTime());
+    const x = (d) => L + (new Date(d).getTime() - t0) / (t1 - t0) * (W - L - R);
+    const y = (v) => Tp + (hi - v) / (hi - lo) * (H - Tp - B);
+    const path = pts.map((p, i) => (i ? 'L' : 'M') + x(p.date).toFixed(1) + ' ' + y(p.kg).toFixed(1)).join(' ');
+    const area = path + ' L' + x(pts[pts.length - 1].date).toFixed(1) + ' ' + (H - B) + ' L' + x(pts[0].date).toFixed(1) + ' ' + (H - B) + ' Z';
+    const mid = Math.round((lo + hi) / 2);
+    const last = pts[pts.length - 1];
+    return '<div class="chart-wrap"><svg viewBox="0 0 ' + W + ' ' + H + '" class="chart" role="img" aria-label="График веса">' +
+      [lo, mid, hi].map((v) => '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" class="grid"/><text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" class="axis" text-anchor="end">' + v + '</text>').join('') +
+      '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(target) + '" y2="' + y(target) + '" class="target"/><text x="' + (W - R) + '" y="' + (y(target) - 5) + '" class="axis accent" text-anchor="end">цель ' + target + '</text>' +
+      '<path d="' + area + '" class="area"/><path d="' + path + '" class="line"/>' +
+      '<circle cx="' + x(last.date) + '" cy="' + y(last.kg) + '" r="4" class="dot"/>' +
+      '<text x="' + L + '" y="' + (H - 6) + '" class="axis">' + esc(fmtDate(pts[0].date, { day: 'numeric', month: 'short' })) + '</text>' +
+      '<text x="' + (W - R) + '" y="' + (H - 6) + '" class="axis" text-anchor="end">' + esc(fmtDate(last.date, { day: 'numeric', month: 'short' })) + '</text>' +
+      '</svg></div>';
+  }
+
+  function renderProfile() {
+    if (!S.profile) return renderOnboarding();
+    const T = targets();
+    let html = '<h1 class="h1">Профиль и норма</h1>';
+    html += '<section class="card targets"><p class="eyebrow">Твоя норма в день</p><div class="big-kcal"><span class="display num">' + T.kcal + '</span> ккал</div>' +
+      '<div class="tgrid"><div><b class="num">' + T.protein + ' г</b><span>белки · ' + T.proteinPerKg.toString().replace('.', ',') + ' г/кг</span></div><div><b class="num">' + T.fat + ' г</b><span>жиры</span></div><div><b class="num">' + T.carbs + ' г</b><span>углеводы</span></div>' +
+      '<div><b class="num">' + (T.water / 1000).toFixed(1).replace('.', ',') + ' л</b><span>вода (+0,5 л в день тренировки)</span></div><div><b class="num">' + T.fiber + ' г</b><span>клетчатка</span></div><div><b class="num">+' + T.weekly.toString().replace('.', ',') + ' кг</b><span>в неделю</span></div></div>' +
+      '<p class="calc-line small muted">Базовый обмен ' + T.bmr + ' × активность = расход ' + T.tdee + ' ккал. Профицит +' + T.surplus + (T.adjust ? (T.adjust > 0 ? ' +' : ' ') + T.adjust + ' (подстройка по весу)' : '') + '. ИМТ ' + T.bmi + ' → ' + T.targetBmi + ' на цели, ~' + T.weeks + ' ' + plural(T.weeks, 'неделя', 'недели', 'недель') + '.</p>' +
+      warningsBlock(T.warnings) + '</section>';
+
+    html += '<section class="card"><div class="split"><h2 class="h3">Вес</h2><span class="muted small">старт ' + (S.startWeight || S.profile.weight) + ' кг</span></div>' + weightChart() +
+      '<div class="add-row"><input id="w-kg" class="input num-in" type="number" inputmode="decimal" step="0.1" placeholder="' + S.profile.weight + '"><span class="unit">кг</span><button class="btn small" data-act="w-add">Записать вес</button></div>' +
+      (S.adaptMsg ? '<p class="note note-info">' + esc(S.adaptMsg) + '</p>' : '') +
+      '<p class="hint">Раз в неделю NovaFit сравнивает средний вес за 7 дней с прошлой неделей и сам поправляет калории на ±100 ккал (в сумме не больше ±300).</p></section>';
+
+    html += '<details class="card"><summary class="h3">Изменить данные</summary>' + profileForm(false) + '</details>';
+
+    html += '<details class="card"><summary class="h3">Откуда цифры и что безопасно</summary><div class="prose small">' +
+      '<p><b>Калории.</b> Базовый обмен по формуле Миффлина — Сан Жеора × коэффициент активности. Сверху профицит 200–500 ккал, чтобы прибавлять 0,25–0,5 % массы тела в неделю. Быстрее не надо: лишнее уходит в жир, а не в мышцы (Iraki et al., 2019; позиция ISSN).</p>' +
+      '<p><b>Белок</b> 1,6–2,2 г на кг веса. Выше 2,2 г/кг дополнительной пользы для мышц нет (метаанализ Morton et al., 2018). Приложение никогда не превышает этот потолок.</p>' +
+      '<p><b>Жиры</b> 25–30 % калорий, но не меньше 0,8 г/кг: это нужно для гормонов. <b>Углеводы</b> занимают остальное и дают энергию на тренировки.</p>' +
+      '<p><b>Сон</b> 7–9 часов (подросткам 8–10). При недосыпе при той же еде набирается больше жира и меньше мышц.</p>' +
+      '<p><b>Добавки.</b> Достаточно обычной еды. Сывороточный протеин — это просто еда в порошке. Креатин моногидрат 3–5 г в день — самая изученная добавка для взрослых здоровых людей. Больше 5 г пользы не даёт, загрузочные фазы не нужны. До 18 лет, при болезнях почек или при приёме лекарств — только после консультации врача. Никаких «гормональных» и «жиросжигающих» препаратов.</p>' +
+      '<p><b>Когда идти к врачу.</b> ИМТ ниже 16; вес падает без причины; есть хронические болезни (почки, печень, диабет, ЖКТ); после еды бывают отёки, сердцебиение или боль.</p>' +
+      '<p class="muted">NovaFit не ставит диагнозов и не заменяет врача или диетолога.</p></div></details>';
+
+    html += '<details class="card"><summary class="h3">Данные</summary><p class="small muted">Всё хранится только на этом устройстве. Сделай копию, чтобы перенести данные на другой телефон.</p>' +
+      '<div class="row-btns"><button class="btn ghost small" data-act="export">Скопировать данные</button><button class="btn ghost small" data-act="import-toggle">Вставить данные</button></div>' +
+      (ui.importOpen ? '<textarea id="import-text" class="input" rows="4" placeholder="Вставь сюда скопированные данные"></textarea><button class="btn small" data-act="import">Загрузить</button>' : '') +
+      (ui.confirmReset ? '<div class="note note-danger"><span>Удалить все данные без возможности восстановления?</span><div class="row-btns"><button class="btn small danger" data-act="reset-yes">Удалить</button><button class="btn small ghost" data-act="reset-no">Отмена</button></div></div>'
+        : '<button class="link danger-text" data-act="reset">Сбросить всё</button>') + '</details>';
+    return html;
+  }
+
+  // ───────────────── рендер ─────────────────
+  const TABS = { today: renderToday, food: renderFood, train: renderTrain, sleep: renderSleep, profile: renderProfile };
+
+  function render() {
+    const view = document.getElementById('view');
+    const tab = TABS[S.tab] ? S.tab : 'today';
+    view.innerHTML = TABS[tab]();
+    document.querySelectorAll('.nav-btn').forEach((b) => {
+      const on = b.dataset.tab === tab;
+      b.classList.toggle('on', on);
+      if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+  }
+
+  function num(id) { const el = document.getElementById(id); return el ? parseFloat(String(el.value).replace(',', '.')) : NaN; }
+  function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+  // ───────────────── действия ─────────────────
+  const ACTIONS = {
+    tab(el) { S.tab = el.dataset.tab; save(); render(); window.scrollTo(0, 0); },
+    rebuild() { rebuildPlan(todayStr()); render(); toast('План пересобран из текущих запасов'); },
+    eat(el) {
+      const plan = getPlan(todayStr()); const m = plan.meals[+el.dataset.i];
+      m.eaten = true; m.items.forEach((it) => { if (S.inventory[it.id] != null) changeInventory(it.id, -it.g); });
+      plan.invVersion = S.invVersion; save(); render(); toast('Записал. Продукты списаны из запасов');
+    },
+    uneat(el) {
+      const plan = getPlan(todayStr()); const m = plan.meals[+el.dataset.i];
+      m.eaten = false; m.items.forEach((it) => { if (!m.missing.find((x) => x.id === it.id)) changeInventory(it.id, it.g); });
+      plan.invVersion = S.invVersion; save(); render();
+    },
+    swap(el) {
+      const date = todayStr(); const plan = getPlan(date); const i = +el.dataset.i;
+      plan.swaps = (plan.swaps || 0) + 1;
+      const inv = Object.assign({}, S.inventory);
+      plan.meals.forEach((m, j) => { if (j !== i && !m.eaten) m.items.forEach((it) => { if (inv[it.id] != null) inv[it.id] = Math.max(0, inv[it.id] - it.g); }); });
+      plan.meals[i] = NF.replanMeal(plan, i, targets(), scheduleFor(date), inv, fm(), recentPenalty(date), plan.swaps);
+      save(); render();
+    },
+    seg(el) { ui.foodSeg = el.dataset.seg; render(); },
+    'pick-food'(el) { ui.addFood = ui.addFood === el.dataset.id ? null : el.dataset.id; document.getElementById('search-results').innerHTML = searchResults(); const q = document.getElementById('add-qty'); if (q) q.focus(); },
+    'add-food'(el) {
+      const f = fm()[el.dataset.id]; const q = num('add-qty'); const u = val('add-unit');
+      if (!(q > 0)) { toast('Укажи количество'); return; }
+      const g = u === 'unit' ? q * f.perUnit : u === 'kg' ? q * 1000 : q;
+      if (S.demoInventory) S.demoInventory = false;
+      changeInventory(f.id, g); ui.addFood = null; ui.search = ''; save(); render(); toast(f.name + ': +' + r0(g) + (LIQUID[f.id] ? ' мл' : ' г'));
+    },
+    'inv-del'(el) { delete S.inventory[el.dataset.id]; S.invVersion++; save(); render(); },
+    'clear-demo'() { S.inventory = {}; S.demoInventory = false; S.invVersion++; save(); render(); },
+    'custom-toggle'() { ui.customOpen = !ui.customOpen; render(); },
+    'custom-add'() {
+      const name = val('cf-name').trim(); const kcal = num('cf-kcal'), p = num('cf-p'), f = num('cf-f'), c = num('cf-c');
+      if (!name || !(kcal >= 0) || !(p >= 0) || !(f >= 0) || !(c >= 0)) { toast('Заполни название и КБЖУ на 100 г'); return; }
+      if (Math.abs(p * 4 + f * 9 + c * 4 - kcal) > Math.max(40, kcal * 0.25)) { toast('КБЖУ не сходятся с калориями. Проверь цифры на упаковке.'); return; }
+      const cat = val('cf-cat');
+      const id = 'c_' + Date.now().toString(36);
+      S.customFoods.push({ id: id, name: name, kcal: kcal, p: p, f: f, c: c, cat: cat, maxMeal: cat === 'fat' ? 40 : cat === 'veg' ? 300 : 250, unit: null, perUnit: null, custom: true });
+      const q = num('cf-qty'); if (q > 0) changeInventory(id, q);
+      S.demoInventory = false; ui.customOpen = false; save(); render(); toast('Продукт добавлен');
+    },
+    'calc-meal'(el) { ui.calcMeal = el.dataset.t; render(); },
+    'calc-toggle'(el) { const id = el.dataset.id; const i = ui.calcSel.indexOf(id); if (i >= 0) ui.calcSel.splice(i, 1); else ui.calcSel.push(id); render(); },
+    'rec-filter'(el) { ui.recFilter = el.dataset.f; render(); },
+    'shop-days'(el) { ui.shopDays = +el.dataset.d; ui.shopChecked = {}; render(); },
+    'shop-apply'() {
+      const ids = Object.keys(ui.shopChecked); if (!ids.length) { toast('Отметь, что купил'); return; }
+      ids.forEach((id) => changeInventory(id, ui.shopChecked[id]));
+      S.demoInventory = false; ui.shopChecked = {}; save(); render(); toast('Добавлено в запасы: ' + ids.length);
+    },
+    day(el) {
+      const d = +el.dataset.d; const i = S.train.days.indexOf(d);
+      if (i >= 0) { if (S.train.days.length <= 2) { toast('Минимум 2 тренировки в неделю'); return; } S.train.days.splice(i, 1); } else S.train.days.push(d);
+      S.draft = null; save(); render();
+    },
+    'w-start'(el) { S.draft = { key: el.dataset.k, date: todayStr(), sets: {} }; save(); render(); },
+    'w-cancel'() { S.draft = null; save(); render(); },
+    'w-finish'() {
+      const program = currentProgram(); const w = program.find((p) => p.key === S.draft.key);
+      const filled = Object.keys(S.draft.sets).some((k) => S.draft.sets[k].some((v) => v > 0));
+      if (!filled) { toast('Впиши повторения хотя бы в один подход'); return; }
+      S.workouts.push({ date: todayStr(), key: w.key, title: w.title, sets: S.draft.sets });
+      S.draft = null; save(); render(); window.scrollTo(0, 0); toast('Тренировка записана. Отдыхай и ешь по плану');
+    },
+    'sleep-q'(el) { ui.sleepQ = +el.dataset.q; const e = sleepEntry(todayStr()); if (e) { e.q = ui.sleepQ; save(); } render(); },
+    'sleep-save'() {
+      const bed = val('sl-bed'), wake = val('sl-wake');
+      if (NF.toMin(bed) == null || NF.toMin(wake) == null) { toast('Укажи время'); return; }
+      const date = todayStr(); const e = sleepEntry(date);
+      const q = ui.sleepQ || (e ? e.q : 3);
+      if (e) Object.assign(e, { bed: bed, wake: wake, q: q }); else S.sleep.log.push({ date: date, bed: bed, wake: wake, q: q });
+      S.sleep.log = S.sleep.log.slice(-120);
+      // время еды завязано на подъём — пересобираем время в плане
+      const plan = S.plans[date];
+      if (plan) { const sc = scheduleFor(date); plan.meals.forEach((m, i) => { if (sc.meals[i]) m.time = sc.meals[i].time; }); }
+      save(); render(); toast('Сон записан: ' + fmtDur(NF.sleepMinutes(bed, wake)));
+    },
+    'w-add'() {
+      const kg = num('w-kg'); if (!(kg >= 30 && kg <= 250)) { toast('Вес от 30 до 250 кг'); return; }
+      const date = todayStr(); const ex = S.weights.find((w) => w.date === date);
+      if (ex) ex.kg = kg; else S.weights.push({ date: date, kg: kg });
+      S.weights.sort((a, b) => (a.date < b.date ? -1 : 1));
+      S.profile.weight = kg;
+      runAdaptation(); save(); render();
+      if (kg >= S.profile.target) toast('Цель достигнута! Поставь новую или перейди на поддержание');
+      else toast('Вес записан');
+    },
+    export() {
+      const text = JSON.stringify(S);
+      const done = () => toast('Данные скопированы');
+      try {
+        navigator.clipboard.writeText(text).then(done, () => { fallbackCopy(text); });
+      } catch (e) { fallbackCopy(text); }
+    },
+    'import-toggle'() { ui.importOpen = !ui.importOpen; render(); },
+    import() {
+      try {
+        const obj = JSON.parse(val('import-text'));
+        if (!obj || obj.v !== 1) throw new Error('bad');
+        S = Object.assign(defaults(), obj); ui.importOpen = false; save(); render(); toast('Данные загружены');
+      } catch (e) { toast('Это не данные NovaFit. Скопируй их заново.'); }
+    },
+    reset() { ui.confirmReset = true; render(); },
+    'reset-no'() { ui.confirmReset = false; render(); },
+    'reset-yes'() { S = defaults(); ui.confirmReset = false; save(); render(); toast('Все данные удалены'); },
+  };
+
+  function fallbackCopy(text) {
+    ui.importOpen = true; render();
+    const ta = document.getElementById('import-text');
+    ta.value = text; ta.select();
+    toast('Выделил данные: скопируй их вручную');
+  }
+
+  document.addEventListener('click', (e) => {
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const fn = ACTIONS[el.dataset.act];
+    if (fn) { e.preventDefault(); fn(el); }
+  });
+
+  document.addEventListener('input', (e) => {
+    const el = e.target;
+    if (el.id === 'food-search') {
+      ui.search = el.value; ui.addFood = null;
+      document.getElementById('search-results').innerHTML = searchResults();
+    }
+    if (el.dataset.bind === 'set') {
+      const id = el.dataset.id, i = +el.dataset.i;
+      const arr = (S.draft.sets[id] = S.draft.sets[id] || []);
+      const v = parseInt(el.value, 10);
+      arr[i] = isNaN(v) ? null : Math.max(0, Math.min(200, v));
+      save();
+    }
+  });
+
+  document.addEventListener('change', (e) => {
+    const el = e.target; const b = el.dataset.bind;
+    if (!b) return;
+    if (b === 'inv') {
+      const g = Math.max(0, parseFloat(el.value) || 0);
+      const cur = S.inventory[el.dataset.id] || 0;
+      changeInventory(el.dataset.id, g - cur); S.demoInventory = false; save(); render();
+    } else if (b === 'calc-stock') { ui.calcStock = el.checked; render(); }
+    else if (b === 'shop') { if (el.checked) ui.shopChecked[el.dataset.id] = +el.dataset.g; else delete ui.shopChecked[el.dataset.id]; }
+    else if (b === 'eq-db') { S.equip.db = +el.value; S.draft = null; save(); render(); }
+    else if (b === 'eq-kg') { const v = parseFloat(el.value); if (v > 0 && v <= 60) { S.equip.dbKg = v; S.draft = null; save(); render(); } }
+    else if (b === 'eq-flag') { S.equip[el.dataset.k] = el.checked; S.draft = null; save(); render(); }
+    else if (b === 'tr-time') { S.train.time = el.value || '18:00'; save(); render(); }
+    else if (b === 'level') { S.level = el.value; S.draft = null; save(); render(); }
+    else if (b === 'sleep-def') { if (NF.toMin(el.value) != null) { S.sleep[el.dataset.k] = el.value; save(); render(); } }
+  });
+
+  document.addEventListener('submit', (e) => {
+    if (e.target.id !== 'profile-form') return;
+    e.preventDefault();
+    const p = {
+      sex: val('pf-sex'), age: num('pf-age'), height: num('pf-height'), weight: num('pf-weight'), target: num('pf-target'),
+      activity: parseFloat(val('pf-activity')), pace: val('pf-pace'),
+    };
+    ui.errors = NF.validateProfile(p);
+    if (ui.errors.length) { render(); return; }
+    const first = !S.profile;
+    S.profile = p;
+    if (first) { S.startWeight = p.weight; S.weights = [{ date: todayStr(), kg: p.weight }]; }
+    else {
+      const ex = S.weights.find((w) => w.date === todayStr());
+      if (ex) ex.kg = p.weight; else if (!S.weights.length || S.weights[S.weights.length - 1].kg !== p.weight) S.weights.push({ date: todayStr(), kg: p.weight });
+    }
+    if (first) S.tab = 'today';
+    save(); render(); window.scrollTo(0, 0);
+    toast(first ? 'Программа готова' : 'Сохранено');
+  });
+
+  // ───────────────── старт ─────────────────
+  if (S.profile) { runAdaptation(); save(); }
+  render();
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && !window.__NF_EMBED) {
+    try { navigator.serviceWorker.register('sw.js').catch(() => {}); } catch (e) { /* ignore */ }
+  }
+})();
+</script>
+</body>
+</html>
