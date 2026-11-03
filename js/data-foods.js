@@ -1,0 +1,205 @@
+/* NovaFit — база продуктов.
+ * Значения на 100 г (для жидкостей — на 100 мл), усреднены по таблицам
+ * Скурихина/Тутельяна и USDA FoodData Central.
+ * Крупы, макароны и бобовые — в СУХОМ виде (так их удобно взвешивать из пачки).
+ * cat: protein | carb | fat | veg | fruit | dairy
+ * unit/perUnit — если продукт удобнее считать штуками (яйцо ≈ 55 г).
+ * maxMeal — разумный максимум на один приём пищи, чтобы алгоритм не предлагал
+ * «съешь 600 г арахисовой пасты».
+ */
+(function (g) {
+  const NF = (g.NF = g.NF || {});
+
+  //   id                 название                                 ккал   Б     Ж     У     кат      max   ед.   г/ед
+  const rows = [
+    ['oats',            'Овсяные хлопья (сухие)',                   366, 12.0,  6.2, 62.0, 'carb',   120],
+    ['buckwheat',       'Гречка (сухая)',                           343, 12.6,  3.3, 62.1, 'carb',   120],
+    ['rice',            'Рис белый (сухой)',                        344,  6.7,  0.7, 78.9, 'carb',   130],
+    ['pasta',           'Макароны из твёрдых сортов (сухие)',       350, 12.0,  1.5, 71.0, 'carb',   130],
+    ['bulgur',          'Булгур (сухой)',                           342, 12.3,  1.3, 75.9, 'carb',   120],
+    ['potato',          'Картофель',                                 77,  2.0,  0.4, 16.3, 'carb',   400],
+    ['bread',           'Хлеб цельнозерновой',                      247, 13.0,  3.4, 41.0, 'carb',   120, 'ломтик', 30],
+    ['lavash',          'Лаваш тонкий',                             277,  9.0,  1.2, 56.0, 'carb',   100, 'лист', 90],
+    ['chicken_breast',  'Куриная грудка (сырая)',                   113, 23.6,  1.9,  0.4, 'protein',250],
+    ['chicken_thigh',   'Куриное бедро без кожи (сырое)',           121, 19.7,  4.1,  0.0, 'protein',250],
+    ['turkey',          'Филе индейки (сырое)',                     112, 23.5,  1.5,  0.0, 'protein',250],
+    ['beef',            'Говядина постная (сырая)',                 187, 18.9, 12.4,  0.0, 'protein',220],
+    ['minced_beef',     'Фарш говяжий 15% (сырой)',                 215, 17.2, 15.0,  0.0, 'protein',200],
+    ['pork',            'Свиная вырезка (сырая)',                   120, 21.0,  3.5,  0.0, 'protein',220],
+    ['fish_white',      'Минтай / хек (сырой)',                      72, 15.9,  0.9,  0.0, 'protein',300],
+    ['salmon',          'Горбуша / лосось (сырой)',                 140, 20.5,  6.5,  0.0, 'protein',220],
+    ['tuna_can',        'Тунец консерв. в собств. соку',            96, 21.0,  1.0,  0.0, 'protein',185, 'банка', 140],
+    ['eggs',            'Яйцо куриное',                             157, 12.7, 11.5,  0.7, 'protein',220, 'шт', 55],
+    ['cottage5',        'Творог 5%',                                121, 17.2,  5.0,  1.8, 'dairy',  300],
+    ['cottage9',        'Творог 9%',                                159, 16.7,  9.0,  2.0, 'dairy',  300],
+    ['milk',            'Молоко 2,5%',                               52,  2.8,  2.5,  4.7, 'dairy',  500],
+    ['kefir',           'Кефир 2,5%',                                53,  2.9,  2.5,  4.0, 'dairy',  500],
+    ['yogurt',          'Йогурт греческий 2%',                       73, 10.0,  1.9,  3.9, 'dairy',  300],
+    ['cheese',          'Сыр твёрдый',                              356, 24.0, 28.0,  0.5, 'dairy',   60],
+    ['smetana',         'Сметана 15%',                              158,  2.6, 15.0,  3.0, 'dairy',   60],
+    ['protein_powder',  'Протеин сывороточный',                     380, 75.0,  6.0,  8.0, 'protein', 40, 'мерная ложка', 30],
+    ['peanut_butter',   'Арахисовая паста',                         588, 25.0, 50.0, 20.0, 'fat',     40],
+    ['peanuts',         'Арахис',                                   567, 26.0, 49.0, 16.0, 'fat',     50],
+    ['walnuts',         'Грецкие орехи',                            654, 15.0, 65.0, 14.0, 'fat',     40],
+    ['almonds',         'Миндаль',                                  579, 21.0, 50.0, 22.0, 'fat',     40],
+    ['olive_oil',       'Масло оливковое',                          884,  0.0,100.0,  0.0, 'fat',     20],
+    ['sunflower_oil',   'Масло подсолнечное',                       899,  0.0, 99.9,  0.0, 'fat',     20],
+    ['butter',          'Масло сливочное 82%',                      748,  0.5, 82.5,  0.8, 'fat',     20],
+    ['avocado',         'Авокадо',                                  160,  2.0, 14.7,  8.5, 'fat',    150, 'шт', 140],
+    ['banana',          'Банан',                                     89,  1.1,  0.3, 22.8, 'fruit',  300, 'шт', 120],
+    ['apple',           'Яблоко',                                    52,  0.3,  0.2, 13.8, 'fruit',  360, 'шт', 180],
+    ['raisins',         'Изюм',                                     299,  3.1,  0.5, 79.0, 'fruit',   50],
+    ['dried_apricots',  'Курага',                                   241,  3.4,  0.5, 62.6, 'fruit',   50],
+    ['honey',           'Мёд',                                      304,  0.3,  0.0, 82.0, 'carb',    30],
+    ['frozen_berries',  'Ягоды замороженные',                        45,  0.7,  0.3, 10.0, 'fruit',  200],
+    ['tomato',          'Помидор',                                   18,  0.9,  0.2,  3.9, 'veg',    300],
+    ['cucumber',        'Огурец',                                    15,  0.7,  0.1,  3.6, 'veg',    300],
+    ['cabbage',         'Капуста белокочанная',                      25,  1.3,  0.1,  5.8, 'veg',    300],
+    ['carrot',          'Морковь',                                   41,  0.9,  0.2,  9.6, 'veg',    200],
+    ['onion',           'Лук репчатый',                              40,  1.1,  0.1,  9.3, 'veg',    100],
+    ['broccoli',        'Брокколи (замороженная)',                   34,  2.8,  0.4,  6.6, 'veg',    300],
+    ['frozen_veg',      'Овощная смесь замороженная',                64,  3.0,  0.5, 12.0, 'veg',    300],
+    ['mushrooms',       'Шампиньоны',                                22,  3.1,  0.3,  3.3, 'veg',    300],
+    ['beans_can',       'Фасоль консервированная (без соуса)',      120,  8.0,  0.5, 21.0, 'carb',   250],
+    ['lentils',         'Чечевица (сухая)',                         352, 24.6,  1.1, 63.0, 'carb',   120],
+    ['chickpeas',       'Нут (сухой)',                              364, 19.3,  6.0, 60.7, 'carb',   120],
+    ['tomato_paste',    'Томатная паста',                            82,  4.3,  0.5, 18.9, 'veg',     50],
+    ['beet',            'Свёкла',                                    43,  1.6,  0.2,  9.6, 'veg',    250],
+    // ── продукты, которые легко найти в любой стране ──
+    ['quinoa',          'Киноа (сухая)',                            368, 14.1,  6.1, 64.2, 'carb',   120],
+    ['couscous',        'Кускус (сухой)',                           376, 12.8,  0.6, 77.4, 'carb',   120],
+    ['rice_noodles',    'Рисовая лапша (сухая)',                    364,  6.0,  0.6, 80.0, 'carb',   120],
+    ['tortilla',        'Тортилья пшеничная',                       306,  8.2,  7.9, 50.5, 'carb',   180, 'шт', 60],
+    ['sweet_potato',    'Батат',                                     86,  1.6,  0.1, 20.1, 'carb',   400],
+    ['granola',         'Гранола / мюсли',                          450, 10.0, 17.0, 64.0, 'carb',    80],
+    ['corn_can',        'Кукуруза консервированная',                 75,  2.3,  1.2, 15.0, 'carb',   250],
+    ['chickpeas_can',   'Нут консервированный',                     139,  7.0,  2.6, 22.5, 'carb',   250],
+    ['canned_tomatoes', 'Томаты в собственном соку',                 24,  1.2,  0.2,  4.5, 'veg',    400],
+    ['bell_pepper',     'Перец болгарский',                          26,  1.0,  0.3,  6.0, 'veg',    250],
+    ['zucchini',        'Кабачок / цукини',                          17,  1.2,  0.3,  3.1, 'veg',    300],
+    ['spinach',         'Шпинат',                                    23,  2.9,  0.4,  3.6, 'veg',    150],
+    ['tofu',            'Тофу твёрдый',                             144, 15.8,  8.7,  2.8, 'protein',250],
+    ['shrimp',          'Креветки очищенные (сырые)',                85, 20.1,  0.5,  0.0, 'protein',250],
+    ['cottage_cheese',  'Зернёный творог (cottage cheese)',          98, 11.1,  4.3,  3.4, 'dairy',  300],
+    ['skyr',            'Скир (skyr)',                               63, 11.0,  0.2,  4.0, 'dairy',  300],
+    ['milk_whole',      'Молоко 3,2%',                               60,  2.9,  3.2,  4.7, 'dairy',  500],
+    ['feta',            'Фета',                                     264, 14.2, 21.3,  4.1, 'dairy',   80],
+    ['mozzarella',      'Моцарелла',                                280, 22.0, 20.0,  2.5, 'dairy',  100],
+    ['hummus',          'Хумус',                                    166,  7.9,  9.6, 14.3, 'fat',    100],
+    ['cashews',         'Кешью',                                    553, 18.0, 44.0, 30.0, 'fat',     40],
+    ['dark_chocolate',  'Шоколад тёмный 70%',                       598,  7.8, 42.6, 45.9, 'fat',     30],
+    ['dates',           'Финики',                                   282,  2.5,  0.4, 75.0, 'fruit',   60],
+  ];
+
+  /* Английские названия: в поездке по ним проще найти продукт в магазине
+   * (показываются в списке покупок). */
+  const EN = {
+    oats: 'rolled oats', buckwheat: 'buckwheat', rice: 'white rice', pasta: 'pasta', bulgur: 'bulgur', potato: 'potatoes',
+    bread: 'wholegrain bread', lavash: 'lavash / flatbread', chicken_breast: 'chicken breast', chicken_thigh: 'chicken thighs, skinless',
+    turkey: 'turkey breast', beef: 'lean beef', minced_beef: 'ground beef 15%', pork: 'pork tenderloin', fish_white: 'white fish (cod, hake, pollock)',
+    salmon: 'salmon', tuna_can: 'canned tuna in water', eggs: 'eggs', cottage5: 'tvorog / quark', cottage9: 'tvorog / quark',
+    milk: 'milk 2%', kefir: 'kefir', yogurt: 'greek yogurt 2%', cheese: 'hard cheese', smetana: 'sour cream', protein_powder: 'whey protein',
+    peanut_butter: 'peanut butter', peanuts: 'peanuts', walnuts: 'walnuts', almonds: 'almonds', olive_oil: 'olive oil',
+    sunflower_oil: 'sunflower oil', butter: 'butter', avocado: 'avocado', banana: 'bananas', apple: 'apples', raisins: 'raisins',
+    dried_apricots: 'dried apricots', honey: 'honey', frozen_berries: 'frozen berries', tomato: 'tomatoes', cucumber: 'cucumbers',
+    cabbage: 'white cabbage', carrot: 'carrots', onion: 'onions', broccoli: 'frozen broccoli', frozen_veg: 'frozen mixed vegetables',
+    mushrooms: 'mushrooms', beans_can: 'canned beans', lentils: 'lentils', chickpeas: 'dry chickpeas', tomato_paste: 'tomato paste',
+    beet: 'beetroot', quinoa: 'quinoa', couscous: 'couscous', rice_noodles: 'rice noodles', tortilla: 'wheat tortillas',
+    sweet_potato: 'sweet potatoes', granola: 'granola / muesli', corn_can: 'canned sweet corn', chickpeas_can: 'canned chickpeas',
+    canned_tomatoes: 'canned chopped tomatoes', bell_pepper: 'bell peppers', zucchini: 'zucchini / courgette', spinach: 'spinach',
+    tofu: 'firm tofu', shrimp: 'peeled shrimp / prawns', cottage_cheese: 'cottage cheese', skyr: 'skyr', milk_whole: 'whole milk',
+    feta: 'feta', mozzarella: 'mozzarella', hummus: 'hummus', cashews: 'cashews', dark_chocolate: 'dark chocolate 70%', dates: 'dates',
+  };
+
+  NF.FOODS = rows.map(function (r) {
+    return {
+      id: r[0], name: r[1], kcal: r[2], p: r[3], f: r[4], c: r[5],
+      cat: r[6], maxMeal: r[7], unit: r[8] || null, perUnit: r[9] || null, custom: false, en: EN[r[0]] || null,
+    };
+  });
+
+  /* Срок хранения после покупки, дней (в холодильнике; для сырого мяса/рыбы —
+   * охлаждённое, не замороженное). null — хранится долго (крупы, консервы,
+   * заморозка, масло). Значение подставляется по умолчанию, его можно поменять. */
+  NF.SHELF = {
+    chicken_breast: 2, chicken_thigh: 2, turkey: 2, beef: 3, minced_beef: 1, pork: 3, fish_white: 2, salmon: 2,
+    eggs: 21, cottage5: 5, cottage9: 5, milk: 5, kefir: 7, yogurt: 10, cheese: 21, smetana: 7,
+    bread: 5, lavash: 5, potato: 30, banana: 5, apple: 14, avocado: 4,
+    tomato: 5, cucumber: 7, cabbage: 14, carrot: 21, onion: 30, mushrooms: 4,
+    beet: 30, tortilla: 10, sweet_potato: 21, bell_pepper: 7, zucchini: 7, spinach: 4, tofu: 5, shrimp: 2,
+    cottage_cheese: 7, skyr: 10, milk_whole: 5, feta: 14, mozzarella: 5, hummus: 5,
+  };
+
+  /* Замены: чем можно заменить продукт, если его нет дома (по порядку — от
+   * самой близкой). Граммы пересчитываются: белковые продукты — по белку,
+   * остальные — по калориям. Помогает и в поездках: нет гречки — киноа. */
+  NF.SUBS = {
+    chicken_breast: ['turkey', 'chicken_thigh', 'pork', 'shrimp', 'fish_white', 'tofu'],
+    chicken_thigh: ['chicken_breast', 'turkey', 'pork', 'beef'],
+    turkey: ['chicken_breast', 'chicken_thigh', 'pork', 'shrimp'],
+    pork: ['beef', 'chicken_thigh', 'turkey', 'chicken_breast'],
+    beef: ['pork', 'chicken_thigh', 'turkey'],
+    minced_beef: ['pork', 'beef', 'chicken_thigh'],
+    fish_white: ['salmon', 'shrimp', 'chicken_breast'],
+    salmon: ['fish_white', 'shrimp', 'chicken_breast'],
+    shrimp: ['fish_white', 'chicken_breast', 'tofu'],
+    tuna_can: ['chicken_breast', 'fish_white', 'eggs'],
+    tofu: ['chicken_breast', 'eggs', 'chickpeas_can'],
+    eggs: ['tofu'],
+    cottage5: ['cottage9', 'cottage_cheese', 'skyr', 'yogurt'],
+    cottage9: ['cottage5', 'cottage_cheese', 'skyr', 'yogurt'],
+    cottage_cheese: ['cottage5', 'cottage9', 'skyr', 'yogurt'],
+    skyr: ['yogurt', 'cottage_cheese', 'cottage5'],
+    yogurt: ['skyr', 'cottage_cheese', 'cottage5'],
+    kefir: ['milk', 'milk_whole', 'yogurt'],
+    milk: ['milk_whole', 'kefir'],
+    milk_whole: ['milk', 'kefir'],
+    smetana: ['yogurt', 'skyr'],
+    cheese: ['mozzarella', 'feta'],
+    mozzarella: ['cheese', 'feta'],
+    feta: ['cheese', 'mozzarella'],
+    buckwheat: ['quinoa', 'bulgur', 'rice', 'couscous'],
+    rice: ['bulgur', 'quinoa', 'couscous', 'buckwheat'],
+    bulgur: ['couscous', 'quinoa', 'rice', 'buckwheat'],
+    couscous: ['bulgur', 'quinoa', 'rice'],
+    quinoa: ['bulgur', 'couscous', 'buckwheat', 'rice'],
+    pasta: ['rice_noodles'],
+    rice_noodles: ['pasta', 'rice'],
+    granola: ['oats'],
+    potato: ['sweet_potato'],
+    sweet_potato: ['potato'],
+    bread: ['tortilla', 'lavash'],
+    lavash: ['tortilla', 'bread'],
+    tortilla: ['lavash', 'bread'],
+    lentils: ['beans_can', 'chickpeas_can'],
+    chickpeas: ['chickpeas_can', 'beans_can'],
+    chickpeas_can: ['beans_can'],
+    beans_can: ['chickpeas_can'],
+    olive_oil: ['sunflower_oil', 'butter'],
+    sunflower_oil: ['olive_oil', 'butter'],
+    butter: ['olive_oil', 'sunflower_oil'],
+    walnuts: ['almonds', 'cashews', 'peanuts'],
+    almonds: ['walnuts', 'cashews', 'peanuts'],
+    peanuts: ['almonds', 'cashews', 'walnuts'],
+    cashews: ['almonds', 'walnuts', 'peanuts'],
+    banana: ['apple', 'frozen_berries'],
+    apple: ['banana'],
+    frozen_berries: ['banana', 'apple'],
+    raisins: ['dried_apricots', 'dates'],
+    dried_apricots: ['raisins', 'dates'],
+    dates: ['raisins', 'dried_apricots'],
+    broccoli: ['frozen_veg', 'zucchini'],
+    frozen_veg: ['broccoli', 'zucchini', 'bell_pepper'],
+    zucchini: ['bell_pepper', 'broccoli', 'frozen_veg'],
+    bell_pepper: ['zucchini', 'frozen_veg'],
+    spinach: ['frozen_veg'],
+    cucumber: ['bell_pepper', 'tomato'],
+    canned_tomatoes: ['tomato', 'tomato_paste'],
+    tomato_paste: ['canned_tomatoes'],
+  };
+
+  NF.CAT_LABEL = {
+    protein: 'Белковое', carb: 'Углеводы', fat: 'Жиры и орехи',
+    veg: 'Овощи', fruit: 'Фрукты', dairy: 'Молочное',
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
