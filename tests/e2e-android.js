@@ -36,11 +36,12 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
   const fontOk = await p.evaluate(async () => { await document.fonts.ready; return document.fonts.check('16px "Golos Text"') && [...document.fonts].some((f) => f.family.includes('Golos') && f.status === 'loaded'); });
   check(fontOk, 'шрифт не загрузился локально');
   await p.click('#profile-form button[type=submit]');
-  await p.waitForSelector('.timeline');
+  await p.waitForSelector('.tl');
   // напоминания → разрешение → расписание на 7 дней
-  await p.click('.nav-btn[data-tab=profile]');
-  await p.click('[data-act=pseg][data-seg=settings]');
-  await p.click('#reminders > summary');
+  await p.click('[data-act=open-settings]');
+  await p.click('#reminders');
+  await p.waitForSelector('#sheet.show');
+  await p.waitForTimeout(500); // шторка доехала
   await p.check('#rem-enabled', { force: true });
   await p.waitForTimeout(300);
   let c = await calls();
@@ -55,7 +56,8 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
   await p.click('[data-act=alarm-settings]');
   await p.click('[data-act=ics]');
   await p.click('[data-act=rem-test]');
-  await p.click('#profile-form ~ * , details:has(#import-text), [data-act=export]').catch(() => {});
+  await p.keyboard.press('Escape');
+  await p.waitForSelector('#sheet', { state: 'hidden' });
   // тренировка: экран, таймер с системным будильником
   await p.click('.nav-btn[data-tab=train]');
   await p.click('[data-act=w-start]');
@@ -66,7 +68,7 @@ const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/cs
   await p.click('[data-act=timer-stop]');
   // «Назад» уводит на главный экран
   const back = await p.evaluate(() => window.__nfBack());
-  check(back === true && (await p.isVisible('.timeline')), '«Назад» не вернул на главный');
+  check(back === true && (await p.isVisible('.tl')), '«Назад» не вернул на главный');
   check((await p.evaluate(() => window.__nfBack())) === false, '«Назад» на главном должен выходить');
   c = await calls();
   const names = new Set(c.map((x) => x[0]));

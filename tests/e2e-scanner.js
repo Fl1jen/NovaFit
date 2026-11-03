@@ -118,15 +118,16 @@ const OFF_PASTA = {
 
   // 5) «съел» по штрихкоду — в еду вне плана
   await p.click('.nav-btn[data-tab=today]');
-  await p.click('[data-act=extra-toggle]');
-  await p.click('[data-act=scan-open][data-mode=extra]');
+  await p.click('.nav-fab');
+  await p.click('.tile[data-sheet=eat]');
+  await p.click('#sheet [data-act=scan-open][data-mode=extra]');
   await p.fill('#scan-code', '4607001771517');
   await p.click('[data-act=scan-find]');
   await p.waitForSelector('#scan-qty');
   await p.fill('#scan-qty', '250');
   await p.click('[data-act=scan-save]');
   await p.waitForTimeout(300);
-  check(/Кефир местный/.test(await p.textContent('.extras')), 'еда по штрихкоду не записалась');
+  check(/Кефир местный/.test(await p.textContent('.tl-item.k-extra')), 'еда по штрихкоду не записалась');
 
   await b.close();
   server.close();
